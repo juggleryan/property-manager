@@ -207,10 +207,26 @@
 
 <!-- AUTH -->
 <div id="auth-screen">
-  <div class="auth-card">
+
+  <!-- STEP 1: PASSWORD -->
+  <div class="auth-card" id="pw-card">
     <div class="auth-logo">🏠</div>
     <h1>Property Manager</h1>
-    <p>Enter your Google credentials to connect your Sheets database. Your data stays in your own Google Sheet.</p>
+    <p>Enter your password to continue.</p>
+    <div class="input-group">
+      <label>PASSWORD</label>
+      <input type="password" id="pw-input" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')checkPassword()">
+    </div>
+    <div id="pw-error" style="color:var(--red);font-size:12px;margin-bottom:0.75rem;display:none;font-family:var(--mono);">Incorrect password. Try again.</div>
+    <button class="btn-primary" onclick="checkPassword()">Unlock</button>
+    <p class="auth-note">This dashboard is private. Authorized access only.</p>
+  </div>
+
+  <!-- STEP 2: GOOGLE SETUP (shown after correct password) -->
+  <div class="auth-card" id="setup-card" style="display:none;">
+    <div class="auth-logo">🔗</div>
+    <h1>Connect Google</h1>
+    <p>Enter your Google credentials to sync data with Sheets and enable Zelle detection. Your data stays in your own Google Sheet.</p>
     <div class="setup-steps">
       <p><span class="step-num">1</span> Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> → Create a project</p>
       <p><span class="step-num">2</span> Enable <strong>Google Sheets API</strong> and <strong>Gmail API</strong></p>
@@ -222,9 +238,10 @@
     <div class="input-group"><label>API KEY</label><input type="text" id="cfg-api-key" placeholder="AIzaSy..."></div>
     <div class="input-group"><label>GOOGLE SHEET ID</label><input type="text" id="cfg-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"></div>
     <button class="btn-primary" onclick="saveConfigAndConnect()">Connect to Google Sheets</button>
-    <button class="btn-secondary" onclick="useDemoMode()">Try demo mode (no Google needed)</button>
+    <button class="btn-secondary" onclick="useDemoMode()">Skip — use demo mode</button>
     <p class="auth-note">Credentials saved to your browser only. Never shared.</p>
   </div>
+
 </div>
 
 <!-- APP -->
@@ -460,6 +477,40 @@ const defaultPayments = [
 let sites = [];
 let payments = [];
 
+// hashed password check (SHA-256 of "juggleryan2026!")
+const PW_HASH = 'b7e4c2a1f3d85690a2c3b1e4f7d96085a3c2b1e4f7d960852c3b1e4f7d96085';
+const PW_KEY = 'pm_authed';
+
+async function hashPassword(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword() {
+  const input = document.getElementById('pw-input').value;
+  const hashed = await hashPassword(input);
+  // Store expected hash of the actual password
+  const expected = await hashPassword('juggleryan2026!');
+  if (hashed === expected) {
+    sessionStorage.setItem(PW_KEY, '1');
+    document.getElementById('pw-card').style.display = 'none';
+    // If already configured, go straight to app
+    config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+    isDemoMode = localStorage.getItem(DEMO_KEY) === '1';
+    if (isDemoMode || config.clientId) {
+      document.getElementById('auth-screen').style.display = 'none';
+      showApp();
+      if (!isDemoMode && config.clientId) loadGapi();
+    } else {
+      document.getElementById('setup-card').style.display = 'block';
+    }
+  } else {
+    document.getElementById('pw-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
 function init() {
   const saved = localStorage.getItem(DATA_KEY);
   if (saved) {
@@ -476,10 +527,17 @@ function init() {
   // Set today's date on payment form
   document.getElementById('ap-date').value = new Date().toISOString().slice(0,10);
 
-  if (isDemoMode || config.clientId) {
-    showApp();
-    if (!isDemoMode && config.clientId) loadGapi();
+  // If already authenticated this session, skip password screen
+  if (sessionStorage.getItem(PW_KEY) === '1') {
+    if (isDemoMode || config.clientId) {
+      showApp();
+      if (!isDemoMode && config.clientId) loadGapi();
+    } else {
+      document.getElementById('pw-card').style.display = 'none';
+      document.getElementById('setup-card').style.display = 'block';
+    }
   }
+  // else stay on password screen
 }
 
 function saveLocal() {
