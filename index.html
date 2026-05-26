@@ -564,10 +564,17 @@ function useDemoMode() {
   showApp();
 }
 
+let tokenClient = null;
+let accessToken = null;
+
 function signOut() {
   localStorage.removeItem(DEMO_KEY);
   localStorage.removeItem(CONFIG_KEY);
-  if (window.gapi && gapi.auth2) { try { gapi.auth2.getAuthInstance().signOut(); } catch(e){} }
+  if (accessToken && window.google) {
+    google.accounts.oauth2.revoke(accessToken, () => {});
+    accessToken = null;
+  }
+  sessionStorage.removeItem(PW_KEY);
   location.reload();
 }
 
@@ -578,33 +585,46 @@ function showApp() {
   setSyncStatus(isDemoMode ? 'demo' : 'idle');
 }
 
-// GAPI
+// NEW Google Identity Services (replaces deprecated gapi.auth2)
 function loadGapi() {
-  const s = document.createElement('script');
-  s.src = 'https://apis.google.com/js/api.js';
-  s.onload = () => gapi.load('client:auth2', initGapiClient);
-  document.head.appendChild(s);
+  const gapiScript = document.createElement('script');
+  gapiScript.src = 'https://apis.google.com/js/api.js';
+  gapiScript.onload = () => {
+    gapi.load('client', async () => {
+      await gapi.client.init({ apiKey: config.apiKey });
+      await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+      await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest');
+      gapiReady = true;
+      loadGIS();
+    });
+  };
+  document.head.appendChild(gapiScript);
 }
 
-function initGapiClient() {
-  gapi.client.init({
-    apiKey: config.apiKey,
-    clientId: config.clientId,
-    discoveryDocs: [
-      'https://sheets.googleapis.com/$discovery/rest?version=v4',
-      'https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest'
-    ],
-    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.readonly'
-  }).then(() => {
-    gapiReady = true;
-    if (gapi.auth2.getAuthInstance().isSignedIn.get()) {
-      setSyncStatus('ok'); loadFromSheets();
-    } else {
-      gapi.auth2.getAuthInstance().signIn()
-        .then(() => { setSyncStatus('ok'); loadFromSheets(); })
-        .catch(() => setSyncStatus('err'));
-    }
-  }).catch(e => { console.error(e); setSyncStatus('err'); });
+function loadGIS() {
+  const gisScript = document.createElement('script');
+  gisScript.src = 'https://accounts.google.com/gsi/client';
+  gisScript.onload = () => {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: config.clientId,
+      scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.readonly',
+      callback: (response) => {
+        if (response.error) {
+          setSyncStatus('err');
+          showToast('Google sign-in failed: ' + response.error);
+          return;
+        }
+        accessToken = response.access_token;
+        gapi.client.setToken({ access_token: accessToken });
+        setSyncStatus('ok');
+        showToast('Google connected ✓');
+        loadFromSheets();
+      }
+    });
+    setSyncStatus('loading');
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  };
+  document.head.appendChild(gisScript);
 }
 
 function setSyncStatus(state) {
@@ -650,6 +670,7 @@ async function loadFromSheets() {
 async function saveToSheets() {
   if (isDemoMode) { showToast('Connect Google Sheets to save data.'); return; }
   if (!gapiReady) { showToast('Google API not ready.'); return; }
+  if (!accessToken) { tokenClient.requestAccessToken({prompt:''}); showToast('Re-authenticating...'); return; }
   setSyncStatus('loading');
   try {
     const sRows = sites.map(s => [s.id,s.name,s.group,s.addr,s.type,s.state,s.tenant,s.rent,s.paid,s.start,s.end,s.status,s.lease||'',s.notes||'']);
@@ -669,6 +690,7 @@ async function saveToSheets() {
 async function syncZelle() {
   if (isDemoMode) { showToast('Connect Gmail to scan Zelle emails.'); return; }
   if (!gapiReady) { showToast('Google API not ready.'); return; }
+  if (!accessToken) { tokenClient.requestAccessToken({prompt:''}); showToast('Re-authenticating...'); return; }
   setSyncStatus('loading');
   showToast('Scanning Gmail for Zelle payments...');
   try {
