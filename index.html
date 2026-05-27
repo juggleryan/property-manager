@@ -388,6 +388,7 @@ button{font-family:var(--sans);}
           <div class="page-header-left"><h2>Dashboard</h2><p>Portfolio overview for <span id="dash-month"></span></p></div>
           <div class="page-header-actions">
             <button class="btn btn-sm btn-secondary" onclick="navTo('all-props',null)">View all properties</button>
+            <button class="btn btn-sm btn-secondary" onclick="openAddPropModal()">+ Add property</button>
             <button class="btn btn-sm btn-primary" onclick="openAddPayModal()">+ Log payment</button>
           </div>
         </div>
@@ -409,6 +410,7 @@ button{font-family:var(--sans);}
         <div class="page-header">
           <div class="page-header-left"><h2 id="props-heading">All properties</h2><p id="props-sub">7 properties</p></div>
           <div class="page-header-actions">
+            <button class="btn btn-sm btn-secondary" onclick="openAddPropModal()">+ Add property</button>
             <button class="btn btn-sm btn-primary" onclick="openAddPayModal()">+ Log payment</button>
           </div>
         </div>
@@ -662,6 +664,55 @@ button{font-family:var(--sans);}
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('assign-overlay')">Cancel</button>
       <button class="btn btn-primary" onclick="confirmAssign()">Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PROPERTY MODAL -->
+<div class="overlay" id="addprop-overlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header"><h3>Add property</h3><button class="modal-close" onclick="closeModal('addprop-overlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-section-title">Property details</div>
+      <div class="grid-2">
+        <div class="f-group"><label>Property name</label><input type="text" id="np-name" placeholder="e.g. 166th Spanaway — Site 3"></div>
+        <div class="f-group"><label>Nickname (optional)</label><input type="text" id="np-nick" placeholder="e.g. The Blue House"></div>
+      </div>
+      <div class="f-group"><label>Full address</label><input type="text" id="np-addr" placeholder="123 Main St, City, State ZIP"></div>
+      <div class="grid-3">
+        <div class="f-group"><label>Type</label>
+          <select id="np-type"><option value="house">House</option><option value="rv">RV site</option></select>
+        </div>
+        <div class="f-group"><label>State</label>
+          <select id="np-state"><option value="wa">Washington</option><option value="az">Arizona</option><option value="other">Other</option></select>
+        </div>
+        <div class="f-group"><label>Monthly rent ($)</label><input type="number" id="np-rent" placeholder="0" min="0" step="1"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Mortgage payment ($)</label><input type="number" id="np-mortgage" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Yard maintenance</label>
+          <select id="np-yard"><option value="">Not specified</option><option value="Tenant">Tenant</option><option value="Owner">Owner</option><option value="Shared">Shared</option><option value="HOA">HOA</option><option value="Management">Property management</option></select>
+        </div>
+      </div>
+      <div class="modal-section-title">Tenant (optional — can add later)</div>
+      <div class="grid-2">
+        <div class="f-group"><label>Tenant name</label><input type="text" id="np-tenant" placeholder="Full name"></div>
+        <div class="f-group"><label>Status</label>
+          <select id="np-status"><option value="vacant">Vacant</option><option value="current">Current</option><option value="pending">Pending</option></select>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="f-group"><label>Lease start</label><input type="date" id="np-start"></div>
+        <div class="f-group"><label>Lease end</label><input type="date" id="np-end"></div>
+        <div class="f-group"><label>Term</label>
+          <select id="np-term"><option value="12">12 months</option><option value="6">6 months</option><option value="24">24 months</option><option value="mtm">Month-to-month</option></select>
+        </div>
+      </div>
+      <div class="f-group"><label>Notes</label><input type="text" id="np-notes" placeholder="Optional notes about this property..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addprop-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewProp()">Add property</button>
     </div>
   </div>
 </div>
@@ -1413,6 +1464,64 @@ function populateSiteDropdowns(){
   });
   // assign lease dropdown
   document.getElementById('assign-site').innerHTML=sites.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('');
+}
+
+// ADD PROPERTY
+function openAddPropModal(){
+  // reset all fields
+  ['np-name','np-nick','np-addr','np-tenant','np-notes'].forEach(id=>document.getElementById(id).value='');
+  ['np-rent','np-mortgage'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('np-type').value='house';
+  document.getElementById('np-state').value='wa';
+  document.getElementById('np-status').value='vacant';
+  document.getElementById('np-yard').value='';
+  document.getElementById('np-term').value='12';
+  document.getElementById('np-start').value=today();
+  document.getElementById('np-end').value='';
+  document.getElementById('addprop-overlay').classList.add('open');
+}
+function saveNewProp(){
+  const name=document.getElementById('np-name').value.trim();
+  const addr=document.getElementById('np-addr').value.trim();
+  const rent=parseInt(document.getElementById('np-rent').value)||0;
+  if(!name||!addr||!rent){showToast('Please fill in name, address, and rent.');return;}
+
+  // Generate a clean ID from the name
+  const id='prop_'+Date.now();
+  const tenant=document.getElementById('np-tenant').value.trim()||'(Vacant)';
+  const status=document.getElementById('np-status').value;
+
+  const newSite={
+    id,
+    name,
+    addr,
+    type:document.getElementById('np-type').value,
+    state:document.getElementById('np-state').value,
+    nickname:document.getElementById('np-nick').value.trim(),
+    tenant:tenant,
+    rent,
+    mortgage:parseInt(document.getElementById('np-mortgage').value)||0,
+    paid:0,
+    start:document.getElementById('np-start').value,
+    end:document.getElementById('np-end').value,
+    term:document.getElementById('np-term').value,
+    status: tenant==='(Vacant)' ? 'vacant' : status,
+    lease:null,
+    yard:document.getElementById('np-yard').value,
+    taxAmt:0,tax1:'',tax2:'',taxNotes:'',
+    notes: document.getElementById('np-notes').value.trim()
+      ? [{ts:now(), text:document.getElementById('np-notes').value.trim()}]
+      : []
+  };
+
+  sites.push(newSite);
+  populateSiteDropdowns();
+  saveLocal();
+  render();
+  closeModal('addprop-overlay');
+  // Update occupancy count
+  document.getElementById('nb-all').textContent=sites.length;
+  showToast(`"${displayName(newSite)}" added successfully.`);
 }
 
 // UTILS
