@@ -6,362 +6,434 @@
 <title>Property Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0f1117;
-    --surface: #171b26;
-    --surface2: #1e2333;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.13);
-    --text: #eef0f5;
-    --text2: #8b90a0;
-    --text3: #555a6a;
-    --accent: #4f8ef7;
-    --accent2: #3a6fd8;
-    --green: #3ecf8e;
-    --green-bg: rgba(62,207,142,0.1);
-    --red: #f76f6f;
-    --red-bg: rgba(247,111,111,0.1);
-    --amber: #f5a623;
-    --amber-bg: rgba(245,166,35,0.1);
-    --blue-bg: rgba(79,142,247,0.1);
-    --radius: 10px;
-    --radius-lg: 16px;
-    --mono: 'DM Mono', monospace;
-    --sans: 'Sora', sans-serif;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
+:root {
+  --bg: #f5f5f3;
+  --white: #ffffff;
+  --border: #e5e5e3;
+  --border2: #d0d0ce;
+  --text: #1a1a1a;
+  --text2: #6b6b6b;
+  --text3: #a0a0a0;
+  --green: #2d7a4f;
+  --green-bg: #edf7f1;
+  --red: #c0392b;
+  --red-bg: #fdf0ee;
+  --amber: #b45309;
+  --amber-bg: #fef8ee;
+  --blue: #1d4ed8;
+  --blue-bg: #eff6ff;
+  --gray-bg: #f5f5f3;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --sans: 'Inter', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
 
-  /* AUTH */
-  #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
-  .auth-card { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 3rem 2.5rem; width: 100%; max-width: 440px; text-align: center; }
-  .auth-logo { width: 52px; height: 52px; background: var(--blue-bg); border: 1px solid rgba(79,142,247,0.25); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 24px; }
-  .auth-card h1 { font-size: 22px; font-weight: 600; margin-bottom: 0.4rem; }
-  .auth-card > p { color: var(--text2); font-size: 13px; margin-bottom: 2rem; line-height: 1.7; }
-  .setup-steps { background: var(--surface2); border-radius: var(--radius); padding: 1.25rem; text-align: left; margin-bottom: 1.5rem; }
-  .setup-steps p { margin-bottom: 0.75rem; font-size: 12px; color: var(--text2); }
-  .setup-steps p:last-child { margin-bottom: 0; }
-  .setup-steps a { color: var(--accent); text-decoration: none; }
-  .setup-steps a:hover { text-decoration: underline; }
-  .step-num { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: var(--blue-bg); border-radius: 50%; font-family: var(--mono); font-size: 10px; color: var(--accent); margin-right: 6px; vertical-align: middle; }
-  .input-group { margin-bottom: 1rem; text-align: left; }
-  .input-group label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 5px; font-family: var(--mono); letter-spacing: 0.05em; }
-  .input-group input { width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s; }
-  .input-group input:focus { border-color: var(--accent); }
-  .btn-primary { width: 100%; padding: 11px; background: var(--accent); border: none; border-radius: var(--radius); color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
-  .btn-primary:hover { background: var(--accent2); }
-  .btn-secondary { width: 100%; padding: 11px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text2); font-family: var(--sans); font-size: 13px; cursor: pointer; margin-top: 0.6rem; transition: all 0.2s; }
-  .btn-secondary:hover { color: var(--text); }
-  .auth-note { font-size: 11px; color: var(--text3); margin-top: 1rem; }
+/* AUTH */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem;background:var(--bg);}
+.auth-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;width:100%;max-width:420px;text-align:center;}
+.auth-logo{width:48px;height:48px;background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:22px;}
+.auth-card h1{font-size:20px;font-weight:600;margin-bottom:0.35rem;}
+.auth-card>p{color:var(--text2);font-size:13px;margin-bottom:1.5rem;line-height:1.7;}
+.setup-steps{background:var(--bg);border-radius:var(--radius);padding:1rem;text-align:left;margin-bottom:1.25rem;}
+.setup-steps p{font-size:12px;color:var(--text2);margin-bottom:0.6rem;}
+.setup-steps p:last-child{margin-bottom:0;}
+.setup-steps a{color:var(--blue);text-decoration:none;}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;background:var(--blue-bg);border-radius:50%;font-size:10px;color:var(--blue);margin-right:5px;vertical-align:middle;font-weight:600;}
+.field-group{margin-bottom:0.85rem;text-align:left;}
+.field-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500;}
+.field-group input{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color 0.2s;background:var(--white);}
+.field-group input:focus{border-color:var(--blue);}
+.btn-primary{width:100%;padding:10px;background:var(--blue);border:none;border-radius:var(--radius);color:#fff;font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer;transition:opacity 0.2s;}
+.btn-primary:hover{opacity:0.9;}
+.btn-secondary{width:100%;padding:10px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-family:var(--sans);font-size:13px;cursor:pointer;margin-top:0.5rem;transition:all 0.2s;}
+.btn-secondary:hover{border-color:var(--border2);color:var(--text);}
+.auth-note{font-size:11px;color:var(--text3);margin-top:0.85rem;}
+#pw-error{color:var(--red);font-size:12px;margin-bottom:0.6rem;display:none;}
 
-  /* APP */
-  #app { display: none; }
-  .topbar { height: 56px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 1.75rem; position: sticky; top: 0; z-index: 50; background: rgba(15,17,23,0.9); backdrop-filter: blur(12px); }
-  .topbar-left { display: flex; align-items: center; gap: 10px; }
-  .topbar-logo { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
-  .topbar-logo span { color: var(--accent); }
-  .topbar-tag { font-family: var(--mono); font-size: 10px; color: var(--text3); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; }
-  .topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  #sync-status { font-family: var(--mono); font-size: 11px; display: flex; align-items: center; gap: 5px; }
-  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); }
-  .sync-dot.ok { background: var(--green); }
-  .sync-dot.err { background: var(--red); }
-  .sync-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .topbar-btn { padding: 7px 13px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text2); font-size: 12px; cursor: pointer; font-family: var(--sans); transition: all 0.2s; white-space: nowrap; }
-  .topbar-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* TOPBAR */
+#app{display:none;}
+.topbar{height:52px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:50;}
+.topbar-logo{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.topbar-logo-icon{width:26px;height:26px;background:var(--blue-bg);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.topbar-nav{display:flex;gap:4px;}
+.topbar-nav button{padding:5px 12px;border:1px solid transparent;border-radius:var(--radius);font-size:12px;color:var(--text2);cursor:pointer;background:transparent;font-family:var(--sans);font-weight:500;transition:all 0.15s;}
+.topbar-nav button:hover{background:var(--bg);color:var(--text);}
+.topbar-nav button.active{background:var(--blue-bg);color:var(--blue);border-color:#bfdbfe;}
+.topbar-right{display:flex;align-items:center;gap:6px;}
+.topbar-btn{padding:6px 12px;border:1px solid var(--border2);border-radius:var(--radius);font-size:12px;color:var(--text2);cursor:pointer;background:var(--white);font-family:var(--sans);font-weight:500;transition:all 0.15s;white-space:nowrap;}
+.topbar-btn:hover{border-color:var(--border2);color:var(--text);background:var(--bg);}
+.sync-indicator{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);}
+.sync-dot.ok{background:var(--green);}
+.sync-dot.err{background:var(--red);}
+.sync-dot.loading{background:var(--amber);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
-  .main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.75rem; }
+/* LAYOUT */
+.app-body{display:flex;min-height:calc(100vh - 52px);}
+.sidebar{width:200px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);padding:1rem 0;}
+.sidebar-section{margin-bottom:1.5rem;}
+.sidebar-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;padding:0 1rem;margin-bottom:4px;}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:7px 1rem;font-size:13px;color:var(--text2);cursor:pointer;transition:all 0.15s;border:none;background:none;width:100%;text-align:left;font-family:var(--sans);}
+.sidebar-item:hover{background:var(--bg);color:var(--text);}
+.sidebar-item.active{background:var(--blue-bg);color:var(--blue);font-weight:500;}
+.sidebar-item .si-icon{width:16px;text-align:center;font-size:14px;}
+.sidebar-item .si-count{margin-left:auto;font-size:10px;background:var(--red-bg);color:var(--red);padding:1px 6px;border-radius:10px;font-weight:600;}
+.sidebar-item .si-count.green{background:var(--green-bg);color:var(--green);}
 
-  /* FILTER TABS */
-  .filter-tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-  .filter-tab { padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text3); cursor: pointer; font-family: var(--mono); transition: all 0.2s; background: transparent; }
-  .filter-tab:hover { color: var(--text2); border-color: var(--border2); }
-  .filter-tab.active { border-color: var(--accent); color: var(--accent); background: var(--blue-bg); }
+.content{flex:1;padding:1.5rem;overflow-y:auto;min-width:0;}
 
-  /* METRICS */
-  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 2rem; }
-  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.4rem; position: relative; overflow: hidden; transition: border-color 0.2s; }
-  .metric-card:hover { border-color: var(--border2); }
-  .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-  .metric-card.green::before { background: var(--green); }
-  .metric-card.red::before { background: var(--red); }
-  .metric-card.amber::before { background: var(--amber); }
-  .metric-card.blue::before { background: var(--accent); }
-  .metric-label { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.05em; margin-bottom: 8px; }
-  .metric-val { font-size: 26px; font-weight: 600; font-family: var(--mono); letter-spacing: -1px; }
-  .metric-val.green { color: var(--green); }
-  .metric-val.red { color: var(--red); }
-  .metric-val.amber { color: var(--amber); }
-  .metric-val.blue { color: var(--accent); }
-  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;}
+.metric{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.1rem;border-top:3px solid transparent;}
+.metric.green{border-top-color:var(--green);}
+.metric.red{border-top-color:var(--red);}
+.metric.amber{border-top-color:var(--amber);}
+.metric.blue{border-top-color:var(--blue);}
+.metric .lbl{font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:500;}
+.metric .val{font-size:22px;font-weight:600;}
+.metric .val.green{color:var(--green);}
+.metric .val.red{color:var(--red);}
+.metric .val.amber{color:var(--amber);}
+.metric .val.blue{color:var(--blue);}
+.metric .sub{font-size:11px;color:var(--text3);margin-top:3px;}
 
-  /* SECTION */
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  .section-title { font-size: 12px; font-weight: 500; color: var(--text2); font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+/* PANELS */
+.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1rem;overflow:hidden;}
+.panel-head{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.panel-title{font-size:13px;font-weight:600;color:var(--text);}
+.panel-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.panel-actions{display:flex;gap:6px;flex-shrink:0;}
+.panel-btn{padding:5px 10px;border:1px solid var(--border2);border-radius:var(--radius);font-size:11px;color:var(--text2);cursor:pointer;background:var(--white);font-family:var(--sans);font-weight:500;white-space:nowrap;}
+.panel-btn:hover{background:var(--bg);color:var(--text);}
+.panel-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+.panel-btn.primary:hover{opacity:0.9;}
 
-  /* PROPERTY GROUP */
-  .property-group { margin-bottom: 2rem; }
-  .property-group-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-  .property-group-name { font-size: 14px; font-weight: 600; color: var(--text); }
-  .property-group-addr { font-size: 11px; color: var(--text3); font-family: var(--mono); }
-  .prop-type-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-family: var(--mono); }
-  .prop-type-badge.rv { background: var(--blue-bg); color: var(--accent); }
-  .prop-type-badge.house { background: var(--green-bg); color: var(--green); }
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{font-size:11px;color:var(--text3);padding:8px 16px;text-align:left;border-bottom:1px solid var(--border);font-weight:500;background:var(--bg);}
+.data-table td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tbody tr:hover td{background:#fafafa;}
+.prop-name{font-weight:500;font-size:13px;}
+.prop-addr{font-size:11px;color:var(--text3);margin-top:1px;}
 
-  /* SITE CARDS */
-  .sites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
-  .site-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.4rem; transition: border-color 0.2s; }
-  .site-card:hover { border-color: var(--border2); }
-  .site-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
-  .site-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
-  .site-addr { font-size: 11px; color: var(--text3); font-family: var(--mono); }
-  .badge { font-size: 10px; font-weight: 500; font-family: var(--mono); padding: 3px 9px; border-radius: 20px; white-space: nowrap; letter-spacing: 0.04em; }
-  .badge.current { background: var(--green-bg); color: var(--green); }
-  .badge.late { background: var(--red-bg); color: var(--red); }
-  .badge.pending { background: var(--amber-bg); color: var(--amber); }
-  .badge.vacant { background: var(--border); color: var(--text3); }
-  .site-rows { border-top: 1px solid var(--border); padding-top: 0.9rem; }
-  .site-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 13px; }
-  .site-row .key { color: var(--text3); }
-  .site-row .val { font-family: var(--mono); font-size: 12px; }
-  .site-row .val.green { color: var(--green); }
-  .site-row .val.red { color: var(--red); }
-  .site-actions { display: flex; gap: 7px; margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
-  .site-btn { flex: 1; padding: 7px 8px; font-size: 11px; font-weight: 500; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text2); cursor: pointer; font-family: var(--sans); transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 4px; }
-  .site-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--blue-bg); }
-  .site-btn svg { width: 12px; height: 12px; flex-shrink: 0; }
+/* STATUS BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px;white-space:nowrap;}
+.badge.current{background:var(--green-bg);color:var(--green);}
+.badge.late{background:var(--red-bg);color:var(--red);}
+.badge.vacant{background:var(--gray-bg);color:var(--text2);border:1px solid var(--border);}
+.badge.pending{background:var(--amber-bg);color:var(--amber);}
+.badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.badge.current .badge-dot{background:var(--green);}
+.badge.late .badge-dot{background:var(--red);}
+.badge.vacant .badge-dot{background:var(--text3);}
+.badge.pending .badge-dot{background:var(--amber);}
+.type-tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.type-tag.rv{background:var(--blue-bg);color:var(--blue);}
+.type-tag.house{background:var(--green-bg);color:var(--green);}
 
-  /* PANEL */
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 1.5rem; overflow: hidden; }
-  .panel-body { padding: 1.4rem; }
+/* PROGRESS */
+.progress-wrap{display:flex;flex-direction:column;gap:3px;}
+.progress-bar-bg{width:72px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-bar-fill{height:4px;border-radius:2px;background:var(--green);transition:width 0.3s;}
+.progress-bar-fill.partial{background:var(--amber);}
+.progress-bar-fill.none{background:var(--red);}
+.progress-label{font-size:11px;color:var(--text3);}
 
-  /* LOG FORM */
-  .log-form { display: grid; grid-template-columns: 2.5fr 1.2fr 1.2fr 1.2fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 1.2rem; }
-  .log-form label { display: block; font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.05em; margin-bottom: 4px; }
-  .log-form select, .log-form input { width: 100%; padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: var(--mono); font-size: 12px; outline: none; transition: border-color 0.2s; }
-  .log-form select:focus, .log-form input:focus { border-color: var(--accent); }
-  .log-form select option { background: var(--surface2); }
-  .log-btn { padding: 9px 16px; background: var(--accent); border: none; border-radius: var(--radius); color: #fff; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; font-family: var(--sans); transition: background 0.2s; }
-  .log-btn:hover { background: var(--accent2); }
+/* ACTION BTNS */
+.row-actions{display:flex;gap:4px;}
+.row-btn{padding:4px 9px;border:1px solid var(--border);border-radius:var(--radius);font-size:11px;color:var(--text2);cursor:pointer;background:var(--white);font-family:var(--sans);transition:all 0.15s;}
+.row-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);}
+.row-btn.danger:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
 
-  table { width: 100%; border-collapse: collapse; }
-  thead th { font-size: 10px; font-family: var(--mono); letter-spacing: 0.08em; color: var(--text3); padding: 0 0 10px; text-align: left; border-bottom: 1px solid var(--border); }
-  tbody tr { transition: background 0.15s; }
-  tbody tr:hover { background: rgba(255,255,255,0.02); }
-  tbody td { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-family: var(--mono); font-size: 12px; }
-  tbody tr:last-child td { border-bottom: none; }
-  .td-green { color: var(--green); }
-  .td-red { color: var(--red); }
-  .td-text { font-family: var(--sans); font-size: 13px; color: var(--text2); }
+/* BILL TRACKER */
+.bill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;padding:16px;}
+.bill-card{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.bill-card-head{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.bill-card-name{font-size:13px;font-weight:600;}
+.bill-card-addr{font-size:11px;color:var(--text3);}
+.bill-types{padding:8px 14px;}
+.bill-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.bill-row:last-child{border-bottom:none;}
+.bill-type-name{color:var(--text2);display:flex;align-items:center;gap:6px;}
+.bill-icon{font-size:13px;}
+.bill-status{display:flex;align-items:center;gap:6px;}
+.bill-paid{color:var(--green);font-weight:500;font-size:11px;}
+.bill-unpaid{color:var(--red);font-weight:500;font-size:11px;}
+.bill-na{color:var(--text3);font-size:11px;}
+.bill-log-btn{font-size:10px;padding:2px 7px;border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;background:var(--white);font-family:var(--sans);}
+.bill-log-btn:hover{border-color:var(--blue);color:var(--blue);}
 
-  /* LEASES */
-  .lease-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin-bottom: 1rem; }
-  .lease-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.2s; }
-  .lease-item:hover { border-color: var(--border2); }
-  .lease-info .lname { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
-  .lease-info .lmeta { font-size: 11px; color: var(--text3); font-family: var(--mono); }
-  .lease-btns { display: flex; gap: 6px; flex-shrink: 0; }
-  .lease-btn { padding: 6px 10px; font-size: 11px; background: transparent; border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text2); cursor: pointer; font-family: var(--sans); display: flex; align-items: center; gap: 4px; transition: all 0.15s; }
-  .lease-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .lease-btn svg { width: 12px; height: 12px; }
-  .upload-drop { border: 1px dashed var(--border2); border-radius: var(--radius); padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--text3); font-size: 13px; }
-  .upload-drop:hover { border-color: var(--accent); color: var(--accent); background: var(--blue-bg); }
-  .upload-drop svg { display: block; margin: 0 auto 0.5rem; width: 22px; height: 22px; }
+/* TAX TRACKER */
+.tax-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.tax-row:last-child{border-bottom:none;}
+.tax-half{display:flex;align-items:center;gap:5px;}
+.tax-check{width:14px;height:14px;border-radius:3px;border:1px solid var(--border2);display:inline-flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;transition:all 0.15s;}
+.tax-check.paid{background:var(--green);border-color:var(--green);color:#fff;}
+.tax-check.unpaid{background:var(--white);}
 
-  /* MODALS */
-  .overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
-  .overlay.open { display: flex; }
-  .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 1.75rem; width: 400px; max-width: calc(100vw - 2rem); max-height: 90vh; overflow-y: auto; }
-  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
-  .field { margin-bottom: 1rem; }
-  .field label { display: block; font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.05em; margin-bottom: 5px; }
-  .field input, .field select { width: 100%; padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.2s; }
-  .field input:focus, .field select:focus { border-color: var(--accent); }
-  .field select option { background: var(--surface2); }
-  .modal-footer { display: flex; gap: 8px; margin-top: 1.5rem; }
-  .modal-footer button { flex: 1; }
+/* LEASE INFO */
+.lease-detail{font-size:12px;color:var(--text2);}
+.lease-detail strong{color:var(--text);font-weight:500;}
+.lease-months{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:500;}
+.lease-months.good{background:var(--green-bg);color:var(--green);}
+.lease-months.warn{background:var(--amber-bg);color:var(--amber);}
+.lease-months.mtm{background:var(--blue-bg);color:var(--blue);}
+.lease-months.over{background:var(--red-bg);color:var(--red);}
 
-  /* TOAST */
-  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 12px 18px; font-size: 13px; color: var(--text); opacity: 0; transform: translateY(8px); transition: all 0.25s; z-index: 200; pointer-events: none; font-family: var(--mono); max-width: 320px; }
-  .toast.show { opacity: 1; transform: translateY(0); }
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1.5rem;width:420px;max-width:calc(100vw - 2rem);max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:1.1rem;}
+.modal-field{margin-bottom:0.85rem;}
+.modal-field label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500;}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color 0.2s;background:var(--white);}
+.modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--blue);}
+.modal-field select option{background:var(--white);}
+.modal-footer{display:flex;gap:8px;margin-top:1.25rem;}
+.modal-footer button{flex:1;}
+.modal-section{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin:1rem 0 0.5rem;padding-top:1rem;border-top:1px solid var(--border);}
 
-  /* SETUP MODAL */
-  .info-box { background: var(--blue-bg); border: 1px solid rgba(79,142,247,0.2); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: var(--text2); margin-bottom: 1rem; line-height: 1.7; }
-  .info-box a { color: var(--accent); text-decoration: none; }
-  .copy-field { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-family: var(--mono); font-size: 11px; color: var(--text2); margin-bottom: 6px; }
-  .copy-field span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .copy-btn { padding: 3px 8px; font-size: 10px; background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--text3); cursor: pointer; font-family: var(--mono); transition: all 0.15s; flex-shrink: 0; }
-  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .setup-section { margin-bottom: 1.25rem; }
-  .setup-section h4 { font-size: 12px; color: var(--text2); margin-bottom: 8px; font-family: var(--mono); }
+/* BILL HISTORY */
+.bill-history{padding:0 14px 10px;}
+.bill-history-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.bill-history-row:last-child{border-bottom:none;}
+.bill-history-date{color:var(--text3);}
+.bill-history-amt{font-weight:500;color:var(--green);}
+.bill-history-note{color:var(--text3);font-style:italic;}
 
-  /* RESPONSIVE */
-  @media (max-width: 850px) { .metrics-grid { grid-template-columns: 1fr 1fr; } .log-form { grid-template-columns: 1fr 1fr; } .topbar-tag { display: none; } }
-  @media (max-width: 480px) { .metrics-grid { grid-template-columns: 1fr; } .log-form { grid-template-columns: 1fr; } }
+/* PAYMENT LOG FORM */
+.log-form{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg);}
+.log-form label{display:block;font-size:10px;color:var(--text3);margin-bottom:3px;font-weight:500;}
+.log-form select,.log-form input{width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--sans);font-size:12px;outline:none;background:var(--white);}
+.log-form select:focus,.log-form input:focus{border-color:var(--blue);}
+.log-submit{padding:7px 14px;background:var(--blue);border:none;border-radius:var(--radius);color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);white-space:nowrap;}
+.log-submit:hover{opacity:0.9;}
+
+/* LEASE SECTION */
+.lease-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;padding:16px;}
+.lease-card{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.lease-card-head{padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;}
+.lease-card-body{padding:10px 14px;}
+.lease-stat{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border);}
+.lease-stat:last-child{border-bottom:none;}
+.lease-stat .lk{color:var(--text3);}
+.lease-stat .lv{font-weight:500;color:var(--text);}
+.lease-file-row{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;background:var(--bg);border-top:1px solid var(--border);}
+.lease-filename{font-size:11px;color:var(--text2);}
+.lease-file-btns{display:flex;gap:4px;}
+
+/* UPLOAD */
+.upload-zone{border:1px dashed var(--border2);border-radius:var(--radius);padding:1.25rem;text-align:center;cursor:pointer;transition:all 0.2s;color:var(--text3);font-size:12px;margin:12px 16px;}
+.upload-zone:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--white);border-radius:var(--radius);padding:10px 16px;font-size:13px;opacity:0;transform:translateY(6px);transition:all 0.2s;z-index:200;pointer-events:none;max-width:300px;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* INFO BOX */
+.info-box{background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.7;}
+.info-box a{color:var(--blue);}
+.copy-row{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:7px 12px;font-size:12px;color:var(--text2);margin-bottom:6px;}
+.copy-row span{flex:1;}
+.copy-btn{padding:2px 7px;font-size:10px;border:1px solid var(--border2);border-radius:5px;color:var(--text3);cursor:pointer;background:var(--white);font-family:var(--sans);}
+.copy-btn:hover{border-color:var(--blue);color:var(--blue);}
 </style>
 </head>
 <body>
 
 <!-- AUTH -->
 <div id="auth-screen">
-
-  <!-- STEP 1: PASSWORD -->
   <div class="auth-card" id="pw-card">
     <div class="auth-logo">🏠</div>
     <h1>Property Manager</h1>
-    <p>Enter your password to continue.</p>
-    <div class="input-group">
-      <label>PASSWORD</label>
-      <input type="password" id="pw-input" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')checkPassword()">
-    </div>
-    <div id="pw-error" style="color:var(--red);font-size:12px;margin-bottom:0.75rem;display:none;font-family:var(--mono);">Incorrect password. Try again.</div>
+    <p>Enter your password to access the dashboard.</p>
+    <div class="field-group"><label>Password</label><input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPassword()"></div>
+    <div id="pw-error">Incorrect password. Try again.</div>
     <button class="btn-primary" onclick="checkPassword()">Unlock</button>
-    <p class="auth-note">This dashboard is private. Authorized access only.</p>
+    <p class="auth-note">Authorized access only.</p>
   </div>
-
-  <!-- STEP 2: GOOGLE SETUP (shown after correct password) -->
-  <div class="auth-card" id="setup-card" style="display:none;">
+  <div class="auth-card" id="setup-card" style="display:none;max-width:460px;">
     <div class="auth-logo">🔗</div>
     <h1>Connect Google</h1>
-    <p>Enter your Google credentials to sync data with Sheets and enable Zelle detection. Your data stays in your own Google Sheet.</p>
+    <p>Enter your Google credentials to sync with Sheets and enable Zelle detection.</p>
     <div class="setup-steps">
-      <p><span class="step-num">1</span> Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> → Create a project</p>
+      <p><span class="step-num">1</span> <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> → Create project</p>
       <p><span class="step-num">2</span> Enable <strong>Google Sheets API</strong> and <strong>Gmail API</strong></p>
-      <p><span class="step-num">3</span> Create an <strong>API Key</strong> and <strong>OAuth 2.0 Client ID</strong> (Web application)</p>
-      <p><span class="step-num">4</span> Add <code>https://YOUR-USERNAME.github.io</code> to Authorized JavaScript origins</p>
-      <p><span class="step-num">5</span> Create a Google Sheet with tabs: <strong>Sites, Payments, Leases</strong></p>
+      <p><span class="step-num">3</span> Create <strong>API Key</strong> + <strong>OAuth 2.0 Client ID</strong> (Web app)</p>
+      <p><span class="step-num">4</span> Add <code>https://juggleryan.github.io</code> to Authorized JavaScript origins</p>
+      <p><span class="step-num">5</span> Create Sheet with tabs: <strong>Sites, Payments, Bills, Leases</strong></p>
     </div>
-    <div class="input-group"><label>OAUTH CLIENT ID</label><input type="text" id="cfg-client-id" placeholder="xxxxx.apps.googleusercontent.com"></div>
-    <div class="input-group"><label>API KEY</label><input type="text" id="cfg-api-key" placeholder="AIzaSy..."></div>
-    <div class="input-group"><label>GOOGLE SHEET ID</label><input type="text" id="cfg-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"></div>
+    <div class="field-group"><label>OAuth Client ID</label><input type="text" id="cfg-client-id" placeholder="xxxxx.apps.googleusercontent.com"></div>
+    <div class="field-group"><label>API Key</label><input type="text" id="cfg-api-key" placeholder="AIzaSy..."></div>
+    <div class="field-group"><label>Google Sheet ID</label><input type="text" id="cfg-sheet-id" placeholder="Sheet ID from URL"></div>
     <button class="btn-primary" onclick="saveConfigAndConnect()">Connect to Google Sheets</button>
     <button class="btn-secondary" onclick="useDemoMode()">Skip — use demo mode</button>
-    <p class="auth-note">Credentials saved to your browser only. Never shared.</p>
+    <p class="auth-note">Credentials saved to your browser only.</p>
   </div>
-
 </div>
 
 <!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-logo">🏠 Property <span>Manager</span></div>
-      <div class="topbar-tag">WA &amp; AZ Portfolio</div>
+    <div class="topbar-logo"><div class="topbar-logo-icon">🏠</div>Property Manager</div>
+    <div class="topbar-nav">
+      <button class="active" onclick="showView('properties',this)">Properties</button>
+      <button onclick="showView('bills',this)">Bills</button>
+      <button onclick="showView('payments',this)">Payments</button>
+      <button onclick="showView('leases',this)">Leases</button>
     </div>
     <div class="topbar-right">
-      <div id="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">—</span></div>
-      <button class="topbar-btn" onclick="syncZelle()">⚡ Check Zelle</button>
+      <div class="sync-indicator"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">—</span></div>
+      <button class="topbar-btn" onclick="syncZelle()">⚡ Zelle</button>
       <button class="topbar-btn" onclick="saveToSheets()">↑ Save</button>
       <button class="topbar-btn" onclick="exportCSV()">↓ CSV</button>
-      <button class="topbar-btn" onclick="openSetupModal()">⚙ Setup</button>
+      <button class="topbar-btn" onclick="openSetupModal()">⚙</button>
       <button class="topbar-btn" onclick="signOut()">Sign out</button>
     </div>
   </div>
 
-  <div class="main">
-
-    <!-- METRICS -->
-    <div class="metrics-grid">
-      <div class="metric-card green"><div class="metric-label">COLLECTED THIS MONTH</div><div class="metric-val green" id="m-collected">$0</div><div class="metric-sub" id="m-collected-sub">of $0 expected</div></div>
-      <div class="metric-card red"><div class="metric-label">OUTSTANDING</div><div class="metric-val red" id="m-outstanding">$0</div><div class="metric-sub" id="m-outstanding-sub">0 properties behind</div></div>
-      <div class="metric-card amber"><div class="metric-label">LATE FEES THIS MONTH</div><div class="metric-val amber" id="m-late">$0</div><div class="metric-sub" id="m-late-sub">from 0 tenants</div></div>
-      <div class="metric-card blue"><div class="metric-label">OCCUPANCY</div><div class="metric-val blue" id="m-occupancy">0/7</div><div class="metric-sub" id="m-occ-sub">properties occupied</div></div>
-    </div>
-
-    <!-- FILTER TABS -->
-    <div class="filter-tabs">
-      <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">All properties</button>
-      <button class="filter-tab" data-filter="rv" onclick="setFilter('rv')">RV sites</button>
-      <button class="filter-tab" data-filter="house" onclick="setFilter('house')">Houses</button>
-      <button class="filter-tab" data-filter="late" onclick="setFilter('late')">Late / overdue</button>
-      <button class="filter-tab" data-filter="wa" onclick="setFilter('wa')">Washington</button>
-      <button class="filter-tab" data-filter="az" onclick="setFilter('az')">Arizona</button>
-    </div>
-
-    <!-- PROPERTIES -->
-    <div class="section-header">
-      <div class="section-title" id="props-label">All properties</div>
-      <button class="topbar-btn" onclick="saveToSheets()">↑ Save to Sheets</button>
-    </div>
-    <div id="properties-container"></div>
-
-    <!-- PAYMENT LOG -->
-    <div class="section-header" style="margin-top:0.5rem;">
-      <div class="section-title">Payment log</div>
-    </div>
-    <div class="panel">
-      <div class="panel-body">
-        <div class="log-form">
-          <div><label>PROPERTY</label>
-            <select id="ap-site">
-              <option value="">Select property...</option>
-              <option value="166th S1">166th Spanaway — Site 1</option>
-              <option value="166th S2">166th Spanaway — Site 2</option>
-              <option value="101st S1">101st Tacoma — Site 1</option>
-              <option value="101st S2">101st Tacoma — Site 2</option>
-              <option value="Bethel">Bethel House — 138 176th St E</option>
-              <option value="Starbucks">Starbucks House — 416 166th St S</option>
-              <option value="CasaGrande">Casa Grande Home — 8932 S Chuichu Rd</option>
-            </select>
-          </div>
-          <div><label>TYPE</label>
-            <select id="ap-type">
-              <option value="Rent">Rent</option>
-              <option value="Late fee">Late fee</option>
-              <option value="Deposit">Deposit</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div><label>AMOUNT ($)</label><input type="number" id="ap-amount" placeholder="0" min="0" step="1"></div>
-          <div><label>METHOD</label>
-            <select id="ap-method">
-              <option value="Zelle">Zelle</option>
-              <option value="Cash">Cash</option>
-              <option value="Check">Check</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div><label>DATE</label><input type="date" id="ap-date"></div>
-          <button class="log-btn" onclick="addPayment()">+ Log</button>
-        </div>
-        <table>
-          <thead><tr><th>DATE</th><th>PROPERTY</th><th>TENANT</th><th>TYPE</th><th>AMOUNT</th><th>METHOD</th><th>SOURCE</th></tr></thead>
-          <tbody id="log-body"></tbody>
-        </table>
+  <div class="app-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">RV Sites</div>
+        <button class="sidebar-item active" onclick="filterProps('all',this)" id="sb-all"><span class="si-icon">▦</span>All properties</button>
+        <button class="sidebar-item" onclick="filterProps('rv',this)"><span class="si-icon">🚐</span>RV sites</button>
+        <button class="sidebar-item" onclick="filterProps('house',this)"><span class="si-icon">🏡</span>Houses</button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Status</div>
+        <button class="sidebar-item" onclick="filterProps('late',this)"><span class="si-icon">⚠</span>Late <span class="si-count" id="sb-late-count">0</span></button>
+        <button class="sidebar-item" onclick="filterProps('current',this)"><span class="si-icon">✓</span>Current <span class="si-count green" id="sb-current-count">0</span></button>
+        <button class="sidebar-item" onclick="filterProps('vacant',this)"><span class="si-icon">○</span>Vacant</button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">State</div>
+        <button class="sidebar-item" onclick="filterProps('wa',this)"><span class="si-icon">📍</span>Washington</button>
+        <button class="sidebar-item" onclick="filterProps('az',this)"><span class="si-icon">📍</span>Arizona</button>
       </div>
     </div>
 
-    <!-- LEASES -->
-    <div class="section-header">
-      <div class="section-title">Lease documents</div>
-    </div>
-    <div class="panel">
-      <div class="panel-body">
-        <div class="lease-grid" id="lease-grid"></div>
-        <div class="upload-drop" onclick="document.getElementById('file-upload').click()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12V4m0 0L8 8m4-4l4 4"/></svg>
-          Click to upload a lease — you'll assign it to a property after selecting
-        </div>
-        <input type="file" id="file-upload" accept=".pdf,.doc,.docx" style="display:none;" onchange="handleUpload(event)">
-        <p style="font-size:11px;color:var(--text3);margin-top:10px;font-family:var(--mono);">In Google Drive mode, leases upload directly to your Drive folder.</p>
-      </div>
-    </div>
+    <!-- CONTENT -->
+    <div class="content">
 
+      <!-- PROPERTIES VIEW -->
+      <div id="view-properties">
+        <div class="metrics">
+          <div class="metric green"><div class="lbl">Collected this month</div><div class="val green" id="m-collected">$0</div><div class="sub" id="m-collected-sub">of $0 expected</div></div>
+          <div class="metric red"><div class="lbl">Outstanding</div><div class="val red" id="m-outstanding">$0</div><div class="sub" id="m-outstanding-sub">0 behind</div></div>
+          <div class="metric amber"><div class="lbl">Late fees</div><div class="val amber" id="m-late">$0</div><div class="sub" id="m-late-sub">this month</div></div>
+          <div class="metric blue"><div class="lbl">Occupancy</div><div class="val blue" id="m-occ">0/7</div><div class="sub" id="m-occ-sub">properties</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div><div class="panel-title" id="props-title">All properties</div><div class="panel-sub">7 properties across WA and AZ</div></div>
+            <div class="panel-actions"><button class="panel-btn primary" onclick="openAddPaymentModal()">+ Log payment</button></div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:28%">Property</th>
+                <th>Type</th>
+                <th>Tenant</th>
+                <th>Rent</th>
+                <th>Paid</th>
+                <th>Lease</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="props-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BILLS VIEW -->
+      <div id="view-bills" style="display:none;">
+        <div class="panel">
+          <div class="panel-head">
+            <div><div class="panel-title">Bill tracker</div><div class="panel-sub">Utilities, maintenance, and property taxes per property</div></div>
+            <div class="panel-actions"><button class="panel-btn primary" onclick="openBillModal()">+ Log bill payment</button></div>
+          </div>
+          <div class="bill-grid" id="bill-grid"></div>
+        </div>
+      </div>
+
+      <!-- PAYMENTS VIEW -->
+      <div id="view-payments" style="display:none;">
+        <div class="panel">
+          <div class="panel-head"><div><div class="panel-title">Payment log</div><div class="panel-sub">All rent, fees, and deposits</div></div></div>
+          <div class="log-form">
+            <div><label>Property</label>
+              <select id="ap-site">
+                <option value="">Select...</option>
+                <option value="166th S1">166th Spanaway — Site 1</option>
+                <option value="166th S2">166th Spanaway — Site 2</option>
+                <option value="101st S1">101st Tacoma — Site 1</option>
+                <option value="101st S2">101st Tacoma — Site 2</option>
+                <option value="Bethel">Bethel House</option>
+                <option value="Starbucks">Starbucks House</option>
+                <option value="CasaGrande">Casa Grande Home</option>
+              </select>
+            </div>
+            <div><label>Type</label>
+              <select id="ap-type">
+                <option value="Rent">Rent</option>
+                <option value="Late fee">Late fee</option>
+                <option value="Deposit">Deposit</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div><label>Amount ($)</label><input type="number" id="ap-amount" placeholder="0" min="0" step="1"></div>
+            <div><label>Method</label>
+              <select id="ap-method">
+                <option value="Zelle">Zelle</option>
+                <option value="Cash">Cash</option>
+                <option value="Check">Check</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div><label>Date</label><input type="date" id="ap-date"></div>
+            <button class="log-submit" onclick="addPayment()">+ Log</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Property</th><th>Tenant</th><th>Type</th><th>Amount</th><th>Method</th><th>Source</th></tr></thead>
+            <tbody id="log-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- LEASES VIEW -->
+      <div id="view-leases" style="display:none;">
+        <div class="panel">
+          <div class="panel-head"><div><div class="panel-title">Lease documents</div><div class="panel-sub">Upload, track, and download leases per property</div></div></div>
+          <div class="lease-grid" id="lease-grid"></div>
+          <div class="upload-zone" onclick="document.getElementById('file-upload').click()">
+            ↑ Click to upload a lease PDF — you'll assign it to a property
+          </div>
+          <input type="file" id="file-upload" accept=".pdf,.doc,.docx" style="display:none;" onchange="handleUpload(event)">
+          <p style="font-size:11px;color:var(--text3);padding:0 16px 12px;font-style:italic;">In Google Drive mode, files upload directly to your Drive folder.</p>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
-<!-- EDIT MODAL -->
+<!-- EDIT PROPERTY MODAL -->
 <div class="overlay" id="edit-overlay">
-  <div class="modal">
-    <h3 id="edit-modal-title">Edit property</h3>
-    <div class="field"><label>TENANT NAME</label><input type="text" id="e-tenant" placeholder="Full name"></div>
-    <div class="field"><label>MONTHLY RENT ($)</label><input type="number" id="e-rent" min="0" step="1"></div>
-    <div class="field"><label>LEASE START</label><input type="date" id="e-start"></div>
-    <div class="field"><label>LEASE END</label><input type="date" id="e-end"></div>
-    <div class="field"><label>STATUS</label>
+  <div class="modal" style="width:460px;">
+    <h3 id="edit-title">Edit property</h3>
+    <div class="modal-field"><label>Tenant name</label><input type="text" id="e-tenant" placeholder="Full name"></div>
+    <div class="modal-field"><label>Monthly rent ($)</label><input type="number" id="e-rent" min="0" step="1"></div>
+    <div class="modal-field"><label>Status</label>
       <select id="e-status">
         <option value="current">Current</option>
         <option value="late">Late</option>
@@ -369,20 +441,125 @@
         <option value="vacant">Vacant</option>
       </select>
     </div>
-    <div class="field"><label>NOTES</label><input type="text" id="e-notes" placeholder="Optional notes..."></div>
+    <div class="modal-section">Lease details</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="modal-field"><label>Lease start</label><input type="date" id="e-start"></div>
+      <div class="modal-field"><label>Lease end</label><input type="date" id="e-end"></div>
+    </div>
+    <div class="modal-field"><label>Lease term</label>
+      <select id="e-term">
+        <option value="12">12 months</option>
+        <option value="6">6 months</option>
+        <option value="24">24 months</option>
+        <option value="mtm">Month-to-month</option>
+      </select>
+    </div>
+    <div class="modal-section">Property taxes</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="modal-field"><label>First half paid</label>
+        <select id="e-tax1">
+          <option value="">Not paid</option>
+          <option value="paid">Paid</option>
+          <option value="included">Included in payment</option>
+        </select>
+      </div>
+      <div class="modal-field"><label>Second half paid</label>
+        <select id="e-tax2">
+          <option value="">Not paid</option>
+          <option value="paid">Paid</option>
+          <option value="included">Included in payment</option>
+          <option value="full">Full year paid</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-field"><label>Notes</label><input type="text" id="e-notes" placeholder="Optional..."></div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeEditModal()" style="width:auto;">Cancel</button>
+      <button class="btn-secondary" onclick="closeModal('edit-overlay')" style="width:auto;">Cancel</button>
       <button class="btn-primary" onclick="saveEditModal()" style="width:auto;">Save changes</button>
     </div>
   </div>
 </div>
 
-<!-- ASSIGN UPLOAD MODAL -->
+<!-- BILL PAYMENT MODAL -->
+<div class="overlay" id="bill-overlay">
+  <div class="modal">
+    <h3>Log bill payment</h3>
+    <div class="modal-field"><label>Property</label>
+      <select id="b-prop">
+        <option value="ALL">All properties (shared bill)</option>
+        <option value="166th S1">166th Spanaway — Site 1</option>
+        <option value="166th S2">166th Spanaway — Site 2</option>
+        <option value="101st S1">101st Tacoma — Site 1</option>
+        <option value="101st S2">101st Tacoma — Site 2</option>
+        <option value="Bethel">Bethel House</option>
+        <option value="Starbucks">Starbucks House</option>
+        <option value="CasaGrande">Casa Grande Home</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>Bill type</label>
+      <select id="b-type">
+        <option value="Water">Water</option>
+        <option value="Sewer/Septic">Sewer / Septic</option>
+        <option value="Electrical">Electrical</option>
+        <option value="Yard maintenance">Yard maintenance</option>
+        <option value="Propane">Propane</option>
+        <option value="Water backflow">Water backflow</option>
+        <option value="Property tax">Property tax</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>Amount ($)</label><input type="number" id="b-amount" placeholder="0" min="0" step="0.01"></div>
+    <div class="modal-field"><label>Date paid</label><input type="date" id="b-date"></div>
+    <div class="modal-field"><label>Period / notes</label><input type="text" id="b-notes" placeholder="e.g. May 2025, Q2, First half 2025..."></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('bill-overlay')" style="width:auto;">Cancel</button>
+      <button class="btn-primary" onclick="saveBillPayment()" style="width:auto;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PAYMENT MODAL (from properties view) -->
+<div class="overlay" id="addpay-overlay">
+  <div class="modal">
+    <h3>Log payment</h3>
+    <div class="modal-field"><label>Property</label>
+      <select id="ap2-site">
+        <option value="">Select...</option>
+        <option value="166th S1">166th Spanaway — Site 1</option>
+        <option value="166th S2">166th Spanaway — Site 2</option>
+        <option value="101st S1">101st Tacoma — Site 1</option>
+        <option value="101st S2">101st Tacoma — Site 2</option>
+        <option value="Bethel">Bethel House</option>
+        <option value="Starbucks">Starbucks House</option>
+        <option value="CasaGrande">Casa Grande Home</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>Type</label>
+      <select id="ap2-type">
+        <option value="Rent">Rent</option>
+        <option value="Late fee">Late fee</option>
+        <option value="Deposit">Deposit</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="modal-field"><label>Amount ($)</label><input type="number" id="ap2-amount" placeholder="0" min="0" step="1"></div>
+    <div class="modal-field"><label>Method</label>
+      <select id="ap2-method"><option value="Zelle">Zelle</option><option value="Cash">Cash</option><option value="Check">Check</option><option value="Other">Other</option></select>
+    </div>
+    <div class="modal-field"><label>Date</label><input type="date" id="ap2-date"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('addpay-overlay')" style="width:auto;">Cancel</button>
+      <button class="btn-primary" onclick="addPaymentModal()" style="width:auto;">Log payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSIGN LEASE MODAL -->
 <div class="overlay" id="assign-overlay">
   <div class="modal">
     <h3>Assign lease to property</h3>
     <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;" id="assign-filename"></p>
-    <div class="field"><label>PROPERTY</label>
+    <div class="modal-field"><label>Property</label>
       <select id="assign-site">
         <option value="0">166th Spanaway — Site 1</option>
         <option value="1">166th Spanaway — Site 2</option>
@@ -394,7 +571,7 @@
       </select>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeAssignModal()" style="width:auto;">Cancel</button>
+      <button class="btn-secondary" onclick="closeModal('assign-overlay')" style="width:auto;">Cancel</button>
       <button class="btn-primary" onclick="confirmAssign()" style="width:auto;">Assign</button>
     </div>
   </div>
@@ -402,27 +579,20 @@
 
 <!-- SETUP MODAL -->
 <div class="overlay" id="setup-overlay">
-  <div class="modal" style="width:480px;">
-    <h3>⚙ Setup & Google integration</h3>
-    <div class="info-box">Connect to Google Sheets + Gmail for full sync and Zelle auto-detection. <a href="https://console.cloud.google.com" target="_blank">Open Google Cloud Console →</a></div>
-    <div class="setup-section">
-      <h4>CREDENTIALS</h4>
-      <div class="field"><label>OAUTH CLIENT ID</label><input type="text" id="s-client-id" placeholder="xxxxx.apps.googleusercontent.com"></div>
-      <div class="field"><label>API KEY</label><input type="text" id="s-api-key" placeholder="AIzaSy..."></div>
-      <div class="field"><label>SHEET ID</label><input type="text" id="s-sheet-id" placeholder="Sheet ID from URL"></div>
-    </div>
-    <div class="setup-section">
-      <h4>REQUIRED SHEET TABS</h4>
-      <div class="copy-field"><span>Sites</span><button class="copy-btn" onclick="copyText('Sites')">copy</button></div>
-      <div class="copy-field"><span>Payments</span><button class="copy-btn" onclick="copyText('Payments')">copy</button></div>
-      <div class="copy-field"><span>Leases</span><button class="copy-btn" onclick="copyText('Leases')">copy</button></div>
-    </div>
-    <div class="setup-section">
-      <h4>ZELLE EMAIL DETECTION</h4>
-      <div class="field"><label>GMAIL SEARCH QUERY</label><input type="text" id="s-gmail-query" placeholder='subject:"You received money"'></div>
-    </div>
+  <div class="modal" style="width:460px;">
+    <h3>Setup & Google integration</h3>
+    <div class="info-box">Connect Google Sheets + Gmail for full sync and Zelle auto-detection. <a href="https://console.cloud.google.com" target="_blank">Open Console →</a></div>
+    <div class="modal-field"><label>OAuth Client ID</label><input type="text" id="s-client-id"></div>
+    <div class="modal-field"><label>API Key</label><input type="text" id="s-api-key"></div>
+    <div class="modal-field"><label>Sheet ID</label><input type="text" id="s-sheet-id"></div>
+    <div class="modal-field"><label>Gmail Zelle search query</label><input type="text" id="s-gmail-query"></div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:0.75rem;">Required Sheet tabs:</p>
+    <div class="copy-row"><span>Sites</span><button class="copy-btn" onclick="copyText('Sites')">copy</button></div>
+    <div class="copy-row"><span>Payments</span><button class="copy-btn" onclick="copyText('Payments')">copy</button></div>
+    <div class="copy-row"><span>Bills</span><button class="copy-btn" onclick="copyText('Bills')">copy</button></div>
+    <div class="copy-row"><span>Leases</span><button class="copy-btn" onclick="copyText('Leases')">copy</button></div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeSetupModal()" style="width:auto;">Close</button>
+      <button class="btn-secondary" onclick="closeModal('setup-overlay')" style="width:auto;">Close</button>
       <button class="btn-primary" onclick="saveSetup()" style="width:auto;">Save settings</button>
     </div>
   </div>
@@ -431,604 +601,555 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const CONFIG_KEY = 'pm_config';
-const DATA_KEY = 'pm_data';
-const DEMO_KEY = 'pm_demo';
+const CONFIG_KEY='pm_config', DATA_KEY='pm_data', DEMO_KEY='pm_demo', PW_KEY='pm_authed';
+let isDemoMode=false, config={}, gapiReady=false, tokenClient=null, accessToken=null;
+let editIdx=null, pendingUpload=null, uploadForIdx=null, activeFilter='all', activeView='properties';
 
-let isDemoMode = false;
-let config = {};
-let gapiReady = false;
-let editIdx = null;
-let pendingUpload = null;
-let uploadForIdx = null;
-let activeFilter = 'all';
+const BILL_TYPES=['Water','Sewer/Septic','Electrical','Yard maintenance','Propane','Water backflow','Property tax'];
+const BILL_ICONS={'Water':'💧','Sewer/Septic':'🚿','Electrical':'⚡','Yard maintenance':'🌿','Propane':'🔥','Water backflow':'🔄','Property tax':'🏛️'};
 
-const PROPERTIES = [
-  { id:'166th S1', name:'Site 1', group:'166th Spanaway', addr:'166th St, Spanaway WA', type:'rv', state:'wa' },
-  { id:'166th S2', name:'Site 2', group:'166th Spanaway', addr:'166th St, Spanaway WA', type:'rv', state:'wa' },
-  { id:'101st S1', name:'Site 1', group:'101st Tacoma',   addr:'101st St S, Tacoma WA', type:'rv', state:'wa' },
-  { id:'101st S2', name:'Site 2', group:'101st Tacoma',   addr:'101st St S, Tacoma WA', type:'rv', state:'wa' },
-  { id:'Bethel',     name:'Bethel House',     group:'Bethel House',     addr:'138 176th St E, Spanaway WA', type:'house', state:'wa' },
-  { id:'Starbucks',  name:'Starbucks House',  group:'Starbucks House',  addr:'416 166th St S, Spanaway WA', type:'house', state:'wa' },
-  { id:'CasaGrande', name:'Casa Grande Home', group:'Casa Grande Home', addr:'8932 S Chuichu Rd, Casa Grande AZ', type:'house', state:'az' },
+const PROP_DEFS=[
+  {id:'166th S1',name:'166th Spanaway — Site 1',group:'166th Spanaway',addr:'166th St, Spanaway WA',type:'rv',state:'wa'},
+  {id:'166th S2',name:'166th Spanaway — Site 2',group:'166th Spanaway',addr:'166th St, Spanaway WA',type:'rv',state:'wa'},
+  {id:'101st S1',name:'101st Tacoma — Site 1',group:'101st Tacoma',addr:'101st St S, Tacoma WA',type:'rv',state:'wa'},
+  {id:'101st S2',name:'101st Tacoma — Site 2',group:'101st Tacoma',addr:'101st St S, Tacoma WA',type:'rv',state:'wa'},
+  {id:'Bethel',name:'Bethel House',group:'Bethel House',addr:'138 176th St E, Spanaway WA',type:'house',state:'wa'},
+  {id:'Starbucks',name:'Starbucks House',group:'Starbucks House',addr:'416 166th St S, Spanaway WA',type:'house',state:'wa'},
+  {id:'CasaGrande',name:'Casa Grande Home',group:'Casa Grande Home',addr:'8932 S Chuichu Rd, Casa Grande AZ',type:'house',state:'az'},
 ];
 
-const defaultSites = PROPERTIES.map(p => ({
-  ...p,
-  tenant: '(Vacant)', rent: p.type === 'house' ? 1200 : 650,
-  paid: 0, start: '', end: '', status: 'vacant', lease: null, notes: ''
-}));
-
-// Seed some demo data
-defaultSites[0] = {...defaultSites[0], tenant:'Mike Reeves', rent:650, paid:650, start:'2024-03-01', end:'2025-03-01', status:'current'};
-defaultSites[1] = {...defaultSites[1], tenant:'Sandra López', rent:600, paid:0, start:'2023-11-15', end:'2024-11-15', status:'late'};
-defaultSites[2] = {...defaultSites[2], tenant:'Dale Warner', rent:700, paid:700, start:'2024-01-10', end:'2025-01-10', status:'current'};
-defaultSites[3] = {...defaultSites[3], tenant:'(Vacant)', rent:675, paid:0, start:'', end:'', status:'vacant'};
-defaultSites[4] = {...defaultSites[4], tenant:'(Vacant)', rent:1400, paid:0, start:'', end:'', status:'vacant', notes:'Recently acquired'};
-defaultSites[5] = {...defaultSites[5], tenant:'(Vacant)', rent:1350, paid:0, start:'', end:'', status:'vacant', notes:'Recently acquired'};
-defaultSites[6] = {...defaultSites[6], tenant:'(Vacant)', rent:1500, paid:0, start:'', end:'', status:'vacant', notes:'New acquisition — AZ'};
-
-const defaultPayments = [
-  {date:'2025-05-01', site:'166th S1', tenant:'Mike Reeves', type:'Rent', amount:650, method:'Zelle', source:'Manual'},
-  {date:'2025-05-08', site:'101st S1', tenant:'Dale Warner', type:'Rent', amount:700, method:'Zelle', source:'Manual'},
-  {date:'2025-04-28', site:'166th S2', tenant:'Sandra López', type:'Late fee', amount:50, method:'Manual', source:'Manual'},
-];
-
-let sites = [];
-let payments = [];
-
-// hashed password check (SHA-256 of "juggleryan2026!")
-const PW_HASH = 'b7e4c2a1f3d85690a2c3b1e4f7d96085a3c2b1e4f7d960852c3b1e4f7d96085';
-const PW_KEY = 'pm_authed';
-
-async function hashPassword(pw) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+function makeSite(p,overrides={}){
+  return {id:p.id,name:p.name,group:p.group,addr:p.addr,type:p.type,state:p.state,
+    tenant:'(Vacant)',rent:p.type==='house'?1200:650,paid:0,
+    start:'',end:'',term:'12',status:'vacant',lease:null,notes:'',
+    tax1:'',tax2:'',...overrides};
 }
 
-async function checkPassword() {
-  const input = document.getElementById('pw-input').value;
-  const hashed = await hashPassword(input);
-  // Store expected hash of the actual password
-  const expected = await hashPassword('juggleryan2026!');
-  if (hashed === expected) {
-    sessionStorage.setItem(PW_KEY, '1');
-    document.getElementById('pw-card').style.display = 'none';
-    // If already configured, go straight to app
-    config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
-    isDemoMode = localStorage.getItem(DEMO_KEY) === '1';
-    if (isDemoMode || config.clientId) {
-      document.getElementById('auth-screen').style.display = 'none';
-      showApp();
-      if (!isDemoMode && config.clientId) loadGapi();
-    } else {
-      document.getElementById('setup-card').style.display = 'block';
-    }
-  } else {
-    document.getElementById('pw-error').style.display = 'block';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
-  }
-}
+let sites=[], payments=[], bills=[];
 
-function init() {
-  const saved = localStorage.getItem(DATA_KEY);
-  if (saved) {
-    const d = JSON.parse(saved);
-    sites = d.sites || JSON.parse(JSON.stringify(defaultSites));
-    payments = d.payments || JSON.parse(JSON.stringify(defaultPayments));
-  } else {
-    sites = JSON.parse(JSON.stringify(defaultSites));
-    payments = JSON.parse(JSON.stringify(defaultPayments));
-  }
-  config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
-  isDemoMode = localStorage.getItem(DEMO_KEY) === '1';
-
-  // Set today's date on payment form
-  document.getElementById('ap-date').value = new Date().toISOString().slice(0,10);
-
-  // If already authenticated this session, skip password screen
-  if (sessionStorage.getItem(PW_KEY) === '1') {
-    if (isDemoMode || config.clientId) {
-      showApp();
-      if (!isDemoMode && config.clientId) loadGapi();
-    } else {
-      document.getElementById('pw-card').style.display = 'none';
-      document.getElementById('setup-card').style.display = 'block';
-    }
-  }
-  // else stay on password screen
-}
-
-function saveLocal() {
-  localStorage.setItem(DATA_KEY, JSON.stringify({sites, payments}));
+function defaultData(){
+  sites=[
+    makeSite(PROP_DEFS[0],{tenant:'Mike Reeves',rent:650,paid:650,start:'2024-03-01',end:'2025-03-01',term:'12',status:'current'}),
+    makeSite(PROP_DEFS[1],{tenant:'Sandra López',rent:600,paid:0,start:'2023-11-15',end:'2024-11-15',term:'12',status:'late'}),
+    makeSite(PROP_DEFS[2],{tenant:'Dale Warner',rent:700,paid:700,start:'2024-01-10',end:'2025-01-10',term:'12',status:'current'}),
+    makeSite(PROP_DEFS[3],{rent:675}),
+    makeSite(PROP_DEFS[4],{rent:1400,notes:'Recently acquired'}),
+    makeSite(PROP_DEFS[5],{rent:1350,notes:'Recently acquired'}),
+    makeSite(PROP_DEFS[6],{rent:1500,notes:'New acquisition — AZ'}),
+  ];
+  payments=[
+    {date:'2025-05-01',site:'166th S1',tenant:'Mike Reeves',type:'Rent',amount:650,method:'Zelle',source:'Manual'},
+    {date:'2025-05-08',site:'101st S1',tenant:'Dale Warner',type:'Rent',amount:700,method:'Zelle',source:'Manual'},
+    {date:'2025-04-28',site:'166th S2',tenant:'Sandra López',type:'Late fee',amount:50,method:'Manual',source:'Manual'},
+  ];
+  bills=[
+    {date:'2025-05-03',prop:'166th S1',type:'Water',amount:45,notes:'May 2025'},
+    {date:'2025-05-03',prop:'166th S2',type:'Water',amount:45,notes:'May 2025'},
+    {date:'2025-04-15',prop:'101st S1',type:'Electrical',amount:120,notes:'April 2025'},
+    {date:'2025-03-01',prop:'ALL',type:'Yard maintenance',amount:200,notes:'March 2025'},
+    {date:'2025-04-10',prop:'166th S1',type:'Property tax',amount:850,notes:'First half 2025'},
+  ];
 }
 
 // AUTH
-function saveConfigAndConnect() {
-  const clientId = document.getElementById('cfg-client-id').value.trim();
-  const apiKey = document.getElementById('cfg-api-key').value.trim();
-  const sheetId = document.getElementById('cfg-sheet-id').value.trim();
-  if (!clientId || !apiKey || !sheetId) { showToast('Please fill in all three fields.'); return; }
-  config = {clientId, apiKey, sheetId, gmailQuery: 'subject:"You received money"'};
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-  localStorage.removeItem(DEMO_KEY);
-  isDemoMode = false;
-  showApp();
-  loadGapi();
+async function hashPassword(pw){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
-
-function useDemoMode() {
-  localStorage.setItem(DEMO_KEY, '1');
-  isDemoMode = true;
-  showApp();
-}
-
-let tokenClient = null;
-let accessToken = null;
-
-function signOut() {
-  localStorage.removeItem(DEMO_KEY);
-  localStorage.removeItem(CONFIG_KEY);
-  if (accessToken && window.google) {
-    google.accounts.oauth2.revoke(accessToken, () => {});
-    accessToken = null;
+async function checkPassword(){
+  const input=document.getElementById('pw-input').value;
+  const hashed=await hashPassword(input);
+  const expected=await hashPassword('juggleryan2026!');
+  if(hashed===expected){
+    sessionStorage.setItem(PW_KEY,'1');
+    document.getElementById('pw-card').style.display='none';
+    config=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');
+    isDemoMode=localStorage.getItem(DEMO_KEY)==='1';
+    if(isDemoMode||config.clientId){document.getElementById('auth-screen').style.display='none';showApp();if(!isDemoMode&&config.clientId)loadGapi();}
+    else document.getElementById('setup-card').style.display='block';
+  } else {
+    document.getElementById('pw-error').style.display='block';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
   }
-  sessionStorage.removeItem(PW_KEY);
-  location.reload();
+}
+function saveConfigAndConnect(){
+  const c=document.getElementById('cfg-client-id').value.trim();
+  const a=document.getElementById('cfg-api-key').value.trim();
+  const s=document.getElementById('cfg-sheet-id').value.trim();
+  if(!c||!a||!s){showToast('Please fill in all three fields.');return;}
+  config={clientId:c,apiKey:a,sheetId:s,gmailQuery:'subject:"You received money"'};
+  localStorage.setItem(CONFIG_KEY,JSON.stringify(config));
+  localStorage.removeItem(DEMO_KEY);isDemoMode=false;
+  document.getElementById('auth-screen').style.display='none';showApp();loadGapi();
+}
+function useDemoMode(){localStorage.setItem(DEMO_KEY,'1');isDemoMode=true;document.getElementById('auth-screen').style.display='none';showApp();}
+function signOut(){localStorage.removeItem(DEMO_KEY);localStorage.removeItem(CONFIG_KEY);sessionStorage.removeItem(PW_KEY);if(accessToken&&window.google){google.accounts.oauth2.revoke(accessToken,()=>{});}location.reload();}
+
+function showApp(){
+  document.getElementById('app').style.display='block';
+  document.getElementById('ap-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('ap2-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('b-date').value=new Date().toISOString().slice(0,10);
+  render();setSyncStatus(isDemoMode?'demo':'idle');
 }
 
-function showApp() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  render();
-  setSyncStatus(isDemoMode ? 'demo' : 'idle');
+function init(){
+  const saved=localStorage.getItem(DATA_KEY);
+  if(saved){const d=JSON.parse(saved);sites=d.sites||[];payments=d.payments||[];bills=d.bills||[];}
+  else defaultData();
+  config=JSON.parse(localStorage.getItem(CONFIG_KEY)||'{}');
+  isDemoMode=localStorage.getItem(DEMO_KEY)==='1';
+  if(sessionStorage.getItem(PW_KEY)==='1'){
+    if(isDemoMode||config.clientId){document.getElementById('auth-screen').style.display='none';showApp();if(!isDemoMode&&config.clientId)loadGapi();}
+    else{document.getElementById('pw-card').style.display='none';document.getElementById('setup-card').style.display='block';}
+  }
 }
 
-// NEW Google Identity Services (replaces deprecated gapi.auth2)
-function loadGapi() {
-  const gapiScript = document.createElement('script');
-  gapiScript.src = 'https://apis.google.com/js/api.js';
-  gapiScript.onload = () => {
-    gapi.load('client', async () => {
-      await gapi.client.init({ apiKey: config.apiKey });
-      await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
-      await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest');
-      gapiReady = true;
-      loadGIS();
-    });
-  };
-  document.head.appendChild(gapiScript);
-}
+function saveLocal(){localStorage.setItem(DATA_KEY,JSON.stringify({sites,payments,bills}));}
 
-function loadGIS() {
-  const gisScript = document.createElement('script');
-  gisScript.src = 'https://accounts.google.com/gsi/client';
-  gisScript.onload = () => {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: config.clientId,
-      scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.readonly',
-      callback: (response) => {
-        if (response.error) {
-          setSyncStatus('err');
-          showToast('Google sign-in failed: ' + response.error);
-          return;
-        }
-        accessToken = response.access_token;
-        gapi.client.setToken({ access_token: accessToken });
-        setSyncStatus('ok');
-        showToast('Google connected ✓');
-        loadFromSheets();
+// GAPI
+function loadGapi(){
+  const s=document.createElement('script');s.src='https://apis.google.com/js/api.js';
+  s.onload=()=>gapi.load('client',async()=>{
+    await gapi.client.init({apiKey:config.apiKey});
+    await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
+    await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest');
+    gapiReady=true;loadGIS();
+  });
+  document.head.appendChild(s);
+}
+function loadGIS(){
+  const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
+  s.onload=()=>{
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:config.clientId,
+      scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.readonly',
+      callback:(r)=>{
+        if(r.error){setSyncStatus('err');showToast('Sign-in failed: '+r.error);return;}
+        accessToken=r.access_token;gapi.client.setToken({access_token:accessToken});
+        setSyncStatus('ok');showToast('Google connected ✓');loadFromSheets();
       }
     });
-    setSyncStatus('loading');
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    setSyncStatus('loading');tokenClient.requestAccessToken({prompt:'consent'});
   };
-  document.head.appendChild(gisScript);
+  document.head.appendChild(s);
+}
+function setSyncStatus(s){
+  const dot=document.getElementById('sync-dot'),txt=document.getElementById('sync-text');
+  dot.className='sync-dot';
+  if(s==='ok'){dot.classList.add('ok');txt.textContent='Sheets connected';}
+  else if(s==='err'){dot.classList.add('err');txt.textContent='Connection error';}
+  else if(s==='loading'){dot.classList.add('loading');txt.textContent='Syncing...';}
+  else if(s==='demo'){txt.textContent='Demo mode';}
+  else{txt.textContent='Not connected';}
 }
 
-function setSyncStatus(state) {
-  const dot = document.getElementById('sync-dot');
-  const txt = document.getElementById('sync-text');
-  dot.className = 'sync-dot';
-  if (state === 'ok') { dot.classList.add('ok'); txt.textContent = 'Sheets connected'; }
-  else if (state === 'err') { dot.classList.add('err'); txt.textContent = 'Connection error'; }
-  else if (state === 'loading') { dot.classList.add('loading'); txt.textContent = 'Syncing...'; }
-  else if (state === 'demo') { txt.textContent = 'Demo mode'; }
-  else { txt.textContent = 'Not connected'; }
-}
-
-// SHEETS
-async function loadFromSheets() {
-  if (!gapiReady || isDemoMode) return;
+async function loadFromSheets(){
+  if(!gapiReady||isDemoMode)return;
   setSyncStatus('loading');
-  try {
-    const r = await gapi.client.sheets.spreadsheets.values.batchGet({
-      spreadsheetId: config.sheetId,
-      ranges: ['Sites!A2:L100', 'Payments!A2:G500']
+  try{
+    const r=await gapi.client.sheets.spreadsheets.values.batchGet({
+      spreadsheetId:config.sheetId,
+      ranges:['Sites!A2:P100','Payments!A2:G500','Bills!A2:F500']
     });
-    const [sr, pr] = r.result.valueRanges;
-    if (sr.values && sr.values.length) {
-      sites = sr.values.map(row => ({
-        id:row[0]||'', name:row[1]||'', group:row[2]||'', addr:row[3]||'', type:row[4]||'rv', state:row[5]||'wa',
-        tenant:row[6]||'', rent:parseFloat(row[7])||0, paid:parseFloat(row[8])||0,
-        start:row[9]||'', end:row[10]||'', status:row[11]||'vacant',
-        lease:row[12]||null, notes:row[13]||''
-      }));
+    const[sr,pr,br]=r.result.valueRanges;
+    if(sr.values&&sr.values.length){
+      sites=sr.values.map(r=>({id:r[0]||'',name:r[1]||'',group:r[2]||'',addr:r[3]||'',type:r[4]||'rv',state:r[5]||'wa',
+        tenant:r[6]||'',rent:parseFloat(r[7])||0,paid:parseFloat(r[8])||0,start:r[9]||'',end:r[10]||'',
+        term:r[11]||'12',status:r[12]||'vacant',lease:r[13]||null,notes:r[14]||'',tax1:r[15]||'',tax2:r[16]||''}));
     }
-    if (pr.values && pr.values.length) {
-      payments = pr.values.map(row => ({
-        date:row[0]||'', site:row[1]||'', tenant:row[2]||'',
-        type:row[3]||'', amount:parseFloat(row[4])||0, method:row[5]||'', source:row[6]||''
-      }));
+    if(pr.values&&pr.values.length){
+      payments=pr.values.map(r=>({date:r[0]||'',site:r[1]||'',tenant:r[2]||'',type:r[3]||'',amount:parseFloat(r[4])||0,method:r[5]||'',source:r[6]||''}));
     }
-    saveLocal(); render(); setSyncStatus('ok');
-    showToast('Loaded from Google Sheets.');
-  } catch(e) { console.error(e); setSyncStatus('err'); showToast('Failed to load from Sheets.'); }
+    if(br.values&&br.values.length){
+      bills=br.values.map(r=>({date:r[0]||'',prop:r[1]||'',type:r[2]||'',amount:parseFloat(r[3])||0,notes:r[4]||''}));
+    }
+    saveLocal();render();setSyncStatus('ok');showToast('Loaded from Google Sheets.');
+  }catch(e){console.error(e);setSyncStatus('err');showToast('Failed to load. Check console.');}
 }
 
-async function saveToSheets() {
-  if (isDemoMode) { showToast('Connect Google Sheets to save data.'); return; }
-  if (!gapiReady) { showToast('Google API not ready.'); return; }
-  if (!accessToken) { tokenClient.requestAccessToken({prompt:''}); showToast('Re-authenticating...'); return; }
+async function saveToSheets(){
+  if(isDemoMode){showToast('Connect Google Sheets to save.');return;}
+  if(!gapiReady){showToast('Google API not ready.');return;}
+  if(!accessToken){tokenClient.requestAccessToken({prompt:''});return;}
   setSyncStatus('loading');
-  try {
-    const sRows = sites.map(s => [s.id,s.name,s.group,s.addr,s.type,s.state,s.tenant,s.rent,s.paid,s.start,s.end,s.status,s.lease||'',s.notes||'']);
-    const pRows = payments.map(p => [p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||'']);
+  try{
+    const sRows=sites.map(s=>[s.id,s.name,s.group,s.addr,s.type,s.state,s.tenant,s.rent,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.notes||'',s.tax1||'',s.tax2||'']);
+    const pRows=payments.map(p=>[p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||'']);
+    const bRows=bills.map(b=>[b.date,b.prop,b.type,b.amount,b.notes||'']);
     await gapi.client.sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: config.sheetId,
-      resource: { valueInputOption:'USER_ENTERED', data: [
-        {range:'Sites!A2', values:sRows},
-        {range:'Payments!A2', values:pRows}
+      spreadsheetId:config.sheetId,
+      resource:{valueInputOption:'USER_ENTERED',data:[
+        {range:'Sites!A2',values:sRows},
+        {range:'Payments!A2',values:pRows},
+        {range:'Bills!A2',values:bRows}
       ]}
     });
-    saveLocal(); setSyncStatus('ok'); showToast('Saved to Google Sheets ✓');
-  } catch(e) { console.error(e); setSyncStatus('err'); showToast('Save failed.'); }
+    saveLocal();setSyncStatus('ok');showToast('Saved to Google Sheets ✓');
+  }catch(e){console.error(e);setSyncStatus('err');showToast('Save failed.');}
 }
 
-// ZELLE
-async function syncZelle() {
-  if (isDemoMode) { showToast('Connect Gmail to scan Zelle emails.'); return; }
-  if (!gapiReady) { showToast('Google API not ready.'); return; }
-  if (!accessToken) { tokenClient.requestAccessToken({prompt:''}); showToast('Re-authenticating...'); return; }
-  setSyncStatus('loading');
-  showToast('Scanning Gmail for Zelle payments...');
-  try {
-    const query = (config.gmailQuery || 'subject:"You received money"') + ' newer_than:30d';
-    const listRes = await gapi.client.gmail.users.messages.list({userId:'me', q:query, maxResults:30});
-    const messages = listRes.result.messages || [];
-    let found = 0;
-    for (const msg of messages) {
-      const detail = await gapi.client.gmail.users.messages.get({userId:'me', id:msg.id, format:'full'});
-      const headers = detail.result.payload.headers;
-      const subjectH = headers.find(h => h.name === 'Subject');
-      const dateH = headers.find(h => h.name === 'Date');
-      if (!subjectH) continue;
-      const subject = subjectH.value;
-      const emailDate = dateH ? new Date(dateH.value).toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
-      const amountMatch = subject.match(/\$[\d,]+\.?\d*/);
-      if (!amountMatch) continue;
-      const amount = parseFloat(amountMatch[0].replace(/[$,]/g,''));
-      const matchedSite = matchTenantToSite(subject);
-      const alreadyLogged = payments.some(p => p.date === emailDate && Math.abs(p.amount - amount) < 0.01 && p.source === 'Zelle Auto');
-      if (alreadyLogged) continue;
-      payments.unshift({
-        date:emailDate, site:matchedSite ? matchedSite.id : 'Unknown',
-        tenant:matchedSite ? matchedSite.tenant : 'Unknown',
-        type:'Rent', amount:Math.round(amount), method:'Zelle', source:'Zelle Auto'
-      });
-      if (matchedSite) {
-        matchedSite.paid = Math.round((matchedSite.paid||0) + amount);
-        if (matchedSite.paid >= matchedSite.rent) matchedSite.status = 'current';
-      }
+async function syncZelle(){
+  if(isDemoMode){showToast('Connect Gmail to scan Zelle emails.');return;}
+  if(!gapiReady){showToast('Google API not ready.');return;}
+  if(!accessToken){tokenClient.requestAccessToken({prompt:''});showToast('Re-authenticating...');return;}
+  setSyncStatus('loading');showToast('Scanning Gmail...');
+  try{
+    const q=(config.gmailQuery||'subject:"You received money"')+' newer_than:30d';
+    const list=await gapi.client.gmail.users.messages.list({userId:'me',q,maxResults:30});
+    const msgs=list.result.messages||[];let found=0;
+    for(const msg of msgs){
+      const d=await gapi.client.gmail.users.messages.get({userId:'me',id:msg.id,format:'full'});
+      const h=d.result.payload.headers;
+      const subj=h.find(x=>x.name==='Subject');const dt=h.find(x=>x.name==='Date');
+      if(!subj)continue;
+      const amtM=subj.value.match(/\$[\d,]+\.?\d*/);if(!amtM)continue;
+      const amt=parseFloat(amtM[0].replace(/[$,]/g,''));
+      const eDate=dt?new Date(dt.value).toISOString().slice(0,10):new Date().toISOString().slice(0,10);
+      const site=matchTenant(subj.value);
+      const dup=payments.some(p=>p.date===eDate&&Math.abs(p.amount-amt)<0.01&&p.source==='Zelle Auto');
+      if(dup)continue;
+      payments.unshift({date:eDate,site:site?site.id:'Unknown',tenant:site?site.tenant:'Unknown',type:'Rent',amount:Math.round(amt),method:'Zelle',source:'Zelle Auto'});
+      if(site){site.paid=Math.round((site.paid||0)+amt);if(site.paid>=site.rent)site.status='current';}
       found++;
     }
-    saveLocal(); render(); setSyncStatus('ok');
-    showToast(found ? `Found ${found} new Zelle payment${found>1?'s':''} ✓` : 'No new Zelle payments found.');
-  } catch(e) { console.error(e); setSyncStatus('err'); showToast('Gmail scan failed.'); }
+    saveLocal();render();setSyncStatus('ok');
+    showToast(found?`Found ${found} new Zelle payment${found>1?'s':''} ✓`:'No new payments found.');
+  }catch(e){console.error(e);setSyncStatus('err');showToast('Gmail scan failed.');}
 }
 
-function matchTenantToSite(text) {
-  const lower = text.toLowerCase();
-  return sites.find(s => {
-    if (!s.tenant || s.tenant === '(Vacant)') return false;
-    return s.tenant.toLowerCase().split(' ').some(p => p.length > 2 && lower.includes(p));
-  });
+function matchTenant(text){
+  const l=text.toLowerCase();
+  return sites.find(s=>s.tenant&&s.tenant!=='(Vacant)'&&s.tenant.toLowerCase().split(' ').some(p=>p.length>2&&l.includes(p)));
 }
 
-// FILTER
-function setFilter(f) {
-  activeFilter = f;
-  document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.dataset.filter === f));
-  const labels = {all:'All properties', rv:'RV sites', house:'Houses', late:'Late / overdue', wa:'Washington properties', az:'Arizona properties'};
-  document.getElementById('props-label').textContent = labels[f] || 'Properties';
-  renderProperties();
+// VIEWS
+function showView(v,btn){
+  activeView=v;
+  ['properties','bills','payments','leases'].forEach(x=>document.getElementById('view-'+x).style.display=x===v?'block':'none');
+  document.querySelectorAll('.topbar-nav button').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(v==='bills')renderBills();
+  if(v==='leases')renderLeases();
+  if(v==='payments')renderLog();
 }
-
-function filteredSites() {
-  if (activeFilter === 'all') return sites;
-  if (activeFilter === 'rv') return sites.filter(s => s.type === 'rv');
-  if (activeFilter === 'house') return sites.filter(s => s.type === 'house');
-  if (activeFilter === 'late') return sites.filter(s => s.status === 'late');
-  if (activeFilter === 'wa') return sites.filter(s => s.state === 'wa');
-  if (activeFilter === 'az') return sites.filter(s => s.state === 'az');
-  return sites;
+function filterProps(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderPropsTable();
 }
 
 // RENDER
-function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+function fmt(n){return '$'+Math.round(n).toLocaleString();}
 
-function render() { renderMetrics(); renderProperties(); renderLog(); renderLeases(); }
-
-function renderMetrics() {
-  const thisMonth = new Date().toISOString().slice(0,7);
-  const collected = payments.filter(p => p.type === 'Rent' && p.date.startsWith(thisMonth)).reduce((a,p) => a+p.amount, 0);
-  const totalRent = sites.filter(s => s.status !== 'vacant').reduce((a,s) => a+s.rent, 0);
-  const outstanding = sites.filter(s => s.status === 'late').reduce((a,s) => a+Math.max(0, s.rent-s.paid), 0);
-  const lateFees = payments.filter(p => p.type === 'Late fee' && p.date.startsWith(thisMonth)).reduce((a,p) => a+p.amount, 0);
-  const lateSites = sites.filter(s => s.status === 'late').length;
-  const occupied = sites.filter(s => s.status !== 'vacant').length;
-
-  document.getElementById('m-collected').textContent = fmt(collected);
-  document.getElementById('m-collected-sub').textContent = `of ${fmt(totalRent)} expected`;
-  document.getElementById('m-outstanding').textContent = fmt(outstanding);
-  document.getElementById('m-outstanding-sub').textContent = `${lateSites} propert${lateSites !== 1 ? 'ies' : 'y'} behind`;
-  document.getElementById('m-late').textContent = fmt(lateFees);
-  document.getElementById('m-late-sub').textContent = `from ${lateSites} tenant${lateSites !== 1 ? 's' : ''}`;
-  document.getElementById('m-occupancy').textContent = `${occupied}/7`;
-  document.getElementById('m-occ-sub').textContent = occupied === 7 ? 'fully occupied' : `${7-occupied} vacant`;
+function leaseInfo(s){
+  if(!s.start||s.status==='vacant')return {duration:'—',remaining:'—',tag:null};
+  const start=new Date(s.start),now=new Date(),end=s.end?new Date(s.end):null;
+  const monthsIn=Math.floor((now-start)/(1000*60*60*24*30.4));
+  if(!end)return {duration:`${monthsIn} mo in`,remaining:'MTM',tag:{cls:'mtm',txt:'Month-to-month'}};
+  const monthsLeft=Math.ceil((end-now)/(1000*60*60*24*30.4));
+  const totalMonths=Math.ceil((end-start)/(1000*60*60*24*30.4));
+  if(monthsLeft<=0)return {duration:`${monthsIn} mo in`,remaining:'Expired',tag:{cls:'over',txt:'Month-to-month'}};
+  if(monthsLeft<=2)return {duration:`${monthsIn} mo in`,remaining:`${monthsLeft} mo left`,tag:{cls:'warn',txt:`${monthsLeft} mo left`}};
+  return {duration:`${monthsIn} mo in`,remaining:`${monthsLeft} mo left`,tag:{cls:'good',txt:`${monthsLeft} mo left`}};
 }
 
-function renderProperties() {
-  const container = document.getElementById('properties-container');
-  const filtered = filteredSites();
+function render(){renderMetrics();renderPropsTable();renderSidebarCounts();}
 
-  // Group by group name
-  const groups = {};
-  filtered.forEach(s => {
-    if (!groups[s.group]) groups[s.group] = [];
-    groups[s.group].push(s);
-  });
+function renderMetrics(){
+  const tm=new Date().toISOString().slice(0,7);
+  const collected=payments.filter(p=>p.type==='Rent'&&p.date.startsWith(tm)).reduce((a,p)=>a+p.amount,0);
+  const totalRent=sites.filter(s=>s.status!=='vacant').reduce((a,s)=>a+s.rent,0);
+  const outstanding=sites.filter(s=>s.status==='late').reduce((a,s)=>a+Math.max(0,s.rent-s.paid),0);
+  const lateFees=payments.filter(p=>p.type==='Late fee'&&p.date.startsWith(tm)).reduce((a,p)=>a+p.amount,0);
+  const lateSites=sites.filter(s=>s.status==='late').length;
+  const occupied=sites.filter(s=>s.status!=='vacant').length;
+  document.getElementById('m-collected').textContent=fmt(collected);
+  document.getElementById('m-collected-sub').textContent=`of ${fmt(totalRent)} expected`;
+  document.getElementById('m-outstanding').textContent=fmt(outstanding);
+  document.getElementById('m-outstanding-sub').textContent=`${lateSites} propert${lateSites!==1?'ies':'y'} behind`;
+  document.getElementById('m-late').textContent=fmt(lateFees);
+  document.getElementById('m-late-sub').textContent=`from ${lateSites} tenant${lateSites!==1?'s':''}`;
+  document.getElementById('m-occ').textContent=`${occupied}/7`;
+  document.getElementById('m-occ-sub').textContent=occupied===7?'fully occupied':`${7-occupied} vacant`;
+}
 
-  if (!Object.keys(groups).length) {
-    container.innerHTML = '<p style="color:var(--text3);font-size:13px;padding:1rem 0;">No properties match this filter.</p>';
-    return;
-  }
+function renderSidebarCounts(){
+  document.getElementById('sb-late-count').textContent=sites.filter(s=>s.status==='late').length;
+  document.getElementById('sb-current-count').textContent=sites.filter(s=>s.status==='current').length;
+}
 
-  container.innerHTML = Object.entries(groups).map(([groupName, groupSites]) => {
-    const first = groupSites[0];
-    const typeBadge = first.type === 'rv'
-      ? '<span class="prop-type-badge rv">RV site</span>'
-      : '<span class="prop-type-badge house">House</span>';
+function filteredSites(){
+  if(activeFilter==='all')return sites;
+  if(activeFilter==='rv')return sites.filter(s=>s.type==='rv');
+  if(activeFilter==='house')return sites.filter(s=>s.type==='house');
+  if(activeFilter==='late')return sites.filter(s=>s.status==='late');
+  if(activeFilter==='current')return sites.filter(s=>s.status==='current');
+  if(activeFilter==='vacant')return sites.filter(s=>s.status==='vacant');
+  if(activeFilter==='wa')return sites.filter(s=>s.state==='wa');
+  if(activeFilter==='az')return sites.filter(s=>s.state==='az');
+  return sites;
+}
 
-    const cards = groupSites.map(s => {
-      const idx = sites.indexOf(s);
-      const badgeCls = s.status;
-      const badgeTxt = {current:'Current', late:'Late', pending:'Pending', vacant:'Vacant'}[s.status] || s.status;
-      const paidColor = s.status === 'vacant' ? '' : (s.paid >= s.rent ? 'green' : 'red');
-      return `<div class="site-card">
-        <div class="site-card-top">
-          <div>
-            <div class="site-title">${s.name}</div>
-            <div class="site-addr">${s.addr}</div>
-          </div>
-          <span class="badge ${badgeCls}">${badgeTxt}</span>
+function renderPropsTable(){
+  const fs=filteredSites();
+  const labels={all:'All properties',rv:'RV sites',house:'Houses',late:'Late / overdue',current:'Current',vacant:'Vacant',wa:'Washington',az:'Arizona'};
+  document.getElementById('props-title').textContent=labels[activeFilter]||'Properties';
+  const tbody=document.getElementById('props-tbody');
+  tbody.innerHTML=fs.map(s=>{
+    const idx=sites.indexOf(s);
+    const li=leaseInfo(s);
+    const pct=s.status==='vacant'?0:Math.min(100,Math.round((s.paid/s.rent)*100));
+    const fillCls=pct>=100?'':pct>0?'partial':'none';
+    const taxInfo=s.tax1==='paid'?'✓ H1':(s.tax1==='included'?'H1 incl':'');
+    const tax2Info=s.tax2==='full'?'Full yr':(s.tax2==='paid'?'✓ H2':(s.tax2==='included'?'H2 incl':''));
+    const taxStr=[taxInfo,tax2Info].filter(Boolean).join(' · ')||'—';
+    return `<tr>
+      <td><div class="prop-name">${s.name}</div><div class="prop-addr">${s.addr}</div></td>
+      <td><span class="type-tag ${s.type}">${s.type==='rv'?'RV site':'House'}</span></td>
+      <td style="color:${s.status==='vacant'?'var(--text3)':'var(--text)'};">${s.tenant}</td>
+      <td>${fmt(s.rent)}</td>
+      <td>
+        ${s.status!=='vacant'?`<div class="progress-wrap">
+          <div class="progress-bar-bg"><div class="progress-bar-fill ${fillCls}" style="width:${pct}%"></div></div>
+          <div class="progress-label" style="color:${pct>=100?'var(--green)':pct>0?'var(--amber)':'var(--red)'}">${fmt(s.paid)}</div>
+        </div>`:'<span style="color:var(--text3)">—</span>'}
+      </td>
+      <td>
+        ${li.tag?`<span class="lease-months ${li.tag.cls}">${li.tag.txt}</span><br>`:''}
+        <span style="font-size:11px;color:var(--text3);">${li.duration!=='—'?li.duration:''}</span>
+      </td>
+      <td><span class="badge ${s.status}"><span class="badge-dot"></span>${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="row-btn" onclick="openEditModal(${idx})">Edit</button>
+          <button class="row-btn" onclick="markPaid(${idx})">Paid</button>
+          <button class="row-btn danger" onclick="logLateFee(${idx})">Late</button>
         </div>
-        <div class="site-rows">
-          <div class="site-row"><span class="key">Tenant</span><span class="val">${s.tenant}</span></div>
-          <div class="site-row"><span class="key">Monthly rent</span><span class="val">${fmt(s.rent)}</span></div>
-          ${s.status !== 'vacant' ? `<div class="site-row"><span class="key">Paid this month</span><span class="val ${paidColor}">${fmt(s.paid)}</span></div>` : ''}
-          ${s.start ? `<div class="site-row"><span class="key">Lease</span><span class="val">${s.start}${s.end?' → '+s.end:''}</span></div>` : ''}
-          ${s.notes ? `<div class="site-row"><span class="key">Notes</span><span class="val" style="font-family:var(--sans);font-size:12px;color:var(--text2);">${s.notes}</span></div>` : ''}
-        </div>
-        <div class="site-actions">
-          <button class="site-btn" onclick="openEditModal(${idx})">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Edit
-          </button>
-          <button class="site-btn" onclick="logLateFee(${idx})">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Late fee
-          </button>
-          <button class="site-btn" onclick="markPaid(${idx})">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-            Mark paid
-          </button>
-        </div>
-      </div>`;
-    }).join('');
+      </td>
+    </tr>`;
+  }).join('');
+}
 
-    return `<div class="property-group">
-      <div class="property-group-header">
-        <div class="property-group-name">${groupName}</div>
-        <div class="property-group-addr">${first.addr}</div>
-        ${typeBadge}
+function renderBills(){
+  const grid=document.getElementById('bill-grid');
+  const allSites=[{id:'ALL',name:'Shared (all properties)',addr:''},...sites];
+  grid.innerHTML=allSites.map(s=>{
+    const propBills=bills.filter(b=>b.prop===s.id);
+    const billRows=BILL_TYPES.map(bt=>{
+      const history=propBills.filter(b=>b.type===bt).sort((a,b)=>b.date.localeCompare(a.date));
+      const last=history[0];
+      const thisMonth=new Date().toISOString().slice(0,7);
+      const paidThisMonth=history.some(b=>b.date.startsWith(thisMonth));
+      return `<div class="bill-row">
+        <span class="bill-type-name"><span class="bill-icon">${BILL_ICONS[bt]||'📄'}</span>${bt}</span>
+        <div class="bill-status">
+          ${last?`<span class="${paidThisMonth?'bill-paid':'bill-unpaid'}">${paidThisMonth?'✓ Paid':'Overdue'}</span>
+          <span style="font-size:10px;color:var(--text3);">${last.date}</span>`:'<span class="bill-na">No history</span>'}
+          <button class="bill-log-btn" onclick="openBillModalFor('${s.id}','${bt}')">+ Log</button>
+        </div>
       </div>
-      <div class="sites-grid">${cards}</div>
+      ${history.length?`<div class="bill-history">${history.slice(0,3).map(b=>`<div class="bill-history-row"><span class="bill-history-date">${b.date}</span><span class="bill-history-amt">${fmt(b.amount)}</span><span class="bill-history-note">${b.notes||''}</span></div>`).join('')}</div>`:''}`;
+    }).join('');
+    return `<div class="bill-card">
+      <div class="bill-card-head">
+        <div><div class="bill-card-name">${s.name}</div>${s.addr?`<div class="bill-card-addr">${s.addr}</div>`:''}</div>
+      </div>
+      <div class="bill-types">${billRows}</div>
     </div>`;
   }).join('');
 }
 
-function renderLog() {
-  const body = document.getElementById('log-body');
-  const sorted = [...payments].sort((a,b) => b.date.localeCompare(a.date));
-  if (!sorted.length) {
-    body.innerHTML = '<tr><td colspan="7" style="color:var(--text3);padding:1rem 0;font-family:var(--sans);">No payments logged yet.</td></tr>';
-    return;
-  }
-  body.innerHTML = sorted.map(p => `<tr>
-    <td>${p.date}</td>
-    <td class="td-text">${p.site}</td>
-    <td class="td-text">${p.tenant}</td>
-    <td class="td-text">${p.type}</td>
-    <td class="${p.type === 'Late fee' ? 'td-red' : 'td-green'}">${fmt(p.amount)}</td>
-    <td class="td-text">${p.method}</td>
-    <td style="font-size:10px;color:var(--text3);">${p.source||''}</td>
+function renderLog(){
+  const body=document.getElementById('log-body');
+  const sorted=[...payments].sort((a,b)=>b.date.localeCompare(a.date));
+  if(!sorted.length){body.innerHTML='<tr><td colspan="7" style="color:var(--text3);padding:1rem 1.5rem;font-style:italic;">No payments logged yet.</td></tr>';return;}
+  body.innerHTML=sorted.map(p=>`<tr>
+    <td>${p.date}</td><td>${p.site}</td><td>${p.tenant}</td><td>${p.type}</td>
+    <td style="color:${p.type==='Late fee'?'var(--red)':'var(--green)'};font-weight:500;">${fmt(p.amount)}</td>
+    <td style="color:var(--text2);">${p.method}</td>
+    <td style="font-size:11px;color:var(--text3);">${p.source||''}</td>
   </tr>`).join('');
 }
 
-function renderLeases() {
-  const g = document.getElementById('lease-grid');
-  g.innerHTML = sites.map((s, i) => `
-    <div class="lease-item">
-      <div class="lease-info">
-        <div class="lname">${s.name}</div>
-        <div class="lmeta">${s.tenant} · ${s.lease || 'No lease on file'}</div>
+function renderLeases(){
+  const grid=document.getElementById('lease-grid');
+  grid.innerHTML=sites.map((s,i)=>{
+    const li=leaseInfo(s);
+    const taxStatus=[];
+    if(s.tax1==='paid')taxStatus.push('H1 paid');
+    else if(s.tax1==='included')taxStatus.push('H1 included');
+    if(s.tax2==='full')taxStatus.push('Full year paid');
+    else if(s.tax2==='paid')taxStatus.push('H2 paid');
+    else if(s.tax2==='included')taxStatus.push('H2 included');
+    return `<div class="lease-card">
+      <div class="lease-card-head">
+        <div>
+          <div style="font-size:13px;font-weight:600;">${s.name}</div>
+          <div style="font-size:11px;color:var(--text3);">${s.addr}</div>
+        </div>
+        <span class="badge ${s.status}"><span class="badge-dot"></span>${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span>
       </div>
-      <div class="lease-btns">
-        ${s.lease ? `<button class="lease-btn" onclick="downloadLease(${i})" title="Download">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download
-        </button>` : ''}
-        <button class="lease-btn" onclick="triggerUploadFor(${i})" title="Upload">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Upload
-        </button>
+      <div class="lease-card-body">
+        <div class="lease-stat"><span class="lk">Tenant</span><span class="lv">${s.tenant}</span></div>
+        <div class="lease-stat"><span class="lk">Lease start</span><span class="lv">${s.start||'—'}</span></div>
+        <div class="lease-stat"><span class="lk">Lease end</span><span class="lv">${s.end||'—'}</span></div>
+        <div class="lease-stat"><span class="lk">Term</span><span class="lv">${s.term==='mtm'?'Month-to-month':s.term+' months'}</span></div>
+        <div class="lease-stat"><span class="lk">Time in unit</span><span class="lv">${li.duration}</span></div>
+        <div class="lease-stat"><span class="lk">Remaining</span><span class="lv">
+          ${li.tag?`<span class="lease-months ${li.tag.cls}">${li.tag.txt}</span>`:li.remaining}
+        </span></div>
+        <div class="lease-stat"><span class="lk">Property taxes</span><span class="lv" style="font-size:11px;">${taxStatus.length?taxStatus.join(' · '):'Not recorded'}</span></div>
       </div>
-    </div>`).join('');
+      <div class="lease-file-row">
+        <span class="lease-filename">${s.lease||'No lease on file'}</span>
+        <div class="lease-file-btns">
+          ${s.lease?`<button class="row-btn" onclick="showToast('Download from Drive: ${s.lease}')">↓</button>`:''}
+          <button class="row-btn" onclick="triggerUploadFor(${i})">↑ Upload</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ACTIONS
-function addPayment() {
-  const site = document.getElementById('ap-site').value;
-  const type = document.getElementById('ap-type').value;
-  const amt = parseFloat(document.getElementById('ap-amount').value);
-  const method = document.getElementById('ap-method').value;
-  const date = document.getElementById('ap-date').value || new Date().toISOString().slice(0,10);
-  if (!site || !amt || isNaN(amt)) { showToast('Please select a property and enter an amount.'); return; }
-  const s = sites.find(x => x.id === site);
-  payments.unshift({date, site, tenant:s ? s.tenant : '', type, amount:Math.round(amt), method, source:'Manual'});
-  if (type === 'Rent' && s) {
-    s.paid = Math.round((s.paid||0) + amt);
-    if (s.paid >= s.rent) s.status = 'current';
-  }
-  document.getElementById('ap-site').value = '';
-  document.getElementById('ap-amount').value = '';
-  saveLocal(); render();
-  showToast('Payment logged.');
+function markPaid(i){
+  const s=sites[i];if(s.status==='vacant'){showToast('Cannot mark a vacant property as paid.');return;}
+  const rem=s.rent-(s.paid||0);if(rem<=0){showToast(`${s.name} is already fully paid.`);return;}
+  const today=new Date().toISOString().slice(0,10);
+  payments.unshift({date:today,site:s.id,tenant:s.tenant,type:'Rent',amount:rem,method:'Zelle',source:'Manual'});
+  s.paid=s.rent;s.status='current';saveLocal();render();showToast(`${s.name} marked as paid.`);
 }
-
-function markPaid(i) {
-  const s = sites[i];
-  if (s.status === 'vacant') { showToast('Cannot mark a vacant property as paid.'); return; }
-  const remaining = s.rent - (s.paid||0);
-  if (remaining <= 0) { showToast(`${s.name} is already fully paid.`); return; }
-  const today = new Date().toISOString().slice(0,10);
-  payments.unshift({date:today, site:s.id, tenant:s.tenant, type:'Rent', amount:remaining, method:'Zelle', source:'Manual'});
-  s.paid = s.rent; s.status = 'current';
-  saveLocal(); render();
-  showToast(`${s.name} marked as paid. ${fmt(remaining)} logged.`);
+function logLateFee(i){
+  const s=sites[i];if(s.status==='vacant'){showToast('Cannot log a late fee for a vacant property.');return;}
+  const today=new Date().toISOString().slice(0,10);
+  payments.unshift({date:today,site:s.id,tenant:s.tenant,type:'Late fee',amount:50,method:'Manual',source:'Manual'});
+  s.status='late';saveLocal();render();showToast(`$50 late fee logged for ${s.name}.`);
 }
-
-function logLateFee(i) {
-  const s = sites[i];
-  if (s.status === 'vacant') { showToast('Cannot log a late fee for a vacant property.'); return; }
-  const today = new Date().toISOString().slice(0,10);
-  payments.unshift({date:today, site:s.id, tenant:s.tenant, type:'Late fee', amount:50, method:'Manual', source:'Manual'});
-  s.status = 'late';
-  saveLocal(); render();
-  showToast(`$50 late fee logged for ${s.name}.`);
+function addPayment(){
+  const site=document.getElementById('ap-site').value;
+  const type=document.getElementById('ap-type').value;
+  const amt=parseFloat(document.getElementById('ap-amount').value);
+  const method=document.getElementById('ap-method').value;
+  const date=document.getElementById('ap-date').value||new Date().toISOString().slice(0,10);
+  if(!site||!amt||isNaN(amt)){showToast('Please select a property and enter an amount.');return;}
+  const s=sites.find(x=>x.id===site);
+  payments.unshift({date,site,tenant:s?s.tenant:'',type,amount:Math.round(amt),method,source:'Manual'});
+  if(type==='Rent'&&s){s.paid=Math.round((s.paid||0)+amt);if(s.paid>=s.rent)s.status='current';}
+  document.getElementById('ap-site').value='';document.getElementById('ap-amount').value='';
+  saveLocal();render();renderLog();showToast('Payment logged.');
 }
-
-function exportCSV() {
-  const headers = ['Date','Property','Tenant','Type','Amount','Method','Source'];
-  const rows = payments.map(p => [p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||''].join(','));
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `property-payments-${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
+function addPaymentModal(){
+  const site=document.getElementById('ap2-site').value;
+  const type=document.getElementById('ap2-type').value;
+  const amt=parseFloat(document.getElementById('ap2-amount').value);
+  const method=document.getElementById('ap2-method').value;
+  const date=document.getElementById('ap2-date').value||new Date().toISOString().slice(0,10);
+  if(!site||!amt||isNaN(amt)){showToast('Please select a property and enter an amount.');return;}
+  const s=sites.find(x=>x.id===site);
+  payments.unshift({date,site,tenant:s?s.tenant:'',type,amount:Math.round(amt),method,source:'Manual'});
+  if(type==='Rent'&&s){s.paid=Math.round((s.paid||0)+amt);if(s.paid>=s.rent)s.status='current';}
+  document.getElementById('ap2-site').value='';document.getElementById('ap2-amount').value='';
+  closeModal('addpay-overlay');saveLocal();render();showToast('Payment logged.');
+}
+function saveBillPayment(){
+  const prop=document.getElementById('b-prop').value;
+  const type=document.getElementById('b-type').value;
+  const amt=parseFloat(document.getElementById('b-amount').value);
+  const date=document.getElementById('b-date').value||new Date().toISOString().slice(0,10);
+  const notes=document.getElementById('b-notes').value.trim();
+  if(!amt||isNaN(amt)){showToast('Please enter an amount.');return;}
+  bills.unshift({date,prop,type,amount:amt,notes});
+  document.getElementById('b-amount').value='';document.getElementById('b-notes').value='';
+  closeModal('bill-overlay');saveLocal();renderBills();showToast(`${type} payment logged.`);
+}
+function exportCSV(){
+  const h=['Date','Property','Tenant','Type','Amount','Method','Source'];
+  const rows=payments.map(p=>[p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||''].join(','));
+  const blob=new Blob([[h.join(','),...rows].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`payments-${new Date().toISOString().slice(0,10)}.csv`;a.click();
   showToast('CSV downloaded.');
 }
 
 // MODALS
-function openEditModal(i) {
-  editIdx = i;
-  const s = sites[i];
-  document.getElementById('edit-modal-title').textContent = `Edit — ${s.name}`;
-  document.getElementById('e-tenant').value = s.tenant !== '(Vacant)' ? s.tenant : '';
-  document.getElementById('e-rent').value = s.rent;
-  document.getElementById('e-start').value = s.start||'';
-  document.getElementById('e-end').value = s.end||'';
-  document.getElementById('e-status').value = s.status;
-  document.getElementById('e-notes').value = s.notes||'';
+function openEditModal(i){
+  editIdx=i;const s=sites[i];
+  document.getElementById('edit-title').textContent=`Edit — ${s.name}`;
+  document.getElementById('e-tenant').value=s.tenant!=='(Vacant)'?s.tenant:'';
+  document.getElementById('e-rent').value=s.rent;
+  document.getElementById('e-status').value=s.status;
+  document.getElementById('e-start').value=s.start||'';
+  document.getElementById('e-end').value=s.end||'';
+  document.getElementById('e-term').value=s.term||'12';
+  document.getElementById('e-tax1').value=s.tax1||'';
+  document.getElementById('e-tax2').value=s.tax2||'';
+  document.getElementById('e-notes').value=s.notes||'';
   document.getElementById('edit-overlay').classList.add('open');
 }
-function closeEditModal() { document.getElementById('edit-overlay').classList.remove('open'); editIdx = null; }
-function saveEditModal() {
-  if (editIdx === null) return;
-  const s = sites[editIdx];
-  s.tenant = document.getElementById('e-tenant').value.trim() || '(Vacant)';
-  s.rent = parseInt(document.getElementById('e-rent').value)||s.rent;
-  s.start = document.getElementById('e-start').value;
-  s.end = document.getElementById('e-end').value;
-  s.status = document.getElementById('e-status').value;
-  s.notes = document.getElementById('e-notes').value.trim();
-  closeEditModal(); saveLocal(); render();
-  showToast('Property updated.');
+function saveEditModal(){
+  if(editIdx===null)return;const s=sites[editIdx];
+  s.tenant=document.getElementById('e-tenant').value.trim()||'(Vacant)';
+  s.rent=parseInt(document.getElementById('e-rent').value)||s.rent;
+  s.status=document.getElementById('e-status').value;
+  s.start=document.getElementById('e-start').value;
+  s.end=document.getElementById('e-end').value;
+  s.term=document.getElementById('e-term').value;
+  s.tax1=document.getElementById('e-tax1').value;
+  s.tax2=document.getElementById('e-tax2').value;
+  s.notes=document.getElementById('e-notes').value.trim();
+  closeModal('edit-overlay');saveLocal();render();showToast('Property updated.');
 }
-
-function triggerUploadFor(i) { uploadForIdx = i; document.getElementById('file-upload').click(); }
-function handleUpload(e) {
-  const f = e.target.files[0];
-  if (!f) return;
-  if (uploadForIdx !== null) {
-    sites[uploadForIdx].lease = f.name;
-    uploadForIdx = null;
-    saveLocal(); render();
-    showToast(`Lease uploaded: ${f.name}`);
-  } else {
-    pendingUpload = f.name;
-    document.getElementById('assign-filename').textContent = `File: ${f.name}`;
-    document.getElementById('assign-overlay').classList.add('open');
-  }
-  e.target.value = '';
+function openBillModal(){document.getElementById('bill-overlay').classList.add('open');}
+function openBillModalFor(prop,type){
+  document.getElementById('b-prop').value=prop;
+  document.getElementById('b-type').value=type;
+  document.getElementById('bill-overlay').classList.add('open');
 }
-function closeAssignModal() { document.getElementById('assign-overlay').classList.remove('open'); pendingUpload = null; }
-function confirmAssign() {
-  const idx = parseInt(document.getElementById('assign-site').value);
-  if (!isNaN(idx) && pendingUpload) {
-    sites[idx].lease = pendingUpload;
-    saveLocal(); render();
-    showToast(`Lease assigned to ${sites[idx].name}`);
-  }
-  closeAssignModal();
-}
-function downloadLease(i) { showToast(`In Google Drive mode, this downloads: ${sites[i].lease}`); }
-
-function openSetupModal() {
-  document.getElementById('s-client-id').value = config.clientId||'';
-  document.getElementById('s-api-key').value = config.apiKey||'';
-  document.getElementById('s-sheet-id').value = config.sheetId||'';
-  document.getElementById('s-gmail-query').value = config.gmailQuery||'subject:"You received money"';
+function openAddPaymentModal(){document.getElementById('addpay-overlay').classList.add('open');}
+function openSetupModal(){
+  document.getElementById('s-client-id').value=config.clientId||'';
+  document.getElementById('s-api-key').value=config.apiKey||'';
+  document.getElementById('s-sheet-id').value=config.sheetId||'';
+  document.getElementById('s-gmail-query').value=config.gmailQuery||'subject:"You received money"';
   document.getElementById('setup-overlay').classList.add('open');
 }
-function closeSetupModal() { document.getElementById('setup-overlay').classList.remove('open'); }
-function saveSetup() {
-  config.clientId = document.getElementById('s-client-id').value.trim();
-  config.apiKey = document.getElementById('s-api-key').value.trim();
-  config.sheetId = document.getElementById('s-sheet-id').value.trim();
-  config.gmailQuery = document.getElementById('s-gmail-query').value.trim();
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-  closeSetupModal();
-  showToast('Settings saved. Reload to reconnect.');
+function saveSetup(){
+  config.clientId=document.getElementById('s-client-id').value.trim();
+  config.apiKey=document.getElementById('s-api-key').value.trim();
+  config.sheetId=document.getElementById('s-sheet-id').value.trim();
+  config.gmailQuery=document.getElementById('s-gmail-query').value.trim();
+  localStorage.setItem(CONFIG_KEY,JSON.stringify(config));
+  closeModal('setup-overlay');showToast('Settings saved. Reload to reconnect.');
 }
+function closeModal(id){document.getElementById(id).classList.remove('open');}
 
-function copyText(t) { navigator.clipboard.writeText(t).then(() => showToast(`Copied: "${t}"`)); }
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 3000);
+function triggerUploadFor(i){uploadForIdx=i;document.getElementById('file-upload').click();}
+function handleUpload(e){
+  const f=e.target.files[0];if(!f)return;
+  if(uploadForIdx!==null){
+    sites[uploadForIdx].lease=f.name;uploadForIdx=null;
+    saveLocal();renderLeases();showToast(`Lease uploaded: ${f.name}`);
+  } else {
+    pendingUpload=f.name;
+    document.getElementById('assign-filename').textContent=`File: ${f.name}`;
+    document.getElementById('assign-overlay').classList.add('open');
+  }
+  e.target.value='';
 }
-
-['edit-overlay','assign-overlay','setup-overlay'].forEach(id => {
-  document.getElementById(id).addEventListener('click', function(e) {
-    if (e.target === this) this.classList.remove('open');
-  });
-});
+function confirmAssign(){
+  const idx=parseInt(document.getElementById('assign-site').value);
+  if(!isNaN(idx)&&pendingUpload){sites[idx].lease=pendingUpload;saveLocal();renderLeases();showToast(`Lease assigned to ${sites[idx].name}`);}
+  closeModal('assign-overlay');pendingUpload=null;
+}
+function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast(`Copied: "${t}"`));}
+function showToast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000);
+}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
 
 init();
 </script>
