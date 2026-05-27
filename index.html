@@ -294,7 +294,8 @@ button{font-family:var(--sans);}
     <div class="auth-logo">🏠</div>
     <h1>Property Manager</h1>
     <p>Sign in to access your portfolio dashboard.</p>
-    <div class="f-group"><label>Password</label><input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPw()"></div>
+    <div class="f-group"><label>Username</label><input type="text" id="pw-user" placeholder="Username" onkeydown="if(event.key==='Enter')checkPw()"></div>
+    <div class="f-group"><label>Password</label><input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()"></div>
     <div id="pw-error">Incorrect password. Please try again.</div>
     <button class="btn btn-primary btn-block" onclick="checkPw()">Sign in</button>
     <p class="auth-note">Authorized access only · juggleryan.github.io</p>
@@ -754,10 +755,11 @@ async function hashPw(pw){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 async function checkPw(){
+  const user=document.getElementById('pw-user').value.trim().toLowerCase();
   const input=document.getElementById('pw-input').value;
   const h=await hashPw(input);
   const expected=await hashPw('juggleryan2026!');
-  if(h===expected){
+  if(user==='rcadmin'&&h===expected){
     sessionStorage.setItem(PK,'1');
     document.getElementById('pw-card').style.display='none';
     config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -767,7 +769,8 @@ async function checkPw(){
   } else {
     document.getElementById('pw-error').style.display='block';
     document.getElementById('pw-input').value='';
-    document.getElementById('pw-input').focus();
+    document.getElementById('pw-user').value='';
+    document.getElementById('pw-user').focus();
   }
 }
 function connectGoogle(){
