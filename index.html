@@ -530,6 +530,8 @@ button{font-family:var(--sans);}
   <div class="modal" style="max-width:560px;">
     <div class="modal-header"><h3 id="edit-title">Edit property</h3><button class="modal-close" onclick="closeModal('edit-overlay')">✕</button></div>
     <div class="modal-body">
+      <div class="modal-section-title">Property nickname</div>
+      <div class="f-group"><label>Nickname (optional)</label><input type="text" id="e-nickname" placeholder="e.g. The Corner Lot, Mike's Place, Spanaway S1..."></div>
       <div class="modal-section-title">Tenant</div>
       <div class="grid-2">
         <div class="f-group"><label>Tenant name</label><input type="text" id="e-tenant" placeholder="Full name"></div>
@@ -707,9 +709,14 @@ function today(){return new Date().toISOString().slice(0,10);}
 function now(){return new Date().toLocaleString();}
 function fmt(n){return '$'+Math.round(n||0).toLocaleString();}
 
+function displayName(s){return s.nickname||s.name;}
+function displayLabel(s){
+  if(!s.nickname)return `<div class="tbl-name">${s.name}</div><div class="tbl-sub">${s.addr}</div>`;
+  return `<div class="tbl-name">${s.nickname}</div><div class="tbl-sub">${s.name} · ${s.addr}</div>`;
+}
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
+    nickname:'',tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',notes:[],...o};
 }
@@ -847,7 +854,7 @@ async function loadFromSheets(){
     if(sr.values&&sr.values.length){
       sites=sr.values.map(r=>({
         id:r[0]||'',name:r[1]||'',addr:r[2]||'',type:r[3]||'rv',state:r[4]||'wa',
-        tenant:r[5]||'',rent:parseFloat(r[6])||0,mortgage:parseFloat(r[7])||0,paid:parseFloat(r[8])||0,
+        nickname:r[20]||'',tenant:r[5]||'',rent:parseFloat(r[6])||0,mortgage:parseFloat(r[7])||0,paid:parseFloat(r[8])||0,
         start:r[9]||'',end:r[10]||'',term:r[11]||'12',status:r[12]||'vacant',
         lease:r[13]||null,yard:r[14]||'',taxAmt:parseFloat(r[15])||0,
         tax1:r[16]||'',tax2:r[17]||'',taxNotes:r[18]||'',
@@ -867,7 +874,7 @@ async function saveToSheets(){
   if(!accessToken){tokenClient.requestAccessToken({prompt:''});return;}
   setSyncStatus('loading');
   try{
-    const sRows=sites.map(s=>[s.id,s.name,s.addr,s.type,s.state,s.tenant,s.rent,s.mortgage||0,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.yard||'',s.taxAmt||0,s.tax1||'',s.tax2||'',s.taxNotes||'',JSON.stringify(s.notes||[])]);
+    const sRows=sites.map(s=>[s.id,s.name,s.addr,s.type,s.state,s.tenant,s.rent,s.mortgage||0,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.yard||'',s.taxAmt||0,s.tax1||'',s.tax2||'',s.taxNotes||'',JSON.stringify(s.notes||[]),s.nickname||'']);
     const pRows=payments.map(p=>[p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||'']);
     const bRows=bills.map(b=>[b.date,b.prop,b.type,b.amount,b.notes||'']);
     const nRows=notices.map(n=>[n.prop,n.type,n.date,n.deadline,n.amt||0,n.notes||'',n.outcome||'Pending']);
@@ -940,7 +947,8 @@ function navBack(){navTo(prevPage||'dashboard',null);}
 function openDetail(idx){
   prevPage='all-props';detailIdx=idx;
   const s=sites[idx];
-  document.getElementById('detail-name').textContent=s.name;
+  document.getElementById('detail-name').textContent=displayName(s);
+  document.getElementById('detail-addr').textContent=s.nickname?`${s.name} · ${s.addr}`:s.addr;
   document.getElementById('detail-addr').textContent=s.addr;
   navTo('prop-detail',null);
   detailTab('overview',document.querySelector('#page-prop-detail .tab'));
@@ -1019,7 +1027,7 @@ function propRow(s,idx,mini=false){
   const pct=s.status==='vacant'?0:Math.min(100,Math.round(((s.paid||0)/s.rent)*100));
   const fillCls=pct>=100?'full':pct>0?'part':'none';
   const hasNotice=notices.some(n=>n.prop===s.id&&n.outcome==='Pending');
-  const rentMort=s.mortgage?`${fmt(s.rent)} / ${fmt(s.mortgage)}`:`${fmt(s.rent)}`;
+  const rentMort=s.mortgage?`${fmt(s.rent)} / ${fmt(s.mortgage)}`:`${fmt(s.rent)} <span class='badge current' style='font-size:9px;padding:2px 6px;vertical-align:middle;'><span class='badge-dot'></span>Paid off</span>`;
   if(mini){
     return `<tr style="cursor:pointer;" onclick="openDetail(${idx})">
       <td><div class="tbl-name">${s.name}</div><div class="tbl-sub">${s.addr}</div></td>
@@ -1031,7 +1039,7 @@ function propRow(s,idx,mini=false){
     </tr>`;
   }
   return `<tr style="cursor:pointer;" onclick="openDetail(${idx})">
-    <td><div class="tbl-name">${s.name}</div><div class="tbl-sub">${s.addr}</div></td>
+    <td>${displayLabel(s)}</td>
     <td><span class="type-tag ${s.type}">${s.type==='rv'?'RV':'House'}</span></td>
     <td style="color:${s.status==='vacant'?'var(--text3)':'var(--text)'};">${s.tenant}</td>
     <td style="font-size:12px;">${rentMort}</td>
@@ -1067,7 +1075,7 @@ function renderDetailOverview(idx){
     <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value"><span class="badge ${s.status}"><span class="badge-dot"></span>${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span></div></div>
     <div class="detail-item"><div class="detail-label">Tenant</div><div class="detail-value">${s.tenant}</div></div>
     <div class="detail-item"><div class="detail-label">Monthly rent</div><div class="detail-value green">${fmt(s.rent)}</div></div>
-    <div class="detail-item"><div class="detail-label">Mortgage payment</div><div class="detail-value">${s.mortgage?fmt(s.mortgage):'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Mortgage payment</div><div class="detail-value">${s.mortgage?fmt(s.mortgage):'<span class="badge current"><span class="badge-dot"></span>Paid off</span>'}</div></div>
     <div class="detail-item"><div class="detail-label">Paid this month</div><div class="detail-value ${(s.paid||0)>=(s.rent||1)?'green':'red'}">${fmt(s.paid||0)}</div></div>
     <div class="detail-item"><div class="detail-label">All-time rent collected</div><div class="detail-value">${fmt(totalPaid)}</div></div>
     <div class="detail-item"><div class="detail-label">Yard maintenance</div><div class="detail-value">${s.yard||'Not specified'}</div></div>
@@ -1135,7 +1143,7 @@ function noticeCard(n,i,showProp=false){
   const daysLeft=n.deadline?Math.ceil((new Date(n.deadline)-new Date())/(1000*60*60*24)):null;
   return `<div class="notice-card">
     <div class="notice-card-head">
-      <div class="notice-type">⚖️ ${n.type}${showProp?` — ${n.prop}`:''}</div>
+      <div class="notice-type">⚖️ ${n.type}${showProp?` — ${(sites.find(s=>s.id===n.prop)||{nickname:'',name:n.prop}).nickname||(sites.find(s=>s.id===n.prop)||{name:n.prop}).name}`:''}</div>
       <div class="notice-date">Served: ${n.date}</div>
     </div>
     <div class="notice-body">
@@ -1176,7 +1184,7 @@ function renderBills(){
       </div>
       ${hist.length?`<div class="bill-hist">${hist.slice(0,3).map(b=>`<div class="bill-hist-row"><span class="bill-hist-date">${b.date}</span><span class="bill-hist-amt">${fmt(b.amount)}</span><span class="bill-hist-note">${b.notes||''}</span></div>`).join('')}</div>`:''}`;
     }).join('');
-    return `<div class="bill-card"><div class="bill-card-head"><div class="bill-card-name">${s.name}</div>${s.addr?`<div class="bill-card-addr">${s.addr}</div>`:''}</div><div class="bill-rows">${typeRows}</div></div>`;
+    return `<div class="bill-card"><div class="bill-card-head"><div class="bill-card-name">${displayName(s)}</div>${s.addr?`<div class="bill-card-addr">${s.name} · ${s.addr}</div>`:''}</div><div class="bill-rows">${typeRows}</div></div>`;
   }).join('');
 }
 
@@ -1194,7 +1202,7 @@ function renderLeases(){
   document.getElementById('lease-tbody').innerHTML=sites.map((s,i)=>{
     const li=leaseInfo(s);
     return `<tr>
-      <td><div class="tbl-name">${s.name}</div><div class="tbl-sub">${s.addr}</div></td>
+      <td>${displayLabel(s)}</td>
       <td style="color:${s.status==='vacant'?'var(--text3)':'var(--text)'};">${s.tenant}</td>
       <td>${s.start||'—'}</td><td>${s.end||'—'}</td>
       <td>${s.term==='mtm'?'MTM':s.term+' mo'}</td>
@@ -1287,7 +1295,8 @@ function exportCSV(){
 // ══ MODALS ══
 function openEditModal(i){
   editIdx=i;const s=sites[i];
-  document.getElementById('edit-title').textContent=`Edit — ${s.name}`;
+  document.getElementById('edit-title').textContent=`Edit — ${s.nickname||s.name}`;
+  document.getElementById('e-nickname').value=s.nickname||'';
   document.getElementById('e-tenant').value=s.tenant!=='(Vacant)'?s.tenant:'';
   document.getElementById('e-status').value=s.status;
   document.getElementById('e-rent').value=s.rent;
@@ -1304,6 +1313,7 @@ function openEditModal(i){
 }
 function saveEdit(){
   if(editIdx===null)return;const s=sites[editIdx];
+  s.nickname=document.getElementById('e-nickname').value.trim();
   s.tenant=document.getElementById('e-tenant').value.trim()||'(Vacant)';
   s.status=document.getElementById('e-status').value;
   s.rent=parseInt(document.getElementById('e-rent').value)||s.rent;
@@ -1390,7 +1400,7 @@ function searchFilter(){
 
 // POPULATE DROPDOWNS
 function populateSiteDropdowns(){
-  const opts=sites.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  const opts=sites.map(s=>`<option value="${s.id}">${displayName(s)}</option>`).join('');
   ['ap-site','ap2-site','b-prop','n-prop'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
