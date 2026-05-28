@@ -1083,11 +1083,7 @@ function defaultData(){
 }
 
 // ══ AUTH ══
-function simplehash(s){
-  // Simple djb2 hash — not cryptographic but works on all browsers including Safari iOS
-  let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)+s.charCodeAt(i);return h>>>0;
-}
-async function checkPw(){
+function checkPw(){
   const user=document.getElementById('pw-user').value.trim().toLowerCase();
   const input=document.getElementById('pw-input').value;
   // Check credentials
