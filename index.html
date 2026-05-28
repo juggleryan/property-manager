@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
 :root{
   --bg:#f7f8fa;--white:#ffffff;--border:#e4e6ea;--border2:#c9cdd4;
@@ -538,6 +539,7 @@ button{font-family:var(--sans);}
       <div class="modal-section-title">Tenant</div>
       <div class="grid-2">
         <div class="f-group"><label>Tenant name</label><input type="text" id="e-tenant" placeholder="Full name"></div>
+        <div class="f-group"><label>Tenant email (for receipts)</label><input type="email" id="e-email" placeholder="tenant@email.com"></div>
         <div class="f-group"><label>Status</label><select id="e-status"><option value="current">Current</option><option value="late">Late</option><option value="pending">Pending</option><option value="vacant">Vacant</option></select></div>
       </div>
       <div class="grid-2">
@@ -697,6 +699,7 @@ button{font-family:var(--sans);}
       <div class="modal-section-title">Tenant (optional — can add later)</div>
       <div class="grid-2">
         <div class="f-group"><label>Tenant name</label><input type="text" id="np-tenant" placeholder="Full name"></div>
+        <div class="f-group"><label>Tenant email (for receipts)</label><input type="email" id="np-email" placeholder="tenant@email.com"></div>
         <div class="f-group"><label>Status</label>
           <select id="np-status"><option value="vacant">Vacant</option><option value="current">Current</option><option value="pending">Pending</option></select>
         </div>
@@ -853,6 +856,7 @@ function launchApp(){
   document.getElementById('app').style.display='block';
   setToday();populateSiteDropdowns();render();
   setSyncStatus(isDemoMode?'demo':'idle');
+  emailjs.init('yMtMxURljjHQMjT16');
   document.getElementById('dash-month').textContent=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
 }
 function setToday(){
@@ -908,7 +912,7 @@ async function loadFromSheets(){
     if(sr.values&&sr.values.length){
       sites=sr.values.map(r=>({
         id:r[0]||'',name:r[1]||'',addr:r[2]||'',type:r[3]||'rv',state:r[4]||'wa',
-        nickname:r[20]||'',tenant:r[5]||'',rent:parseFloat(r[6])||0,mortgage:parseFloat(r[7])||0,paid:parseFloat(r[8])||0,
+        nickname:r[20]||'',tenantEmail:r[21]||'',tenant:r[5]||'',rent:parseFloat(r[6])||0,mortgage:parseFloat(r[7])||0,paid:parseFloat(r[8])||0,
         start:r[9]||'',end:r[10]||'',term:r[11]||'12',status:r[12]||'vacant',
         lease:r[13]||null,yard:r[14]||'',taxAmt:parseFloat(r[15])||0,
         tax1:r[16]||'',tax2:r[17]||'',taxNotes:r[18]||'',
@@ -928,7 +932,7 @@ async function saveToSheets(){
   if(!accessToken){tokenClient.requestAccessToken({prompt:''});return;}
   setSyncStatus('loading');
   try{
-    const sRows=sites.map(s=>[s.id,s.name,s.addr,s.type,s.state,s.tenant,s.rent,s.mortgage||0,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.yard||'',s.taxAmt||0,s.tax1||'',s.tax2||'',s.taxNotes||'',JSON.stringify(s.notes||[]),s.nickname||'']);
+    const sRows=sites.map(s=>[s.id,s.name,s.addr,s.type,s.state,s.tenant,s.rent,s.mortgage||0,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.yard||'',s.taxAmt||0,s.tax1||'',s.tax2||'',s.taxNotes||'',JSON.stringify(s.notes||[]),s.nickname||'',s.tenantEmail||'']);
     const pRows=payments.map(p=>[p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||'']);
     const bRows=bills.map(b=>[b.date,b.prop,b.type,b.amount,b.notes||'']);
     const nRows=notices.map(n=>[n.prop,n.type,n.date,n.deadline,n.amt||0,n.notes||'',n.outcome||'Pending']);
@@ -1296,7 +1300,10 @@ function addPayment(){
   payments.unshift({date,site,tenant:s?s.tenant:'',type,amount:Math.round(amt),method,source:'Manual'});
   if(type==='Rent'&&s){s.paid=Math.round((s.paid||0)+amt);if(s.paid>=s.rent)s.status='current';}
   document.getElementById('ap-site').value='';document.getElementById('ap-amt').value='';
-  saveLocal();render();renderPayLog();showToast('Payment logged.');
+  saveLocal();render();renderPayLog();
+  sendReceipt(site,type,amt,method,date).then(sent=>{
+    showToast(sent?'Payment logged & receipt sent ✓':'Payment logged. (No tenant email on file)');
+  });
 }
 function submitAddPay(){
   const site=document.getElementById('ap2-site').value;
@@ -1309,7 +1316,10 @@ function submitAddPay(){
   payments.unshift({date,site,tenant:s?s.tenant:'',type,amount:Math.round(amt),method,source:'Manual'});
   if(type==='Rent'&&s){s.paid=Math.round((s.paid||0)+amt);if(s.paid>=s.rent)s.status='current';}
   document.getElementById('ap2-site').value='';document.getElementById('ap2-amt').value='';
-  closeModal('addpay-overlay');saveLocal();render();showToast('Payment logged.');
+  closeModal('addpay-overlay');saveLocal();render();
+  sendReceipt(site,type,amt,method,date).then(sent=>{
+    showToast(sent?'Payment logged & receipt sent ✓':'Payment logged. (No tenant email on file)');
+  });
 }
 function saveBill(){
   const prop=document.getElementById('b-prop').value;
@@ -1352,6 +1362,7 @@ function openEditModal(i){
   document.getElementById('edit-title').textContent=`Edit — ${s.nickname||s.name}`;
   document.getElementById('e-nickname').value=s.nickname||'';
   document.getElementById('e-tenant').value=s.tenant!=='(Vacant)'?s.tenant:'';
+  document.getElementById('e-email').value=s.tenantEmail||'';
   document.getElementById('e-status').value=s.status;
   document.getElementById('e-rent').value=s.rent;
   document.getElementById('e-mortgage').value=s.mortgage||'';
@@ -1369,6 +1380,7 @@ function saveEdit(){
   if(editIdx===null)return;const s=sites[editIdx];
   s.nickname=document.getElementById('e-nickname').value.trim();
   s.tenant=document.getElementById('e-tenant').value.trim()||'(Vacant)';
+  s.tenantEmail=document.getElementById('e-email').value.trim();
   s.status=document.getElementById('e-status').value;
   s.rent=parseInt(document.getElementById('e-rent').value)||s.rent;
   s.mortgage=parseInt(document.getElementById('e-mortgage').value)||0;
@@ -1509,6 +1521,7 @@ function saveNewProp(){
     lease:null,
     yard:document.getElementById('np-yard').value,
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',
+    tenantEmail: document.getElementById('np-email').value.trim(),
     notes: document.getElementById('np-notes').value.trim()
       ? [{ts:now(), text:document.getElementById('np-notes').value.trim()}]
       : []
@@ -1522,6 +1535,30 @@ function saveNewProp(){
   // Update occupancy count
   document.getElementById('nb-all').textContent=sites.length;
   showToast(`"${displayName(newSite)}" added successfully.`);
+}
+
+// EMAIL RECEIPTS
+async function sendReceipt(siteId, type, amount, method, date){
+  const s=sites.find(x=>x.id===siteId);
+  if(!s||!s.tenantEmail){
+    // No email on file — skip silently unless it's a manual trigger
+    return false;
+  }
+  try {
+    await emailjs.send('service_3acvjpg','template_k3mfybb',{
+      to_email: s.tenantEmail,
+      tenant_name: s.tenant,
+      property_name: displayName(s),
+      payment_type: type,
+      amount: '$'+Math.round(amount).toLocaleString(),
+      date: date,
+      method: method
+    });
+    return true;
+  } catch(e) {
+    console.error('EmailJS error:', e);
+    return false;
+  }
 }
 
 // UTILS
