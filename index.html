@@ -1545,12 +1545,13 @@ function saveNewProp(){
 // EMAIL RECEIPTS
 async function sendReceipt(siteId, type, amount, method, date){
   const s=sites.find(x=>x.id===siteId);
+  console.log('[Receipt] siteId:', siteId, '| site found:', !!s, '| tenantEmail:', s?s.tenantEmail:'N/A');
   if(!s||!s.tenantEmail){
-    // No email on file — skip silently unless it's a manual trigger
+    console.log('[Receipt] No email on file — skipping');
     return false;
   }
   try {
-    await emailjs.send('service_3acvjpg','template_k3mfybb',{
+    await emailjs.send('service_3acvjpg','template_te2mpqb',{
       to_email: s.tenantEmail,
       tenant_name: s.tenant,
       property_name: displayName(s),
@@ -1561,7 +1562,7 @@ async function sendReceipt(siteId, type, amount, method, date){
     });
     return true;
   } catch(e) {
-    console.error('EmailJS error:', e);
+    console.error('EmailJS error:', JSON.stringify(e), e.text||e.message||e);
     return false;
   }
 }
