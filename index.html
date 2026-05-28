@@ -1083,16 +1083,15 @@ function defaultData(){
 }
 
 // ══ AUTH ══
-async function hashPw(pw){
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+function simplehash(s){
+  // Simple djb2 hash — not cryptographic but works on all browsers including Safari iOS
+  let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)+s.charCodeAt(i);return h>>>0;
 }
 async function checkPw(){
   const user=document.getElementById('pw-user').value.trim().toLowerCase();
   const input=document.getElementById('pw-input').value;
-  const h=await hashPw(input);
-  const expected=await hashPw('juggleryan2026!');
-  if(user==='rcadmin'&&h===expected){
+  // Check credentials
+  if(user==='rcadmin'&&input==='juggleryan2026!'){
     sessionStorage.setItem(PK,'1');
     document.getElementById('pw-card').style.display='none';
     config=JSON.parse(localStorage.getItem(CK)||'{}');
