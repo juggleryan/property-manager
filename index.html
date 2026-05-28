@@ -773,7 +773,7 @@ function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
     nickname:'',tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
-    taxAmt:0,tax1:'',tax2:'',taxNotes:'',notes:[],...o};
+    taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
 
 function defaultData(){
@@ -842,7 +842,12 @@ function signOut(){localStorage.removeItem(DMK);localStorage.removeItem(CK);sess
 
 function init(){
   const saved=localStorage.getItem(DK);
-  if(saved){const d=JSON.parse(saved);sites=d.sites||[];payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];}
+  if(saved){
+    const d=JSON.parse(saved);
+    payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
+    // Merge saved sites with defaults to ensure new fields like tenantEmail exist
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',...s}));
+  }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
   isDemoMode=localStorage.getItem(DMK)==='1';
