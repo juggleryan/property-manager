@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
 :root{
@@ -235,6 +237,7 @@ button{font-family:var(--sans);}
 .bill-hist-amt{font-weight:600;color:var(--green);}
 .bill-hist-note{color:var(--text3);font-style:italic;}
 
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text2);line-height:1.7;}
 /* UPLOAD */
 .upload-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;color:var(--text3);font-size:13px;margin:1rem;}
 .upload-zone:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);}
@@ -258,6 +261,35 @@ button{font-family:var(--sans);}
 .detail-value.red{color:var(--red);}
 .detail-value.amber{color:var(--amber);}
 
+/* P&L */
+.pl-metric{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.1rem;border-top:3px solid transparent;}
+.pl-metric.income{border-top-color:var(--green);}
+.pl-metric.expense{border-top-color:var(--red);}
+.pl-metric.net{border-top-color:var(--blue);}
+.pl-metric.margin{border-top-color:var(--amber);}
+.pl-metric .lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.pl-metric .val{font-size:22px;font-weight:700;}
+.pl-metric .sub{font-size:11px;color:var(--text3);margin-top:3px;}
+.tbl tfoot td{font-weight:700;border-top:2px solid var(--border);background:var(--bg);font-size:13px;padding:10px 16px;}
+.tbl tfoot td.income-total{color:var(--green);}
+.tbl tfoot td.expense-total{color:var(--red);}
+.positive{color:var(--green);font-weight:600;}
+.growth-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;}
+.growth-card{background:var(--bg);border-radius:var(--radius);padding:12px 14px;border:1px solid var(--border);}
+.growth-card .gl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.growth-card .gv{font-size:18px;font-weight:700;color:var(--text);}
+.growth-card .gs{font-size:11px;color:var(--text3);margin-top:2px;}
+.acq-timeline{display:flex;flex-direction:column;gap:0;}
+.acq-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.acq-item:last-child{border-bottom:none;}
+.acq-dot{width:10px;height:10px;border-radius:50%;background:var(--blue);flex-shrink:0;}
+.acq-name{font-weight:600;font-size:13px;flex:1;}
+.acq-date{font-size:11px;color:var(--text3);}
+.acq-price{font-size:13px;font-weight:600;color:var(--text);}
+.acq-value{font-size:12px;color:var(--green);font-weight:600;}
+.acq-equity{font-size:11px;color:var(--text3);}
+.acq-return{font-size:12px;font-weight:600;}
+.negative{color:var(--red);font-weight:600;}
 /* MOBILE */
 @media(max-width:768px){
   :root{--sidebar-w:0px;}
@@ -354,6 +386,7 @@ button{font-family:var(--sans);}
       <div class="sidebar-section">
         <div class="sidebar-label">Overview</div>
         <button class="nav-item active" onclick="navTo('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</button>
+        <button class="nav-item" onclick="navTo('pl',this)"><span class="nav-icon">📈</span>P&amp;L Report</button>
         <button class="nav-item" onclick="navTo('payments',this)"><span class="nav-icon">💳</span>Payments</button>
         <button class="nav-item" onclick="navTo('bills',this)"><span class="nav-icon">📋</span>Bills &amp; Utilities</button>
       </div>
@@ -485,7 +518,7 @@ button{font-family:var(--sans);}
             <div><label>Property</label><select id="ap-site"><option value="">Select...</option></select></div>
             <div><label>Type</label><select id="ap-type"><option value="Rent">Rent</option><option value="Mortgage">Mortgage</option><option value="Late fee">Late fee</option><option value="Deposit">Deposit</option><option value="Other">Other</option></select></div>
             <div><label>Amount ($)</label><input type="number" id="ap-amt" placeholder="0" min="0" step="1"></div>
-            <div><label>Method</label><select id="ap-method"><option value="Zelle">Zelle</option><option value="Cash">Cash</option><option value="Check">Check</option><option value="Other">Other</option></select></div>
+            <div><label>Method</label><select id="ap-method" onchange="autoToggleReceipt('ap-method','ap-send-receipt')"><option value="Zelle">Zelle</option><option value="Cash">Cash</option><option value="Check">Check</option><option value="Other">Other</option></select></div>
             <div><label>Date</label><input type="date" id="ap-date"></div>
             <button class="btn btn-primary" onclick="addPayment()" style="margin-bottom:0;">+ Log</button>
           </div>
@@ -504,7 +537,13 @@ button{font-family:var(--sans);}
 
       <!-- ── LEASES ── -->
       <div class="page" id="page-leases">
-        <div class="page-header"><div class="page-header-left"><h2>Lease documents</h2><p>Upload and manage lease files per property</p></div></div>
+        <div class="page-header">
+        <div class="page-header-left"><h2>Lease documents</h2><p>Upload, generate, and manage leases per property</p></div>
+        <div class="page-header-actions">
+          <button class="btn btn-sm btn-secondary" onclick="openLeaseTemplateModal()">⚙ Manage templates</button>
+          <button class="btn btn-sm btn-primary" onclick="openGenerateLeaseModal()">✦ Generate lease</button>
+        </div>
+      </div>
         <div class="card">
           <div class="card-body no-pad" id="lease-grid-wrap">
             <table class="tbl"><thead><tr><th>Property</th><th>Tenant</th><th>Lease start</th><th>Lease end</th><th>Term</th><th>Time in</th><th>Remaining</th><th>File</th><th></th></tr></thead><tbody id="lease-tbody"></tbody></table>
@@ -521,6 +560,76 @@ button{font-family:var(--sans);}
           <div class="page-header-actions"><button class="btn btn-sm btn-primary" onclick="openNoticeModal()">+ Serve notice</button></div>
         </div>
         <div class="card"><div class="card-body" id="all-notices-list"></div></div>
+      </div>
+
+
+      <!-- ── P&L REPORT ── -->
+      <div class="page" id="page-pl">
+        <div class="page-header">
+          <div class="page-header-left"><h2>Profit &amp; Loss Report</h2><p id="pl-period-label">Portfolio overview</p></div>
+          <div class="page-header-actions">
+            <select id="pl-prop-filter" class="topbar-btn" style="cursor:pointer;" onchange="renderPL()">
+              <option value="ALL">All properties (portfolio)</option>
+            </select>
+            <select id="pl-year" class="topbar-btn" style="cursor:pointer;" onchange="onYearChange()">
+            </select>
+            <input type="date" id="pl-from" class="topbar-btn" style="cursor:pointer;" onchange="renderPL()" placeholder="From">
+            <input type="date" id="pl-to" class="topbar-btn" style="cursor:pointer;" onchange="renderPL()" placeholder="To">
+            <button class="btn btn-sm btn-secondary" onclick="exportPLCSV()">↓ CSV</button>
+            <button class="btn btn-sm btn-secondary" onclick="exportPLPDF()">↓ PDF</button>
+          </div>
+        </div>
+
+        <!-- SUMMARY METRICS -->
+        <div class="metrics" id="pl-metrics" style="grid-template-columns:repeat(4,1fr);"></div>
+
+        <!-- INCOME TABLE -->
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-header"><div class="card-title" style="color:var(--green);">↑ Income</div></div>
+          <table class="tbl" id="pl-income-tbl">
+            <thead><tr id="pl-income-head"></tr></thead>
+            <tbody id="pl-income-body"></tbody>
+            <tfoot id="pl-income-foot"></tfoot>
+          </table>
+        </div>
+
+        <!-- EXPENSE TABLE -->
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-header"><div class="card-title" style="color:var(--red);">↓ Expenses</div></div>
+          <table class="tbl" id="pl-expense-tbl">
+            <thead><tr id="pl-expense-head"></tr></thead>
+            <tbody id="pl-expense-body"></tbody>
+            <tfoot id="pl-expense-foot"></tfoot>
+          </table>
+        </div>
+
+        <!-- NET CASH FLOW TABLE -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Net cash flow</div></div>
+          <table class="tbl" id="pl-net-tbl">
+            <thead><tr id="pl-net-head"></tr></thead>
+            <tbody id="pl-net-body"></tbody>
+          </table>
+        </div>
+
+        <!-- PORTFOLIO GROWTH -->
+        <div class="card" style="margin-top:1rem;" id="pl-growth-card">
+          <div class="card-header"><div class="card-title">📈 Portfolio growth</div><div class="card-sub">Acquisition history, equity, and returns</div></div>
+          <div class="card-body" id="pl-growth-body"></div>
+        </div>
+
+        <!-- MONTHLY BREAKDOWN -->
+        <div class="card" style="margin-top:1rem;">
+          <div class="card-header"><div class="card-title">Monthly breakdown</div><div class="card-sub" id="pl-monthly-sub"></div></div>
+          <table class="tbl">
+            <thead><tr>
+              <th>Month</th><th>Rent collected</th><th>Other income</th><th>Total income</th>
+              <th>Mortgage</th><th>Bills &amp; utilities</th><th>Total expenses</th>
+              <th>Net cash flow</th>
+            </tr></thead>
+            <tbody id="pl-monthly-body"></tbody>
+          </table>
+        </div>
       </div>
 
     </div><!-- /main -->
@@ -548,6 +657,12 @@ button{font-family:var(--sans);}
       </div>
       <div class="f-group"><label>Yard maintenance responsibility</label>
         <select id="e-yard"><option value="">Not specified</option><option value="Tenant">Tenant</option><option value="Owner">Owner</option><option value="Shared">Shared</option><option value="HOA">HOA</option><option value="Management">Property management</option></select>
+      </div>
+      <div class="modal-section-title">Acquisition</div>
+      <div class="grid-3">
+        <div class="f-group"><label>Purchase date</label><input type="date" id="e-purchase-date"></div>
+        <div class="f-group"><label>Purchase price ($)</label><input type="number" id="e-purchase-price" min="0" step="1" placeholder="0"></div>
+        <div class="f-group"><label>Estimated current value ($)</label><input type="number" id="e-current-value" min="0" step="1" placeholder="0"></div>
       </div>
       <div class="modal-section-title">Lease</div>
       <div class="grid-3">
@@ -578,12 +693,16 @@ button{font-family:var(--sans);}
       <div class="f-group"><label>Property</label><select id="ap2-site"><option value="">Select property...</option></select></div>
       <div class="grid-2">
         <div class="f-group"><label>Type</label><select id="ap2-type"><option value="Rent">Rent</option><option value="Mortgage">Mortgage</option><option value="Late fee">Late fee</option><option value="Deposit">Deposit</option><option value="Other">Other</option></select></div>
-        <div class="f-group"><label>Method</label><select id="ap2-method"><option value="Zelle">Zelle</option><option value="Cash">Cash</option><option value="Check">Check</option><option value="Other">Other</option></select></div>
+        <div class="f-group"><label>Method</label><select id="ap2-method" onchange="autoToggleReceipt('ap2-method','ap2-send-receipt')"><option value="Zelle">Zelle</option><option value="Cash">Cash</option><option value="Check">Check</option><option value="Other">Other</option></select></div>
       </div>
       <div class="grid-2">
         <div class="f-group"><label>Amount ($)</label><input type="number" id="ap2-amt" placeholder="0" min="0" step="1"></div>
         <div class="f-group"><label>Date</label><input type="date" id="ap2-date"></div>
       </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;margin-top:0.5rem;">
+        <input type="checkbox" id="ap2-send-receipt" checked style="cursor:pointer;">
+        Send receipt email to tenant
+      </label>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('addpay-overlay')">Cancel</button>
@@ -720,6 +839,166 @@ button{font-family:var(--sans);}
   </div>
 </div>
 
+<!-- LEASE TEMPLATE MODAL -->
+<div class="overlay" id="lease-template-overlay">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header"><h3>Lease templates</h3><button class="modal-close" onclick="closeModal('lease-template-overlay')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">Upload your master lease templates once. The app will use these to generate filled leases for each tenant.</p>
+      <div class="card" style="margin-bottom:10px;">
+        <div class="card-header">
+          <div><div class="card-title">🚐 RV Site Lease Template</div><div class="card-sub" id="rv-template-status">No template uploaded</div></div>
+          <div class="card-actions">
+            <button class="btn btn-xs btn-secondary" onclick="document.getElementById('rv-template-upload').click()">Upload</button>
+            <button class="btn btn-xs btn-secondary" id="rv-template-download" style="display:none" onclick="downloadTemplate('rv')">↓</button>
+          </div>
+        </div>
+        <input type="file" id="rv-template-upload" accept=".docx" style="display:none;" onchange="handleTemplateUpload(event,'rv')">
+      </div>
+      <div class="card" style="margin-bottom:10px;">
+        <div class="card-header">
+          <div><div class="card-title">🏡 House Lease Template</div><div class="card-sub" id="house-template-status">No template uploaded</div></div>
+          <div class="card-actions">
+            <button class="btn btn-xs btn-secondary" onclick="document.getElementById('house-template-upload').click()">Upload</button>
+            <button class="btn btn-xs btn-secondary" id="house-template-download" style="display:none" onclick="downloadTemplate('house')">↓</button>
+          </div>
+        </div>
+        <input type="file" id="house-template-upload" accept=".docx" style="display:none;" onchange="handleTemplateUpload(event,'house')">
+      </div>
+      <div class="info-box" style="margin-top:1rem;">
+        Templates use <strong>{{PLACEHOLDER}}</strong> tags that get replaced with real tenant data. Download the pre-built RC Properties templates to get started.
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-xs btn-secondary" onclick="downloadPrebuiltTemplate('rv')">↓ RV template (.docx)</button>
+          <button class="btn btn-xs btn-secondary" onclick="downloadPrebuiltTemplate('house')">↓ House template (.docx)</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('lease-template-overlay')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- GENERATE LEASE MODAL -->
+<div class="overlay" id="generate-lease-overlay">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header"><h3>Generate lease</h3><button class="modal-close" onclick="closeModal('generate-lease-overlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-section-title">Property & tenant</div>
+      <div class="f-group"><label>Property</label><select id="gl-prop"><option value="">Select property...</option></select></div>
+      <div class="grid-2">
+        <div class="f-group"><label>Tenant name</label><input type="text" id="gl-tenant" placeholder="Full legal name"></div>
+        <div class="f-group"><label>Co-tenant name</label><input type="text" id="gl-cotenant" placeholder="If applicable"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Tenant email</label><input type="email" id="gl-email" placeholder="tenant@email.com"></div>
+        <div class="f-group"><label>Tenant phone</label><input type="text" id="gl-phone" placeholder="(253) 555-0000"></div>
+      </div>
+      <div class="f-group"><label>Emergency contact</label><input type="text" id="gl-emergency" placeholder="Name — Phone"></div>
+      <div class="modal-section-title">Lease terms</div>
+      <div class="grid-3">
+        <div class="f-group"><label>Agreement date</label><input type="date" id="gl-agr-date"></div>
+        <div class="f-group"><label>Lease start</label><input type="date" id="gl-start"></div>
+        <div class="f-group"><label>Lease end</label><input type="date" id="gl-end"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Lease type</label>
+          <select id="gl-lease-type">
+            <option value="Month-to-Month">Month-to-Month</option>
+            <option value="Fixed term — 6 months">Fixed term — 6 months</option>
+            <option value="Fixed term — 12 months">Fixed term — 12 months</option>
+            <option value="Fixed term — 24 months">Fixed term — 24 months</option>
+          </select>
+        </div>
+        <div class="f-group"><label>Payment method</label>
+          <select id="gl-payment-method">
+            <option value="Zelle">Zelle</option>
+            <option value="ACH bank transfer">ACH bank transfer</option>
+            <option value="Check">Check</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-section-title">Additional details</div>
+      <div class="grid-2">
+        <div class="f-group"><label>Deposit date received</label><input type="date" id="gl-deposit-date"></div>
+        <div class="f-group"><label>Authorized occupants</label><input type="text" id="gl-occupants" placeholder="List all names"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Max occupants</label><input type="number" id="gl-max-occ" placeholder="e.g. 4" min="1"></div>
+        <div class="f-group"><label>Authorized vehicles</label><input type="text" id="gl-vehicles" placeholder="Make, model, plate"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Pet permitted</label>
+          <select id="gl-pet-permitted">
+            <option value="No pets permitted">No pets permitted</option>
+            <option value="Yes — as approved below">Yes — as approved</option>
+          </select>
+        </div>
+        <div class="f-group"><label>Pet details</label><input type="text" id="gl-pet-details" placeholder="Breed, name, weight"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Pet deposit</label><input type="text" id="gl-pet-deposit" placeholder="$0"></div>
+        <div class="f-group"><label>Monthly pet fee</label><input type="text" id="gl-pet-fee" placeholder="$0"></div>
+      </div>
+      <div id="rv-extra-fields">
+        <div class="modal-section-title">RV details</div>
+        <div class="grid-2">
+          <div class="f-group"><label>RV make / model</label><input type="text" id="gl-rv-make" placeholder="e.g. Keystone Cougar"></div>
+          <div class="f-group"><label>RV year</label><input type="text" id="gl-rv-year" placeholder="e.g. 2019"></div>
+        </div>
+        <div class="grid-2">
+          <div class="f-group"><label>License plate</label><input type="text" id="gl-rv-plate" placeholder="e.g. WA-ABC123"></div>
+          <div class="f-group"><label>RV length (ft)</label><input type="text" id="gl-rv-length" placeholder="e.g. 32"></div>
+        </div>
+        <div class="f-group"><label>Max vehicles on site</label><input type="text" id="gl-max-vehicles" placeholder="e.g. 2"></div>
+      </div>
+      <div id="house-extra-fields" style="display:none;">
+        <div class="modal-section-title">House details</div>
+        <div class="f-group"><label>Appliances provided</label><input type="text" id="gl-appliances" placeholder="Refrigerator, stove, dishwasher..."></div>
+        <div class="grid-2">
+          <div class="f-group"><label>HVAC type</label><input type="text" id="gl-hvac" placeholder="e.g. Forced air / heat pump"></div>
+          <div class="f-group"><label>Water heater type</label><input type="text" id="gl-water-heater" placeholder="e.g. Electric tank 50gal"></div>
+        </div>
+        <div class="grid-2">
+          <div class="f-group"><label>Parking spaces</label><input type="text" id="gl-parking" placeholder="e.g. 2-car garage + driveway"></div>
+          <div class="f-group"><label>Renter's insurance</label>
+            <select id="gl-renters-ins">
+              <option value="Required — minimum $100,000 liability">Required</option>
+              <option value="Strongly recommended">Strongly recommended</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="f-group"><label>Built before 1978</label>
+            <select id="gl-lead-paint">
+              <option value="No">No</option>
+              <option value="Yes — disclosure attached">Yes — disclosure attached</option>
+              <option value="Unknown">Unknown</option>
+            </select>
+          </div>
+          <div class="f-group"><label>Known mold conditions</label>
+            <select id="gl-mold">
+              <option value="None known">None known</option>
+              <option value="See attached disclosure">See attached disclosure</option>
+            </select>
+          </div>
+        </div>
+        <div class="f-group"><label>Smoking policy</label>
+          <select id="gl-smoking">
+            <option value="Prohibited entirely — inside and outside">Prohibited entirely</option>
+            <option value="Permitted outdoors only — not inside">Outdoors only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('generate-lease-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="generateLease()">✦ Generate & download</button>
+    </div>
+  </div>
+</div>
+
 <!-- SETUP MODAL -->
 <div class="overlay" id="setup-overlay">
   <div class="modal" style="max-width:460px;">
@@ -771,7 +1050,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
+    nickname:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -846,7 +1125,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',purchasePrice:0,purchaseDate:'',currentValue:0,...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -917,7 +1196,7 @@ async function loadFromSheets(){
     if(sr.values&&sr.values.length){
       sites=sr.values.map(r=>({
         id:r[0]||'',name:r[1]||'',addr:r[2]||'',type:r[3]||'rv',state:r[4]||'wa',
-        nickname:r[20]||'',tenantEmail:r[21]||'',tenant:r[5]||'',rent:parseFloat(r[6])||0,mortgage:parseFloat(r[7])||0,paid:parseFloat(r[8])||0,
+        nickname:r[20]||'',tenantEmail:r[21]||'',purchaseDate:r[22]||'',purchasePrice:parseFloat(r[23])||0,currentValue:parseFloat(r[24])||0,tenant:r[5]||'',rent:parseFloat(r[6])||0,mortgage:parseFloat(r[7])||0,paid:parseFloat(r[8])||0,
         start:r[9]||'',end:r[10]||'',term:r[11]||'12',status:r[12]||'vacant',
         lease:r[13]||null,yard:r[14]||'',taxAmt:parseFloat(r[15])||0,
         tax1:r[16]||'',tax2:r[17]||'',taxNotes:r[18]||'',
@@ -937,7 +1216,7 @@ async function saveToSheets(){
   if(!accessToken){tokenClient.requestAccessToken({prompt:''});return;}
   setSyncStatus('loading');
   try{
-    const sRows=sites.map(s=>[s.id,s.name,s.addr,s.type,s.state,s.tenant,s.rent,s.mortgage||0,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.yard||'',s.taxAmt||0,s.tax1||'',s.tax2||'',s.taxNotes||'',JSON.stringify(s.notes||[]),s.nickname||'',s.tenantEmail||'']);
+    const sRows=sites.map(s=>[s.id,s.name,s.addr,s.type,s.state,s.tenant,s.rent,s.mortgage||0,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.yard||'',s.taxAmt||0,s.tax1||'',s.tax2||'',s.taxNotes||'',JSON.stringify(s.notes||[]),s.nickname||'',s.tenantEmail||'',s.purchaseDate||'',s.purchasePrice||0,s.currentValue||0]);
     const pRows=payments.map(p=>[p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||'']);
     const bRows=bills.map(b=>[b.date,b.prop,b.type,b.amount,b.notes||'']);
     const nRows=notices.map(n=>[n.prop,n.type,n.date,n.deadline,n.amt||0,n.notes||'',n.outcome||'Pending']);
@@ -992,6 +1271,7 @@ function navTo(pageId,btn){
   const pg=document.getElementById('page-'+pageId);
   if(pg)pg.classList.add('active');
   if(btn)btn.classList.add('active');
+  if(pageId==='pl'){initPL();renderPL();}
   if(pageId==='bills')renderBills();
   if(pageId==='leases')renderLeases();
   if(pageId==='payments')renderPayLog();
@@ -1275,7 +1555,8 @@ function renderLeases(){
       <td>
         <div class="row-actions">
           ${s.lease?`<button class="btn btn-xs btn-secondary" onclick="showToast('Download: ${s.lease}')">↓</button>`:''}
-          <button class="btn btn-xs btn-secondary" onclick="triggerUpload(${i})">↑</button>
+          <button class="btn btn-xs btn-secondary" onclick="triggerUpload(${i})">↑ Upload</button>
+          <button class="btn btn-xs btn-primary" onclick="openGenerateLeaseModal(${i})">✦ Generate</button>
         </div>
       </td>
     </tr>`;
@@ -1306,9 +1587,14 @@ function addPayment(){
   if(type==='Rent'&&s){s.paid=Math.round((s.paid||0)+amt);if(s.paid>=s.rent)s.status='current';}
   document.getElementById('ap-site').value='';document.getElementById('ap-amt').value='';
   saveLocal();render();renderPayLog();
-  sendReceipt(site,type,amt,method,date).then(sent=>{
-    showToast(sent?'Payment logged & receipt sent ✓':'Payment logged. (No tenant email on file)');
-  });
+  const sendRec = document.getElementById('ap-send-receipt').checked;
+  if(sendRec){
+    sendReceipt(site,type,amt,method,date).then(sent=>{
+      showToast(sent?'Payment logged & receipt sent ✓':'Payment logged. (No tenant email on file)');
+    });
+  } else {
+    showToast('Payment logged.');
+  }
 }
 function submitAddPay(){
   const site=document.getElementById('ap2-site').value;
@@ -1322,9 +1608,14 @@ function submitAddPay(){
   if(type==='Rent'&&s){s.paid=Math.round((s.paid||0)+amt);if(s.paid>=s.rent)s.status='current';}
   document.getElementById('ap2-site').value='';document.getElementById('ap2-amt').value='';
   closeModal('addpay-overlay');saveLocal();render();
-  sendReceipt(site,type,amt,method,date).then(sent=>{
-    showToast(sent?'Payment logged & receipt sent ✓':'Payment logged. (No tenant email on file)');
-  });
+  const sendRec2 = document.getElementById('ap2-send-receipt').checked;
+  if(sendRec2){
+    sendReceipt(site,type,amt,method,date).then(sent=>{
+      showToast(sent?'Payment logged & receipt sent ✓':'Payment logged. (No tenant email on file)');
+    });
+  } else {
+    showToast('Payment logged.');
+  }
 }
 function saveBill(){
   const prop=document.getElementById('b-prop').value;
@@ -1366,6 +1657,9 @@ function openEditModal(i){
   editIdx=i;const s=sites[i];
   document.getElementById('edit-title').textContent=`Edit — ${s.nickname||s.name}`;
   document.getElementById('e-nickname').value=s.nickname||'';
+  document.getElementById('e-purchase-date').value=s.purchaseDate||'';
+  document.getElementById('e-purchase-price').value=s.purchasePrice||'';
+  document.getElementById('e-current-value').value=s.currentValue||'';
   document.getElementById('e-tenant').value=s.tenant!=='(Vacant)'?s.tenant:'';
   document.getElementById('e-email').value=s.tenantEmail||'';
   document.getElementById('e-status').value=s.status;
@@ -1384,6 +1678,9 @@ function openEditModal(i){
 function saveEdit(){
   if(editIdx===null)return;const s=sites[editIdx];
   s.nickname=document.getElementById('e-nickname').value.trim();
+  s.purchaseDate=document.getElementById('e-purchase-date').value;
+  s.purchasePrice=parseInt(document.getElementById('e-purchase-price').value)||0;
+  s.currentValue=parseInt(document.getElementById('e-current-value').value)||0;
   s.tenant=document.getElementById('e-tenant').value.trim()||'(Vacant)';
   s.tenantEmail=document.getElementById('e-email').value.trim();
   s.status=document.getElementById('e-status').value;
@@ -1565,6 +1862,643 @@ async function sendReceipt(siteId, type, amount, method, date){
     console.error('EmailJS error:', JSON.stringify(e), e.text||e.message||e);
     return false;
   }
+}
+
+// LEASE TEMPLATE STORAGE
+let leaseTemplates = { rv: null, house: null };
+
+function openLeaseTemplateModal() {
+  updateTemplateStatus();
+  document.getElementById('lease-template-overlay').classList.add('open');
+}
+
+function updateTemplateStatus() {
+  const saved = JSON.parse(localStorage.getItem('pm_templates') || '{}');
+  leaseTemplates.rv = saved.rv || null;
+  leaseTemplates.house = saved.house || null;
+  document.getElementById('rv-template-status').textContent = leaseTemplates.rv ? 'Template loaded ✓' : 'No template uploaded';
+  document.getElementById('house-template-status').textContent = leaseTemplates.house ? 'Template loaded ✓' : 'No template uploaded';
+  document.getElementById('rv-template-download').style.display = leaseTemplates.rv ? 'inline-flex' : 'none';
+  document.getElementById('house-template-download').style.display = leaseTemplates.house ? 'inline-flex' : 'none';
+}
+
+function handleTemplateUpload(e, type) {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const saved = JSON.parse(localStorage.getItem('pm_templates') || '{}');
+    saved[type] = { name: f.name, data: ev.target.result };
+    localStorage.setItem('pm_templates', JSON.stringify(saved));
+    leaseTemplates[type] = saved[type];
+    updateTemplateStatus();
+    showToast(`${type === 'rv' ? 'RV' : 'House'} lease template uploaded.`);
+  };
+  reader.readAsDataURL(f);
+  e.target.value = '';
+}
+
+function downloadTemplate(type) {
+  const t = leaseTemplates[type];
+  if (!t) return;
+  const a = document.createElement('a');
+  a.href = t.data; a.download = t.name; a.click();
+}
+
+function downloadPrebuiltTemplate(type) {
+  showToast('Download the template from the files provided with your app.');
+}
+
+function openGenerateLeaseModal(propIdx = null) {
+  // Populate property dropdown
+  const sel = document.getElementById('gl-prop');
+  sel.innerHTML = '<option value="">Select property...</option>' +
+    sites.map((s, i) => `<option value="${i}">${displayName(s)}</option>`).join('');
+
+  const today2 = today();
+  document.getElementById('gl-agr-date').value = today2;
+  document.getElementById('gl-start').value = today2;
+  document.getElementById('gl-deposit-date').value = today2;
+
+  if (propIdx !== null) {
+    sel.value = propIdx;
+    propSelected(propIdx);
+  }
+
+  sel.onchange = () => {
+    const idx = parseInt(sel.value);
+    if (!isNaN(idx)) propSelected(idx);
+  };
+
+  document.getElementById('generate-lease-overlay').classList.add('open');
+}
+
+function propSelected(idx) {
+  const s = sites[idx];
+  if (!s) return;
+  document.getElementById('gl-tenant').value = s.tenant !== '(Vacant)' ? s.tenant : '';
+  document.getElementById('gl-email').value = s.tenantEmail || '';
+  document.getElementById('gl-start').value = s.start || today();
+  document.getElementById('gl-end').value = s.end || '';
+  document.getElementById('gl-occupants').value = s.tenant !== '(Vacant)' ? s.tenant : '';
+
+  // Show/hide RV vs house fields
+  const isRV = s.type === 'rv';
+  document.getElementById('rv-extra-fields').style.display = isRV ? 'block' : 'none';
+  document.getElementById('house-extra-fields').style.display = isRV ? 'none' : 'block';
+}
+
+async function generateLease() {
+  const propIdx = parseInt(document.getElementById('gl-prop').value);
+  if (isNaN(propIdx)) { showToast('Please select a property.'); return; }
+  const s = sites[propIdx];
+  const tenantName = document.getElementById('gl-tenant').value.trim();
+  if (!tenantName) { showToast('Please enter the tenant name.'); return; }
+
+  const isRV = s.type === 'rv';
+
+  // Build replacements map
+  const leaseEnd = document.getElementById('gl-end').value;
+  const replacements = {
+    AGREEMENT_DATE: document.getElementById('gl-agr-date').value,
+    TENANT_NAME: tenantName,
+    CO_TENANT_NAME: document.getElementById('gl-cotenant').value.trim() || 'N/A',
+    PROPERTY_ADDRESS: s.addr,
+    PROPERTY_CITY: s.addr.split(',')[1]?.trim() || '',
+    PROPERTY_ZIP: '',
+    SITE_DESCRIPTION: displayName(s),
+    LEASE_TYPE: document.getElementById('gl-lease-type').value,
+    LEASE_START: document.getElementById('gl-start').value,
+    LEASE_END: leaseEnd || 'N/A (Month-to-Month)',
+    RENT_AMOUNT: fmt(s.rent),
+    TOTAL_DUE_AT_SIGNING: fmt(s.rent * 2),
+    DEPOSIT_DATE: document.getElementById('gl-deposit-date').value,
+    PAYMENT_METHOD: document.getElementById('gl-payment-method').value,
+    TENANT_EMAIL: document.getElementById('gl-email').value.trim() || '______________________',
+    TENANT_PHONE: document.getElementById('gl-phone').value.trim() || '______________________',
+    EMERGENCY_CONTACT: document.getElementById('gl-emergency').value.trim() || '______________________',
+    YARD_RESPONSIBILITY: s.yard || 'As agreed',
+    AUTHORIZED_OCCUPANTS: document.getElementById('gl-occupants').value.trim() || tenantName,
+    MAX_OCCUPANTS: document.getElementById('gl-max-occ').value || '______',
+    AUTHORIZED_VEHICLES: document.getElementById('gl-vehicles').value.trim() || '______________________',
+    PET_PERMITTED: document.getElementById('gl-pet-permitted').value,
+    PET_DETAILS: document.getElementById('gl-pet-details').value.trim() || 'N/A',
+    PET_DEPOSIT: document.getElementById('gl-pet-deposit').value.trim() || '$0',
+    PET_FEE: document.getElementById('gl-pet-fee').value.trim() || '$0',
+    // RV fields
+    RV_MAKE_MODEL: document.getElementById('gl-rv-make').value.trim() || '______________________',
+    RV_YEAR: document.getElementById('gl-rv-year').value.trim() || '______',
+    RV_PLATE: document.getElementById('gl-rv-plate').value.trim() || '______________________',
+    RV_LENGTH: document.getElementById('gl-rv-length').value.trim() || '______',
+    MAX_VEHICLES: document.getElementById('gl-max-vehicles').value.trim() || '______',
+    // House fields
+    APPLIANCES_PROVIDED: document.getElementById('gl-appliances').value.trim() || '______________________',
+    HVAC_TYPE: document.getElementById('gl-hvac').value.trim() || '______________________',
+    WATER_HEATER_TYPE: document.getElementById('gl-water-heater').value.trim() || '______________________',
+    PARKING_SPACES: document.getElementById('gl-parking').value.trim() || '______________________',
+    RENTERS_INSURANCE_REQUIRED: document.getElementById('gl-renters-ins').value,
+    LEAD_PAINT_BUILT_BEFORE_1978: document.getElementById('gl-lead-paint').value,
+    LEAD_PAINT_KNOWN: 'Unknown',
+    MOLD_DISCLOSURE: document.getElementById('gl-mold').value,
+    SMOKING_POLICY: document.getElementById('gl-smoking').value,
+    // Utility defaults
+    UTILITY_WATER: 'Included', UTILITY_SEWER: 'Included',
+    UTILITY_ELECTRIC: 'Included', UTILITY_PROPANE: 'Included',
+    UTILITY_TRASH: 'Included', UTILITY_INTERNET: 'Not provided',
+  };
+
+  // Get template from storage
+  const saved = JSON.parse(localStorage.getItem('pm_templates') || '{}');
+  const templateKey = isRV ? 'rv' : 'house';
+  const template = saved[templateKey];
+
+  if (!template) {
+    showToast(`No ${isRV ? 'RV' : 'house'} lease template uploaded. Go to ⚙ Manage templates first.`);
+    return;
+  }
+
+  showToast('Generating lease...');
+  closeModal('generate-lease-overlay');
+
+  try {
+    // Fetch template as arraybuffer
+    const res = await fetch(template.data);
+    const arrayBuf = await res.arrayBuffer();
+    const uint8 = new Uint8Array(arrayBuf);
+
+    // Use JSZip to open the docx and replace placeholders in document.xml
+    const JSZip = (await import('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js')).default;
+    const zip = await JSZip.loadAsync(uint8);
+
+    // Replace in document.xml, header, and footer files
+    const filesToProcess = Object.keys(zip.files).filter(name =>
+      name.includes('word/document') || name.includes('word/header') || name.includes('word/footer')
+    );
+
+    for (const fileName of filesToProcess) {
+      let xmlContent = await zip.file(fileName).async('string');
+      for (const [key, value] of Object.entries(replacements)) {
+        // Placeholders may have XML tags splitting them, so replace the full {{TAG}} pattern
+        xmlContent = xmlContent.split(`{{${key}}}`).join(value);
+      }
+      zip.file(fileName, xmlContent);
+    }
+
+    const filled = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const filename = `${displayName(s).replace(/[^a-z0-9]/gi,'_')}_Lease_${tenantName.replace(/\s+/g,'_')}_${replacements.LEASE_START}.docx`;
+    saveAs(filled, filename);
+
+    // Save lease reference to site
+    s.lease = filename;
+    if (s.tenant === '(Vacant)' || !s.tenant) {
+      s.tenant = tenantName;
+      s.tenantEmail = document.getElementById('gl-email').value.trim();
+      s.start = document.getElementById('gl-start').value;
+      s.end = leaseEnd;
+      s.status = 'current';
+    }
+    saveLocal(); render(); renderLeases();
+    showToast(`Lease generated and downloaded: ${filename}`);
+
+    // Save to Google Drive if connected
+    if (gapiReady && accessToken) {
+      showToast('Saving to Google Drive...');
+      // Convert blob to base64 for Drive upload
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const base64 = ev.target.result.split(',')[1];
+          await gapi.client.request({
+            path: 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: filename, mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+          });
+          showToast('Saved to Google Drive ✓');
+        } catch(e) { console.error('Drive save error:', e); }
+      };
+      reader.readAsDataURL(filled);
+    }
+  } catch(e) {
+    console.error('Lease generation error:', e);
+    showToast('Error generating lease. Check console.');
+  }
+}
+
+// P&L REPORT
+function initPL() {
+  // Populate year selector
+  const yearSel = document.getElementById('pl-year');
+  const currentYear = new Date().getFullYear();
+  yearSel.innerHTML = '<option value="custom">Custom range</option>';
+  for (let y = currentYear; y >= currentYear - 5; y--) {
+    yearSel.innerHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`;
+  }
+  // Populate property filter
+  const propSel = document.getElementById('pl-prop-filter');
+  propSel.innerHTML = '<option value="ALL">All properties (portfolio)</option>' +
+    sites.map(s => `<option value="${s.id}">${displayName(s)}</option>`).join('');
+  // Set default date range to current year
+  setYearRange(currentYear);
+}
+
+function onYearChange() {
+  const val = document.getElementById('pl-year').value;
+  if (val === 'custom') return;
+  setYearRange(parseInt(val));
+}
+
+function setYearRange(year) {
+  document.getElementById('pl-from').value = `${year}-01-01`;
+  document.getElementById('pl-to').value = `${year}-12-31`;
+  renderPL();
+}
+
+function getPLDates() {
+  const from = document.getElementById('pl-from').value;
+  const to = document.getElementById('pl-to').value;
+  return { from, to };
+}
+
+function inDateRange(dateStr, from, to) {
+  if (!dateStr) return false;
+  return dateStr >= from && dateStr <= to;
+}
+
+function renderPL() {
+  const { from, to } = getPLDates();
+  if (!from || !to) return;
+  const propFilter = document.getElementById('pl-prop-filter').value;
+  const isPortfolio = propFilter === 'ALL';
+  const filteredSitesPL = isPortfolio ? sites : sites.filter(s => s.id === propFilter);
+
+  document.getElementById('pl-period-label').textContent =
+    `${isPortfolio ? 'All properties' : displayName(filteredSitesPL[0] || sites[0])} · ${from} to ${to}`;
+  document.getElementById('pl-monthly-sub').textContent =
+    `${from.slice(0,7)} through ${to.slice(0,7)}`;
+
+  // ── INCOME ──
+  const rentIncome = {};
+  const lateFeeIncome = {};
+  const depositIncome = {};
+  const otherIncome = {};
+
+  filteredSitesPL.forEach(s => {
+    rentIncome[s.id] = 0; lateFeeIncome[s.id] = 0;
+    depositIncome[s.id] = 0; otherIncome[s.id] = 0;
+  });
+
+  payments.filter(p => inDateRange(p.date, from, to)).forEach(p => {
+    const s = filteredSitesPL.find(s => s.id === p.site);
+    if (!s) return;
+    if (p.type === 'Rent') rentIncome[s.id] = (rentIncome[s.id] || 0) + p.amount;
+    else if (p.type === 'Late fee') lateFeeIncome[s.id] = (lateFeeIncome[s.id] || 0) + p.amount;
+    else if (p.type === 'Deposit') depositIncome[s.id] = (depositIncome[s.id] || 0) + p.amount;
+    else otherIncome[s.id] = (otherIncome[s.id] || 0) + p.amount;
+  });
+
+  // ── EXPENSES ──
+  const mortgageExp = {};
+  const billsExp = {};
+  const taxExp = {};
+  const maintenanceExp = {};
+
+  filteredSitesPL.forEach(s => {
+    mortgageExp[s.id] = 0; billsExp[s.id] = 0;
+    taxExp[s.id] = 0; maintenanceExp[s.id] = 0;
+  });
+
+  // Mortgage from payment log
+  payments.filter(p => inDateRange(p.date, from, to) && p.type === 'Mortgage').forEach(p => {
+    const s = filteredSitesPL.find(s => s.id === p.site);
+    if (s) mortgageExp[s.id] = (mortgageExp[s.id] || 0) + p.amount;
+  });
+
+  // Bills
+  bills.filter(b => inDateRange(b.date, from, to)).forEach(b => {
+    const s = filteredSitesPL.find(s => s.id === b.prop);
+    if (!s) {
+      // Shared bill — split across all filtered sites
+      if (b.prop === 'ALL') {
+        const share = b.amount / filteredSitesPL.length;
+        filteredSitesPL.forEach(s2 => {
+          if (b.type === 'Property tax') taxExp[s2.id] = (taxExp[s2.id] || 0) + share;
+          else billsExp[s2.id] = (billsExp[s2.id] || 0) + share;
+        });
+      }
+      return;
+    }
+    if (b.type === 'Property tax') taxExp[s.id] = (taxExp[s.id] || 0) + b.amount;
+    else billsExp[s.id] = (billsExp[s.id] || 0) + b.amount;
+  });
+
+  // ── TOTALS ──
+  const totalRent = filteredSitesPL.reduce((a, s) => a + (rentIncome[s.id] || 0), 0);
+  const totalLate = filteredSitesPL.reduce((a, s) => a + (lateFeeIncome[s.id] || 0), 0);
+  const totalDeposit = filteredSitesPL.reduce((a, s) => a + (depositIncome[s.id] || 0), 0);
+  const totalOther = filteredSitesPL.reduce((a, s) => a + (otherIncome[s.id] || 0), 0);
+  const totalIncome = totalRent + totalLate + totalDeposit + totalOther;
+
+  const totalMortgage = filteredSitesPL.reduce((a, s) => a + (mortgageExp[s.id] || 0), 0);
+  const totalBills = filteredSitesPL.reduce((a, s) => a + (billsExp[s.id] || 0), 0);
+  const totalTax = filteredSitesPL.reduce((a, s) => a + (taxExp[s.id] || 0), 0);
+  const totalMaint = filteredSitesPL.reduce((a, s) => a + (maintenanceExp[s.id] || 0), 0);
+  const totalExpenses = totalMortgage + totalBills + totalTax + totalMaint;
+  const netCashFlow = totalIncome - totalExpenses;
+  const noi = totalIncome - totalBills - totalTax - totalMaint; // before mortgage
+  const margin = totalIncome > 0 ? Math.round((netCashFlow / totalIncome) * 100) : 0;
+
+  // ── RENDER METRICS ──
+  document.getElementById('pl-metrics').innerHTML = `
+    <div class="pl-metric income"><div class="lbl">Total income</div><div class="val positive">${fmt(totalIncome)}</div><div class="sub">Rent + fees + deposits</div></div>
+    <div class="pl-metric expense"><div class="lbl">Total expenses</div><div class="val negative">${fmt(totalExpenses)}</div><div class="sub">Mortgage + bills + taxes</div></div>
+    <div class="pl-metric net"><div class="lbl">Net cash flow</div><div class="val ${netCashFlow >= 0 ? 'positive' : 'negative'}">${fmt(netCashFlow)}</div><div class="sub">After all expenses</div></div>
+    <div class="pl-metric margin"><div class="lbl">Profit margin</div><div class="val" style="color:var(--amber);">${margin}%</div><div class="sub">NOI: ${fmt(noi)}</div></div>
+  `;
+
+  // ── RENDER INCOME TABLE ──
+  const propCols = isPortfolio ? filteredSitesPL.map(s => `<th>${displayName(s)}</th>`).join('') : '';
+  const incomeHead = `<th>Category</th>${propCols}<th>Total</th>`;
+  document.getElementById('pl-income-head').innerHTML = incomeHead;
+
+  const incomeRows = [
+    ['Rent collected', rentIncome],
+    ['Late fees', lateFeeIncome],
+    ['Deposits', depositIncome],
+    ['Other', otherIncome],
+  ];
+  document.getElementById('pl-income-body').innerHTML = incomeRows.map(([label, data]) => {
+    const rowTotal = filteredSitesPL.reduce((a, s) => a + (data[s.id] || 0), 0);
+    const propCells = isPortfolio ? filteredSitesPL.map(s => `<td>${fmt(data[s.id] || 0)}</td>`).join('') : '';
+    return `<tr><td style="font-weight:500;">${label}</td>${propCells}<td class="positive">${fmt(rowTotal)}</td></tr>`;
+  }).join('');
+  const incomeFoot = isPortfolio ? filteredSitesPL.map(s => {
+    const t = (rentIncome[s.id]||0)+(lateFeeIncome[s.id]||0)+(depositIncome[s.id]||0)+(otherIncome[s.id]||0);
+    return `<td class="income-total">${fmt(t)}</td>`;
+  }).join('') : '';
+  document.getElementById('pl-income-foot').innerHTML = `<tr><td class="income-total">Total income</td>${incomeFoot}<td class="income-total">${fmt(totalIncome)}</td></tr>`;
+
+  // ── RENDER EXPENSE TABLE ──
+  document.getElementById('pl-expense-head').innerHTML = incomeHead;
+  const expenseRows = [
+    ['Mortgage payments', mortgageExp],
+    ['Bills & utilities', billsExp],
+    ['Property taxes', taxExp],
+    ['Maintenance', maintenanceExp],
+  ];
+  document.getElementById('pl-expense-body').innerHTML = expenseRows.map(([label, data]) => {
+    const rowTotal = filteredSitesPL.reduce((a, s) => a + (data[s.id] || 0), 0);
+    const propCells = isPortfolio ? filteredSitesPL.map(s => `<td>${fmt(data[s.id] || 0)}</td>`).join('') : '';
+    return `<tr><td style="font-weight:500;">${label}</td>${propCells}<td class="negative">${fmt(rowTotal)}</td></tr>`;
+  }).join('');
+  const expenseFoot = isPortfolio ? filteredSitesPL.map(s => {
+    const t = (mortgageExp[s.id]||0)+(billsExp[s.id]||0)+(taxExp[s.id]||0)+(maintenanceExp[s.id]||0);
+    return `<td class="expense-total">${fmt(t)}</td>`;
+  }).join('') : '';
+  document.getElementById('pl-expense-foot').innerHTML = `<tr><td class="expense-total">Total expenses</td>${expenseFoot}<td class="expense-total">${fmt(totalExpenses)}</td></tr>`;
+
+  // ── RENDER NET TABLE ──
+  document.getElementById('pl-net-head').innerHTML = incomeHead;
+  const netRow = isPortfolio ? filteredSitesPL.map(s => {
+    const inc = (rentIncome[s.id]||0)+(lateFeeIncome[s.id]||0)+(depositIncome[s.id]||0)+(otherIncome[s.id]||0);
+    const exp = (mortgageExp[s.id]||0)+(billsExp[s.id]||0)+(taxExp[s.id]||0)+(maintenanceExp[s.id]||0);
+    const net = inc - exp;
+    return `<td class="${net >= 0 ? 'positive' : 'negative'}">${fmt(net)}</td>`;
+  }).join('') : '';
+  document.getElementById('pl-net-body').innerHTML =
+    `<tr><td style="font-weight:600;">Net cash flow</td>${netRow}<td class="${netCashFlow >= 0 ? 'positive' : 'negative'}">${fmt(netCashFlow)}</td></tr>`;
+
+  // ── PORTFOLIO GROWTH ──
+  renderPortfolioGrowth(filteredSitesPL);
+
+  // ── MONTHLY BREAKDOWN ──
+  const months = getMonthsInRange(from, to);
+  document.getElementById('pl-monthly-body').innerHTML = months.map(({ label, key }) => {
+    const mPays = payments.filter(p => p.date.startsWith(key) && filteredSitesPL.some(s => s.id === p.site));
+    const mBills = bills.filter(b => b.date.startsWith(key) && (filteredSitesPL.some(s => s.id === b.prop) || b.prop === 'ALL'));
+    const mRent = mPays.filter(p => p.type === 'Rent').reduce((a, p) => a + p.amount, 0);
+    const mOther = mPays.filter(p => p.type !== 'Rent' && p.type !== 'Mortgage').reduce((a, p) => a + p.amount, 0);
+    const mTotalInc = mRent + mOther;
+    const mMortgage = mPays.filter(p => p.type === 'Mortgage').reduce((a, p) => a + p.amount, 0);
+    const mBillsTotal = mBills.reduce((a, b) => a + b.amount, 0);
+    const mTotalExp = mMortgage + mBillsTotal;
+    const mNet = mTotalInc - mTotalExp;
+    return `<tr>
+      <td style="font-weight:500;">${label}</td>
+      <td class="positive">${mRent > 0 ? fmt(mRent) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td>${mOther > 0 ? fmt(mOther) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-weight:600;">${fmt(mTotalInc)}</td>
+      <td>${mMortgage > 0 ? fmt(mMortgage) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td>${mBillsTotal > 0 ? fmt(mBillsTotal) : '<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-weight:600;">${fmt(mTotalExp)}</td>
+      <td class="${mNet >= 0 ? 'positive' : 'negative'}">${fmt(mNet)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPortfolioGrowth(filteredSitesPL) {
+  const el = document.getElementById('pl-growth-body');
+  if (!el) return;
+
+  // Portfolio-wide stats
+  const totalPurchase = sites.reduce((a, s) => a + (s.purchasePrice || 0), 0);
+  const totalCurrentVal = sites.reduce((a, s) => a + (s.currentValue || s.purchasePrice || 0), 0);
+  const totalEquity = totalCurrentVal - totalPurchase;
+  const totalMortgageBalance = 0; // placeholder until we track balances
+  const annualRentRoll = sites.filter(s => s.status !== 'vacant').reduce((a, s) => a + (s.rent * 12), 0);
+  const totalProps = sites.length;
+  const propsWithData = sites.filter(s => s.purchasePrice > 0).length;
+
+  // Year-by-year acquisition timeline
+  const acquisitions = sites
+    .filter(s => s.purchaseDate)
+    .sort((a, b) => a.purchaseDate.localeCompare(b.purchaseDate));
+
+  // Group by year acquired
+  const byYear = {};
+  acquisitions.forEach(s => {
+    const yr = s.purchaseDate.slice(0, 4);
+    if (!byYear[yr]) byYear[yr] = [];
+    byYear[yr].push(s);
+  });
+
+  // Cash-on-cash return (using filtered sites for date range)
+  const { from, to } = getPLDates();
+  const daysInRange = (new Date(to) - new Date(from)) / (1000*60*60*24) + 1;
+  const annualFactor = 365 / daysInRange;
+  const filteredIncome = payments
+    .filter(p => inDateRange(p.date, from, to) && p.type === 'Rent' && filteredSitesPL.some(s => s.id === p.site))
+    .reduce((a, p) => a + p.amount, 0);
+  const filteredExpenses = bills
+    .filter(b => inDateRange(b.date, from, to) && (filteredSitesPL.some(s => s.id === b.prop) || b.prop === 'ALL'))
+    .reduce((a, b) => a + b.amount, 0);
+  const filteredMortgage = payments
+    .filter(p => inDateRange(p.date, from, to) && p.type === 'Mortgage' && filteredSitesPL.some(s => s.id === p.site))
+    .reduce((a, p) => a + p.amount, 0);
+  const annualizedNOI = (filteredIncome - filteredExpenses - filteredMortgage) * annualFactor;
+  const cashOnCash = totalPurchase > 0 ? ((annualizedNOI / totalPurchase) * 100).toFixed(1) : '—';
+
+  el.innerHTML = `
+    <div class="growth-grid">
+      <div class="growth-card">
+        <div class="gl">Total properties</div>
+        <div class="gv">${totalProps}</div>
+        <div class="gs">${propsWithData} with purchase data</div>
+      </div>
+      <div class="growth-card">
+        <div class="gl">Total invested</div>
+        <div class="gv">${totalPurchase ? fmt(totalPurchase) : '—'}</div>
+        <div class="gs">Combined purchase price</div>
+      </div>
+      <div class="growth-card">
+        <div class="gl">Portfolio value</div>
+        <div class="gv" style="color:var(--green);">${totalCurrentVal ? fmt(totalCurrentVal) : '—'}</div>
+        <div class="gs">Estimated current value${totalEquity > 0 ? ` · +${fmt(totalEquity)} appreciation` : ''}</div>
+      </div>
+      <div class="growth-card">
+        <div class="gl">Annual rent roll</div>
+        <div class="gv" style="color:var(--blue);">${fmt(annualRentRoll)}</div>
+        <div class="gs">At full occupancy · CoC: ${cashOnCash}%</div>
+      </div>
+    </div>
+
+    <h4 style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Acquisition timeline</h4>
+    ${acquisitions.length ? `
+    <div class="acq-timeline">
+      ${acquisitions.map(s => {
+        const equity = (s.currentValue || s.purchasePrice || 0) - (s.purchasePrice || 0);
+        const appreciation = s.purchasePrice > 0 && s.currentValue > 0
+          ? (((s.currentValue - s.purchasePrice) / s.purchasePrice) * 100).toFixed(1) + '%'
+          : null;
+        const yearsHeld = s.purchaseDate
+          ? ((new Date() - new Date(s.purchaseDate)) / (1000*60*60*24*365)).toFixed(1)
+          : null;
+        return `<div class="acq-item">
+          <div class="acq-dot"></div>
+          <div style="flex:1;">
+            <div class="acq-name">${displayName(s)}</div>
+            <div class="acq-date">${s.purchaseDate || '—'}${yearsHeld ? ` · ${yearsHeld} years held` : ''} · ${s.type === 'rv' ? 'RV site' : 'House'} · ${s.state.toUpperCase()}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="acq-price">${s.purchasePrice ? fmt(s.purchasePrice) : 'Price not set'}</div>
+            ${s.currentValue ? `<div class="acq-value">Est. ${fmt(s.currentValue)}${appreciation ? ` (+${appreciation})` : ''}</div>` : ''}
+            ${equity > 0 ? `<div class="acq-equity">Equity: ${fmt(equity)}</div>` : ''}
+          </div>
+          <div style="min-width:60px;text-align:right;">
+            <div style="font-size:11px;font-weight:600;color:var(--green);">${fmt(s.rent)}/mo</div>
+            <div style="font-size:10px;color:var(--text3);">${s.status}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    ` : `<p style="font-size:13px;color:var(--text3);font-style:italic;">No acquisition dates set yet. Edit each property and add a purchase date and price to see your portfolio timeline.</p>`}
+
+    ${Object.keys(byYear).length > 1 ? `
+    <h4 style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:1rem 0 10px;">Properties acquired by year</h4>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      ${Object.entries(byYear).map(([yr, props]) => `
+        <div style="background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--radius);padding:8px 14px;min-width:100px;">
+          <div style="font-size:18px;font-weight:700;color:var(--blue);">${yr}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${props.length} propert${props.length > 1 ? 'ies' : 'y'}</div>
+          <div style="font-size:11px;color:var(--text3);">${props.map(s => displayName(s)).join(', ')}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+  `;
+}
+
+function getMonthsInRange(from, to) {
+  const months = [];
+  const start = new Date(from.slice(0, 7) + '-01');
+  const end = new Date(to.slice(0, 7) + '-01');
+  const cur = new Date(start);
+  while (cur <= end) {
+    const key = cur.toISOString().slice(0, 7);
+    const label = cur.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    months.push({ key, label });
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  return months;
+}
+
+function exportPLCSV() {
+  const { from, to } = getPLDates();
+  const propFilter = document.getElementById('pl-prop-filter').value;
+  const filteredSitesPL = propFilter === 'ALL' ? sites : sites.filter(s => s.id === propFilter);
+  const months = getMonthsInRange(from, to);
+
+  const rows = [['Month', 'Rent', 'Other Income', 'Total Income', 'Mortgage', 'Bills', 'Total Expenses', 'Net Cash Flow']];
+  months.forEach(({ label, key }) => {
+    const mPays = payments.filter(p => p.date.startsWith(key) && filteredSitesPL.some(s => s.id === p.site));
+    const mBills = bills.filter(b => b.date.startsWith(key) && (filteredSitesPL.some(s => s.id === b.prop) || b.prop === 'ALL'));
+    const mRent = mPays.filter(p => p.type === 'Rent').reduce((a, p) => a + p.amount, 0);
+    const mOther = mPays.filter(p => p.type !== 'Rent' && p.type !== 'Mortgage').reduce((a, p) => a + p.amount, 0);
+    const mMort = mPays.filter(p => p.type === 'Mortgage').reduce((a, p) => a + p.amount, 0);
+    const mBillsT = mBills.reduce((a, b) => a + b.amount, 0);
+    rows.push([label, mRent, mOther, mRent+mOther, mMort, mBillsT, mMort+mBillsT, (mRent+mOther)-(mMort+mBillsT)]);
+  });
+
+  const csv = rows.map(r => r.join(',')).join('
+');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `PL_Report_${from}_to_${to}.csv`; a.click();
+  showToast('P&L CSV downloaded.');
+}
+
+function exportPLPDF() {
+  const { from, to } = getPLDates();
+  const propFilter = document.getElementById('pl-prop-filter').value;
+  const propLabel = propFilter === 'ALL' ? 'All Properties' : displayName(sites.find(s => s.id === propFilter) || sites[0]);
+
+  // Build print-friendly HTML and trigger print to PDF
+  const metrics = document.getElementById('pl-metrics').innerHTML;
+  const incomeTable = document.getElementById('pl-income-tbl').outerHTML;
+  const expenseTable = document.getElementById('pl-expense-tbl').outerHTML;
+  const netTable = document.getElementById('pl-net-tbl').outerHTML;
+  const monthlyTable = document.querySelector('#page-pl .card:last-child table').outerHTML;
+
+  const printWin = window.open('', '_blank');
+  printWin.document.write(`<!DOCTYPE html><html><head><title>P&L Report</title><style>
+    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1d23;padding:20px;}
+    h1{font-size:20px;font-weight:700;color:#2563eb;margin-bottom:4px;}
+    h2{font-size:14px;color:#6b7280;margin-bottom:20px;font-weight:400;}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+    th{font-size:10px;color:#6b7280;padding:6px 10px;text-align:left;border-bottom:2px solid #e4e6ea;background:#f7f8fa;text-transform:uppercase;letter-spacing:.04em;}
+    td{padding:8px 10px;border-bottom:1px solid #e4e6ea;font-size:12px;}
+    tfoot td{font-weight:700;border-top:2px solid #e4e6ea;background:#f7f8fa;}
+    .positive{color:#16a34a;font-weight:600;}
+    .negative{color:#dc2626;font-weight:600;}
+    .income-total{color:#16a34a;font-weight:700;}
+    .expense-total{color:#dc2626;font-weight:700;}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+    .pl-metric{border:1px solid #e4e6ea;border-radius:8px;padding:12px;}
+    .pl-metric .lbl{font-size:10px;color:#a0a8b4;text-transform:uppercase;margin-bottom:4px;}
+    .pl-metric .val{font-size:20px;font-weight:700;}
+    .pl-metric .sub{font-size:10px;color:#a0a8b4;margin-top:2px;}
+    h3{font-size:13px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #2563eb;color:#2563eb;}
+    @media print{body{padding:10px;}}
+  </style></head><body>
+    <h1>RC Properties — Profit &amp; Loss Report</h1>
+    <h2>${propLabel} &middot; ${from} to ${to}</h2>
+    <div class="metrics">${metrics}</div>
+    <h3>Income</h3>${incomeTable}
+    <h3>Expenses</h3>${expenseTable}
+    <h3>Net cash flow</h3>${netTable}
+    <h3>Monthly breakdown</h3>${monthlyTable}
+    <p style="font-size:10px;color:#a0a8b4;margin-top:20px;">Generated ${new Date().toLocaleDateString()} &middot; RC Properties</p>
+  </body></html>`);
+  printWin.document.close();
+  setTimeout(() => { printWin.print(); }, 500);
+  showToast('Opening PDF print dialog...');
+}
+
+// AUTO TOGGLE RECEIPT BASED ON METHOD
+function autoToggleReceipt(methodId, checkboxId) {
+  const method = document.getElementById(methodId).value;
+  const checkbox = document.getElementById(checkboxId);
+  // Zelle sends its own notification, Check rarely needs one — uncheck by default
+  // Cash and Other default to checked
+  checkbox.checked = (method === 'Cash' || method === 'Other');
 }
 
 // UTILS
