@@ -1084,10 +1084,16 @@ function defaultData(){
 
 // ══ AUTH ══
 function checkPw(){
-  const user=document.getElementById('pw-user').value.trim().toLowerCase();
-  const input=document.getElementById('pw-input').value;
-  // Check credentials
+  const userEl=document.getElementById('pw-user');
+  const inputEl=document.getElementById('pw-input');
+  const errEl=document.getElementById('pw-error');
+  if(!userEl||!inputEl){errEl.textContent='Page error: fields not found. Try refreshing.';errEl.style.display='block';return;}
+  const user=userEl.value.trim().toLowerCase();
+  const input=inputEl.value;
+  errEl.textContent='Trying: user="'+user+'" pw length='+input.length;
+  errEl.style.display='block';
   if(user==='rcadmin'&&input==='juggleryan2026!'){
+  errEl.style.display='none';
     sessionStorage.setItem(PK,'1');
     document.getElementById('pw-card').style.display='none';
     config=JSON.parse(localStorage.getItem(CK)||'{}');
