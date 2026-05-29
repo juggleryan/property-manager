@@ -318,6 +318,47 @@ button{font-family:var(--sans);}
 .log-form-grid select:focus,.log-form-grid input:focus{border-color:var(--blue);}
 @media(max-width:768px){.log-form-grid{grid-template-columns:1fr 1fr;}}
 </style>
+<script>
+// Early auth function — defined before main script to prevent "not defined" errors
+function checkPw(){
+  const userEl=document.getElementById('pw-user');
+  const inputEl=document.getElementById('pw-input');
+  const errEl=document.getElementById('pw-error');
+  if(!userEl||!inputEl){errEl.textContent='Page error: fields not found. Try refreshing.';errEl.style.display='block';return;}
+  const user=userEl.value.trim().toLowerCase();
+  const input=inputEl.value;
+  errEl.textContent='Trying: user="'+user+'" pw length='+input.length;
+  errEl.style.display='block';
+  if(user==='rcadmin'&&input==='juggleryan2026!'){
+  errEl.style.display='none';
+    sessionStorage.setItem(PK,'1');
+    document.getElementById('pw-card').style.display='none';
+    config=JSON.parse(localStorage.getItem(CK)||'{}');
+    isDemoMode=localStorage.getItem(DMK)==='1';
+    if(isDemoMode||config.clientId){document.getElementById('auth-screen').style.display='none';launchApp();}
+    else document.getElementById('setup-card').style.display='block';
+  } else {
+    document.getElementById('pw-error').style.display='block';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-user').value='';
+    document.getElementById('pw-user').focus();
+  }
+}
+
+function connectGoogle(){
+  var c=document.getElementById('cfg-cid').value.trim();
+  var a=document.getElementById('cfg-key').value.trim();
+  var s=document.getElementById('cfg-sid').value.trim();
+  if(!c||!a||!s){alert('Please fill in all three fields.');return;}
+  localStorage.setItem('pm_config',JSON.stringify({clientId:c,apiKey:a,sheetId:s,gmailQuery:'subject:"You received money"'}));
+  localStorage.removeItem('pm_demo');
+  location.reload();
+}
+function demoModeEarly(){
+  localStorage.setItem('pm_demo','1');
+  location.reload();
+}
+</script>
 </head>
 <body>
 
@@ -1083,30 +1124,7 @@ function defaultData(){
 }
 
 // ══ AUTH ══
-function checkPw(){
-  const userEl=document.getElementById('pw-user');
-  const inputEl=document.getElementById('pw-input');
-  const errEl=document.getElementById('pw-error');
-  if(!userEl||!inputEl){errEl.textContent='Page error: fields not found. Try refreshing.';errEl.style.display='block';return;}
-  const user=userEl.value.trim().toLowerCase();
-  const input=inputEl.value;
-  errEl.textContent='Trying: user="'+user+'" pw length='+input.length;
-  errEl.style.display='block';
-  if(user==='rcadmin'&&input==='juggleryan2026!'){
-  errEl.style.display='none';
-    sessionStorage.setItem(PK,'1');
-    document.getElementById('pw-card').style.display='none';
-    config=JSON.parse(localStorage.getItem(CK)||'{}');
-    isDemoMode=localStorage.getItem(DMK)==='1';
-    if(isDemoMode||config.clientId){document.getElementById('auth-screen').style.display='none';launchApp();}
-    else document.getElementById('setup-card').style.display='block';
-  } else {
-    document.getElementById('pw-error').style.display='block';
-    document.getElementById('pw-input').value='';
-    document.getElementById('pw-user').value='';
-    document.getElementById('pw-user').focus();
-  }
-}
+// checkPw moved to early script
 function connectGoogle(){
   const c=document.getElementById('cfg-cid').value.trim();
   const a=document.getElementById('cfg-key').value.trim();
@@ -2478,7 +2496,48 @@ function exportPLPDF() {
     .pl-metric .sub{font-size:10px;color:#a0a8b4;margin-top:2px;}
     h3{font-size:13px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #2563eb;color:#2563eb;}
     @media print{body{padding:10px;}}
-  </style></head><body>
+  </style><script>
+// Early auth function — defined before main script to prevent "not defined" errors
+function checkPw(){
+  const userEl=document.getElementById('pw-user');
+  const inputEl=document.getElementById('pw-input');
+  const errEl=document.getElementById('pw-error');
+  if(!userEl||!inputEl){errEl.textContent='Page error: fields not found. Try refreshing.';errEl.style.display='block';return;}
+  const user=userEl.value.trim().toLowerCase();
+  const input=inputEl.value;
+  errEl.textContent='Trying: user="'+user+'" pw length='+input.length;
+  errEl.style.display='block';
+  if(user==='rcadmin'&&input==='juggleryan2026!'){
+  errEl.style.display='none';
+    sessionStorage.setItem(PK,'1');
+    document.getElementById('pw-card').style.display='none';
+    config=JSON.parse(localStorage.getItem(CK)||'{}');
+    isDemoMode=localStorage.getItem(DMK)==='1';
+    if(isDemoMode||config.clientId){document.getElementById('auth-screen').style.display='none';launchApp();}
+    else document.getElementById('setup-card').style.display='block';
+  } else {
+    document.getElementById('pw-error').style.display='block';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-user').value='';
+    document.getElementById('pw-user').focus();
+  }
+}
+
+function connectGoogle(){
+  var c=document.getElementById('cfg-cid').value.trim();
+  var a=document.getElementById('cfg-key').value.trim();
+  var s=document.getElementById('cfg-sid').value.trim();
+  if(!c||!a||!s){alert('Please fill in all three fields.');return;}
+  localStorage.setItem('pm_config',JSON.stringify({clientId:c,apiKey:a,sheetId:s,gmailQuery:'subject:"You received money"'}));
+  localStorage.removeItem('pm_demo');
+  location.reload();
+}
+function demoModeEarly(){
+  localStorage.setItem('pm_demo','1');
+  location.reload();
+}
+</script>
+</head><body>
     <h1>RC Properties — Profit &amp; Loss Report</h1>
     <h2>${propLabel} &middot; ${from} to ${to}</h2>
     <div class="metrics">${metrics}</div>
