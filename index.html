@@ -344,7 +344,7 @@ function checkPw(){
       var attempts=0;
       var tryLaunch=function(){
         if(typeof launchApp==='function'){launchApp();}
-        else if(attempts++<20){setTimeout(tryLaunch,100);}
+        else if(attempts++<50){setTimeout(tryLaunch,100);}
       };
       tryLaunch();
     } else {
@@ -365,11 +365,19 @@ function connectGoogle(){
   if(!c||!a||!s){alert('Please fill in all three fields.');return;}
   localStorage.setItem('pm_config',JSON.stringify({clientId:c,apiKey:a,sheetId:s,gmailQuery:'subject:"You received money"'}));
   localStorage.removeItem('pm_demo');
+  sessionStorage.setItem(PK,'1');
   location.reload();
 }
 function demoModeEarly(){
   localStorage.setItem('pm_demo','1');
-  location.reload();
+  sessionStorage.setItem(PK,'1');
+  document.getElementById('auth-screen').style.display='none';
+  var attempts=0;
+  var tryLaunch=function(){
+    if(typeof launchApp==='function'){launchApp();}
+    else if(attempts++<50){setTimeout(tryLaunch,100);}
+  };
+  tryLaunch();
 }
 </script>
 </head>
@@ -402,7 +410,7 @@ function demoModeEarly(){
     <div class="f-group"><label>API Key</label><input type="text" id="cfg-key" placeholder="AIzaSy..."></div>
     <div class="f-group"><label>Google Sheet ID</label><input type="text" id="cfg-sid" placeholder="Paste Sheet ID from URL"></div>
     <button class="btn btn-primary btn-block" onclick="connectGoogle()">Connect to Google Sheets</button>
-    <button class="btn btn-secondary btn-block" style="margin-top:6px;" onclick="demoMode()">Skip — use demo mode</button>
+    <button class="btn btn-secondary btn-block" style="margin-top:6px;" onclick="demoModeEarly()">Skip — use demo mode</button>
     <p class="auth-note">Credentials saved in your browser only. Never shared.</p>
   </div>
 </div>
@@ -1074,8 +1082,7 @@ function demoModeEarly(){
 <div class="toast" id="toast"></div>
 
 <script>
-// ══ CONSTANTS ══
-const CK='pm_config',DK='pm_data',DMK='pm_demo',PK='pm_authed';
+// ══ CONSTANTS ══ (declared in early script above)
 const BILL_TYPES=['Water','Sewer/Septic','Electrical','Yard maintenance','Propane','Water backflow','Property tax'];
 const BILL_ICONS={Water:'💧','Sewer/Septic':'🚿',Electrical:'⚡','Yard maintenance':'🌿',Propane:'🔥','Water backflow':'🔄','Property tax':'🏛️',Other:'📄'};
 const PROP_DEFS=[
