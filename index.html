@@ -340,9 +340,13 @@ function checkPw(){
     var demo=localStorage.getItem(DMK)==='1';
     if(demo||cfg.clientId){
       document.getElementById('auth-screen').style.display='none';
-      // Try launchApp, fall back to reload if main script not ready
-      if(typeof launchApp==='function'){launchApp();}
-      else{location.reload();}
+      // Wait for main script to be ready then launch
+      var attempts=0;
+      var tryLaunch=function(){
+        if(typeof launchApp==='function'){launchApp();}
+        else if(attempts++<20){setTimeout(tryLaunch,100);}
+      };
+      tryLaunch();
     } else {
       document.getElementById('setup-card').style.display='block';
     }
@@ -2527,9 +2531,13 @@ function checkPw(){
     var demo=localStorage.getItem(DMK)==='1';
     if(demo||cfg.clientId){
       document.getElementById('auth-screen').style.display='none';
-      // Try launchApp, fall back to reload if main script not ready
-      if(typeof launchApp==='function'){launchApp();}
-      else{location.reload();}
+      // Wait for main script to be ready then launch
+      var attempts=0;
+      var tryLaunch=function(){
+        if(typeof launchApp==='function'){launchApp();}
+        else if(attempts++<20){setTimeout(tryLaunch,100);}
+      };
+      tryLaunch();
     } else {
       document.getElementById('setup-card').style.display='block';
     }
