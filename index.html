@@ -319,29 +319,38 @@ button{font-family:var(--sans);}
 @media(max-width:768px){.log-form-grid{grid-template-columns:1fr 1fr;}}
 </style>
 <script>
+// Constants needed by early auth functions
+var CK='pm_config',DK='pm_data',DMK='pm_demo',PK='pm_authed';
 // Early auth function — defined before main script to prevent "not defined" errors
 function checkPw(){
-  const userEl=document.getElementById('pw-user');
-  const inputEl=document.getElementById('pw-input');
-  const errEl=document.getElementById('pw-error');
-  if(!userEl||!inputEl){errEl.textContent='Page error: fields not found. Try refreshing.';errEl.style.display='block';return;}
-  const user=userEl.value.trim().toLowerCase();
-  const input=inputEl.value;
-  errEl.textContent='Trying: user="'+user+'" pw length='+input.length;
-  errEl.style.display='block';
+  var userEl=document.getElementById('pw-user');
+  var inputEl=document.getElementById('pw-input');
+  var errEl=document.getElementById('pw-error');
+  if(!userEl||!inputEl){
+    if(errEl){errEl.textContent='Error: form fields missing. Please hard refresh.';errEl.style.display='block';}
+    return;
+  }
+  var user=userEl.value.trim().toLowerCase();
+  var input=inputEl.value;
   if(user==='rcadmin'&&input==='juggleryan2026!'){
-  errEl.style.display='none';
     sessionStorage.setItem(PK,'1');
     document.getElementById('pw-card').style.display='none';
-    config=JSON.parse(localStorage.getItem(CK)||'{}');
-    isDemoMode=localStorage.getItem(DMK)==='1';
-    if(isDemoMode||config.clientId){document.getElementById('auth-screen').style.display='none';launchApp();}
-    else document.getElementById('setup-card').style.display='block';
+    if(errEl)errEl.style.display='none';
+    var cfg=JSON.parse(localStorage.getItem(CK)||'{}');
+    var demo=localStorage.getItem(DMK)==='1';
+    if(demo||cfg.clientId){
+      document.getElementById('auth-screen').style.display='none';
+      // Try launchApp, fall back to reload if main script not ready
+      if(typeof launchApp==='function'){launchApp();}
+      else{location.reload();}
+    } else {
+      document.getElementById('setup-card').style.display='block';
+    }
   } else {
-    document.getElementById('pw-error').style.display='block';
-    document.getElementById('pw-input').value='';
-    document.getElementById('pw-user').value='';
-    document.getElementById('pw-user').focus();
+    if(errEl){errEl.textContent='Incorrect username or password.';errEl.style.display='block';}
+    inputEl.value='';
+    userEl.value='';
+    userEl.focus();
   }
 }
 
@@ -2497,29 +2506,38 @@ function exportPLPDF() {
     h3{font-size:13px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #2563eb;color:#2563eb;}
     @media print{body{padding:10px;}}
   </style><script>
+// Constants needed by early auth functions
+var CK='pm_config',DK='pm_data',DMK='pm_demo',PK='pm_authed';
 // Early auth function — defined before main script to prevent "not defined" errors
 function checkPw(){
-  const userEl=document.getElementById('pw-user');
-  const inputEl=document.getElementById('pw-input');
-  const errEl=document.getElementById('pw-error');
-  if(!userEl||!inputEl){errEl.textContent='Page error: fields not found. Try refreshing.';errEl.style.display='block';return;}
-  const user=userEl.value.trim().toLowerCase();
-  const input=inputEl.value;
-  errEl.textContent='Trying: user="'+user+'" pw length='+input.length;
-  errEl.style.display='block';
+  var userEl=document.getElementById('pw-user');
+  var inputEl=document.getElementById('pw-input');
+  var errEl=document.getElementById('pw-error');
+  if(!userEl||!inputEl){
+    if(errEl){errEl.textContent='Error: form fields missing. Please hard refresh.';errEl.style.display='block';}
+    return;
+  }
+  var user=userEl.value.trim().toLowerCase();
+  var input=inputEl.value;
   if(user==='rcadmin'&&input==='juggleryan2026!'){
-  errEl.style.display='none';
     sessionStorage.setItem(PK,'1');
     document.getElementById('pw-card').style.display='none';
-    config=JSON.parse(localStorage.getItem(CK)||'{}');
-    isDemoMode=localStorage.getItem(DMK)==='1';
-    if(isDemoMode||config.clientId){document.getElementById('auth-screen').style.display='none';launchApp();}
-    else document.getElementById('setup-card').style.display='block';
+    if(errEl)errEl.style.display='none';
+    var cfg=JSON.parse(localStorage.getItem(CK)||'{}');
+    var demo=localStorage.getItem(DMK)==='1';
+    if(demo||cfg.clientId){
+      document.getElementById('auth-screen').style.display='none';
+      // Try launchApp, fall back to reload if main script not ready
+      if(typeof launchApp==='function'){launchApp();}
+      else{location.reload();}
+    } else {
+      document.getElementById('setup-card').style.display='block';
+    }
   } else {
-    document.getElementById('pw-error').style.display='block';
-    document.getElementById('pw-input').value='';
-    document.getElementById('pw-user').value='';
-    document.getElementById('pw-user').focus();
+    if(errEl){errEl.textContent='Incorrect username or password.';errEl.style.display='block';}
+    inputEl.value='';
+    userEl.value='';
+    userEl.focus();
   }
 }
 
