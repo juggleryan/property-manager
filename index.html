@@ -1138,16 +1138,7 @@ function defaultData(){
 
 // ══ AUTH ══
 // checkPw moved to early script
-function connectGoogle(){
-  const c=document.getElementById('cfg-cid').value.trim();
-  const a=document.getElementById('cfg-key').value.trim();
-  const s=document.getElementById('cfg-sid').value.trim();
-  if(!c||!a||!s){showToast('Please fill in all three fields.');return;}
-  config={clientId:c,apiKey:a,sheetId:s,gmailQuery:'subject:"You received money"'};
-  localStorage.setItem(CK,JSON.stringify(config));
-  localStorage.removeItem(DMK);isDemoMode=false;
-  document.getElementById('auth-screen').style.display='none';launchApp();loadGapi();
-}
+
 function demoMode(){localStorage.setItem(DMK,'1');isDemoMode=true;document.getElementById('auth-screen').style.display='none';launchApp();}
 function signOut(){localStorage.removeItem(DMK);localStorage.removeItem(CK);sessionStorage.removeItem(PK);if(accessToken&&window.google)google.accounts.oauth2.revoke(accessToken,()=>{});location.reload();}
 
@@ -2469,8 +2460,8 @@ function exportPLCSV() {
     rows.push([label, mRent, mOther, mRent+mOther, mMort, mBillsT, mMort+mBillsT, (mRent+mOther)-(mMort+mBillsT)]);
   });
 
-  const csv = rows.map(r => r.join(',')).join('
-');
+  const csv = rows.map(r => r.join(",")).join(String.fromCharCode(10));
+
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = `PL_Report_${from}_to_${to}.csv`; a.click();
@@ -2478,105 +2469,54 @@ function exportPLCSV() {
 }
 
 function exportPLPDF() {
-  const { from, to } = getPLDates();
-  const propFilter = document.getElementById('pl-prop-filter').value;
-  const propLabel = propFilter === 'ALL' ? 'All Properties' : displayName(sites.find(s => s.id === propFilter) || sites[0]);
+  var from = document.getElementById('pl-from').value;
+  var to = document.getElementById('pl-to').value;
+  var propFilter = document.getElementById('pl-prop-filter').value;
+  var propLabel = propFilter === 'ALL' ? 'All Properties' : displayName(sites.find(function(s){return s.id===propFilter;})||sites[0]);
 
-  // Build print-friendly HTML and trigger print to PDF
-  const metrics = document.getElementById('pl-metrics').innerHTML;
-  const incomeTable = document.getElementById('pl-income-tbl').outerHTML;
-  const expenseTable = document.getElementById('pl-expense-tbl').outerHTML;
-  const netTable = document.getElementById('pl-net-tbl').outerHTML;
-  const monthlyTable = document.querySelector('#page-pl .card:last-child table').outerHTML;
+  var metrics = document.getElementById('pl-metrics').innerHTML;
+  var incomeTable = document.getElementById('pl-income-tbl').outerHTML;
+  var expenseTable = document.getElementById('pl-expense-tbl').outerHTML;
+  var netTable = document.getElementById('pl-net-tbl').outerHTML;
+  var lastCard = document.querySelector('#page-pl .card:last-child table');
+  var monthlyTable = lastCard ? lastCard.outerHTML : '';
 
-  const printWin = window.open('', '_blank');
-  printWin.document.write(`<!DOCTYPE html><html><head><title>P&L Report</title><style>
-    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1d23;padding:20px;}
-    h1{font-size:20px;font-weight:700;color:#2563eb;margin-bottom:4px;}
-    h2{font-size:14px;color:#6b7280;margin-bottom:20px;font-weight:400;}
-    table{width:100%;border-collapse:collapse;margin-bottom:20px;}
-    th{font-size:10px;color:#6b7280;padding:6px 10px;text-align:left;border-bottom:2px solid #e4e6ea;background:#f7f8fa;text-transform:uppercase;letter-spacing:.04em;}
-    td{padding:8px 10px;border-bottom:1px solid #e4e6ea;font-size:12px;}
-    tfoot td{font-weight:700;border-top:2px solid #e4e6ea;background:#f7f8fa;}
-    .positive{color:#16a34a;font-weight:600;}
-    .negative{color:#dc2626;font-weight:600;}
-    .income-total{color:#16a34a;font-weight:700;}
-    .expense-total{color:#dc2626;font-weight:700;}
-    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
-    .pl-metric{border:1px solid #e4e6ea;border-radius:8px;padding:12px;}
-    .pl-metric .lbl{font-size:10px;color:#a0a8b4;text-transform:uppercase;margin-bottom:4px;}
-    .pl-metric .val{font-size:20px;font-weight:700;}
-    .pl-metric .sub{font-size:10px;color:#a0a8b4;margin-top:2px;}
-    h3{font-size:13px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #2563eb;color:#2563eb;}
-    @media print{body{padding:10px;}}
-  </style><script>
-// Constants needed by early auth functions
-var CK='pm_config',DK='pm_data',DMK='pm_demo',PK='pm_authed';
-// Early auth function — defined before main script to prevent "not defined" errors
-function checkPw(){
-  var userEl=document.getElementById('pw-user');
-  var inputEl=document.getElementById('pw-input');
-  var errEl=document.getElementById('pw-error');
-  if(!userEl||!inputEl){
-    if(errEl){errEl.textContent='Error: form fields missing. Please hard refresh.';errEl.style.display='block';}
-    return;
-  }
-  var user=userEl.value.trim().toLowerCase();
-  var input=inputEl.value;
-  if(user==='rcadmin'&&input==='juggleryan2026!'){
-    sessionStorage.setItem(PK,'1');
-    document.getElementById('pw-card').style.display='none';
-    if(errEl)errEl.style.display='none';
-    var cfg=JSON.parse(localStorage.getItem(CK)||'{}');
-    var demo=localStorage.getItem(DMK)==='1';
-    if(demo||cfg.clientId){
-      document.getElementById('auth-screen').style.display='none';
-      // Wait for main script to be ready then launch
-      var attempts=0;
-      var tryLaunch=function(){
-        if(typeof launchApp==='function'){launchApp();}
-        else if(attempts++<20){setTimeout(tryLaunch,100);}
-      };
-      tryLaunch();
-    } else {
-      document.getElementById('setup-card').style.display='block';
-    }
-  } else {
-    if(errEl){errEl.textContent='Incorrect username or password.';errEl.style.display='block';}
-    inputEl.value='';
-    userEl.value='';
-    userEl.focus();
-  }
-}
+  var css = 'body{font-family:Arial,sans-serif;font-size:12px;color:#1a1d23;padding:20px;}' +
+    'h1{font-size:20px;font-weight:700;color:#2563eb;margin-bottom:4px;}' +
+    'h2{font-size:14px;color:#6b7280;margin-bottom:20px;font-weight:400;}' +
+    'table{width:100%;border-collapse:collapse;margin-bottom:20px;}' +
+    'th{font-size:10px;color:#6b7280;padding:6px 10px;text-align:left;border-bottom:2px solid #e4e6ea;background:#f7f8fa;text-transform:uppercase;letter-spacing:.04em;}' +
+    'td{padding:8px 10px;border-bottom:1px solid #e4e6ea;font-size:12px;}' +
+    'tfoot td{font-weight:700;border-top:2px solid #e4e6ea;background:#f7f8fa;}' +
+    '.positive{color:#16a34a;font-weight:600;}.negative{color:#dc2626;font-weight:600;}' +
+    '.income-total{color:#16a34a;font-weight:700;}.expense-total{color:#dc2626;font-weight:700;}' +
+    '.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}' +
+    '.pl-metric{border:1px solid #e4e6ea;border-radius:8px;padding:12px;}' +
+    '.pl-metric .lbl{font-size:10px;color:#a0a8b4;text-transform:uppercase;margin-bottom:4px;}' +
+    '.pl-metric .val{font-size:20px;font-weight:700;}' +
+    '.pl-metric .sub{font-size:10px;color:#a0a8b4;margin-top:2px;}' +
+    'h3{font-size:13px;font-weight:700;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #2563eb;color:#2563eb;}' +
+    '@media print{body{padding:10px;}}';
 
-function connectGoogle(){
-  var c=document.getElementById('cfg-cid').value.trim();
-  var a=document.getElementById('cfg-key').value.trim();
-  var s=document.getElementById('cfg-sid').value.trim();
-  if(!c||!a||!s){alert('Please fill in all three fields.');return;}
-  localStorage.setItem('pm_config',JSON.stringify({clientId:c,apiKey:a,sheetId:s,gmailQuery:'subject:"You received money"'}));
-  localStorage.removeItem('pm_demo');
-  location.reload();
-}
-function demoModeEarly(){
-  localStorage.setItem('pm_demo','1');
-  location.reload();
-}
-</script>
-</head><body>
-    <h1>RC Properties — Profit &amp; Loss Report</h1>
-    <h2>${propLabel} &middot; ${from} to ${to}</h2>
-    <div class="metrics">${metrics}</div>
-    <h3>Income</h3>${incomeTable}
-    <h3>Expenses</h3>${expenseTable}
-    <h3>Net cash flow</h3>${netTable}
-    <h3>Monthly breakdown</h3>${monthlyTable}
-    <p style="font-size:10px;color:#a0a8b4;margin-top:20px;">Generated ${new Date().toLocaleDateString()} &middot; RC Properties</p>
-  </body></html>`);
+  var html = '<!DOCTYPE html><html><head><title>P&L Report</title><style>' + css + '</style></head><body>' +
+    '<h1>RC Properties — Profit & Loss Report</h1>' +
+    '<h2>' + propLabel + ' &middot; ' + from + ' to ' + to + '</h2>' +
+    '<div class="metrics">' + metrics + '</div>' +
+    '<h3>Income</h3>' + incomeTable +
+    '<h3>Expenses</h3>' + expenseTable +
+    '<h3>Net cash flow</h3>' + netTable +
+    '<h3>Monthly breakdown</h3>' + monthlyTable +
+    '<p style="font-size:10px;color:#a0a8b4;margin-top:20px;">Generated ' + new Date().toLocaleDateString() + ' &middot; RC Properties</p>' +
+    '</body></html>';
+
+  var printWin = window.open('', '_blank');
+  if (!printWin) { showToast('Allow popups to export PDF.'); return; }
+  printWin.document.write(html);
   printWin.document.close();
-  setTimeout(() => { printWin.print(); }, 500);
+  setTimeout(function(){ printWin.print(); }, 500);
   showToast('Opening PDF print dialog...');
 }
+
 
 // AUTO TOGGLE RECEIPT BASED ON METHOD
 function autoToggleReceipt(methodId, checkboxId) {
@@ -2596,6 +2536,13 @@ function showToast(msg){
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
 
 init();
+</script>
+</body>
+</html>
+
+// UTILS
+
+
 </script>
 </body>
 </html>
