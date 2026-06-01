@@ -261,6 +261,13 @@ button{font-family:var(--sans);}
 .detail-value.red{color:var(--red);}
 .detail-value.amber{color:var(--amber);}
 
+/* LOANS */
+.loan-status-active{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.loan-status-overdue{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+.loan-status-paid{background:var(--bg);color:var(--text3);border:1px solid var(--border);}
+.loan-progress{display:flex;flex-direction:column;gap:3px;}
+.loan-progress-bar{width:80px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.loan-progress-fill{height:100%;border-radius:3px;background:var(--green);}
 /* P&L */
 .pl-metric{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.1rem;border-top:3px solid transparent;}
 .pl-metric.income{border-top-color:var(--green);}
@@ -449,6 +456,7 @@ function demoModeEarly(){
         <div class="sidebar-label">Overview</div>
         <button class="nav-item active" onclick="navTo('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</button>
         <button class="nav-item" onclick="navTo('pl',this)"><span class="nav-icon">📈</span>P&amp;L Report</button>
+        <button class="nav-item" onclick="navTo('loans',this)"><span class="nav-icon">💰</span>Loan tracker</button>
         <button class="nav-item" onclick="navTo('payments',this)"><span class="nav-icon">💳</span>Payments</button>
         <button class="nav-item" onclick="navTo('bills',this)"><span class="nav-icon">📋</span>Bills &amp; Utilities</button>
       </div>
@@ -690,6 +698,45 @@ function demoModeEarly(){
               <th>Net cash flow</th>
             </tr></thead>
             <tbody id="pl-monthly-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- ── LOANS ── -->
+      <div class="page" id="page-loans">
+        <div class="page-header">
+          <div class="page-header-left"><h2>Loan tracker</h2><p>Personal loans made and received</p></div>
+          <div class="page-header-actions">
+            <button class="btn btn-sm btn-secondary" onclick="openLoanModal('lent')">+ Loan I made</button>
+            <button class="btn btn-sm btn-primary" onclick="openLoanModal('borrowed')">+ Loan I took</button>
+          </div>
+        </div>
+
+        <!-- LOAN SUMMARY METRICS -->
+        <div class="metrics" id="loan-metrics" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.25rem;"></div>
+
+        <!-- LOANS I MADE -->
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-header">
+            <div><div class="card-title" style="color:var(--green);">💵 Loans I've made — people owe me</div></div>
+            <button class="btn btn-sm btn-primary" onclick="openLoanModal('lent')">+ Add</button>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Borrower</th><th>Amount</th><th>Rate</th><th>Structure</th><th>Start date</th><th>Balance</th><th>Status</th><th></th></tr></thead>
+            <tbody id="loans-lent-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- LOANS I TOOK -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title" style="color:var(--red);">🏦 Loans I've taken — I owe someone</div></div>
+            <button class="btn btn-sm btn-secondary" onclick="openLoanModal('borrowed')">+ Add</button>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Lender</th><th>Amount</th><th>Rate</th><th>Structure</th><th>Start date</th><th>Balance</th><th>Status</th><th></th></tr></thead>
+            <tbody id="loans-borrowed-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -1061,6 +1108,84 @@ function demoModeEarly(){
   </div>
 </div>
 
+<!-- LOAN MODAL -->
+<div class="overlay" id="loan-overlay">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header"><h3 id="loan-modal-title">Add loan</h3><button class="modal-close" onclick="closeModal('loan-overlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-section-title">Loan details</div>
+      <input type="hidden" id="loan-direction">
+      <input type="hidden" id="loan-edit-idx">
+      <div class="grid-2">
+        <div class="f-group"><label id="loan-party-label">Borrower name</label><input type="text" id="loan-party" placeholder="Full name"></div>
+        <div class="f-group"><label>Related property (optional)</label>
+          <select id="loan-property"><option value="">None</option></select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Loan amount ($)</label><input type="number" id="loan-amount" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Interest rate (% per year)</label><input type="number" id="loan-rate" placeholder="0" min="0" step="0.1"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Start date</label><input type="date" id="loan-start"></div>
+        <div class="f-group"><label>Due / payoff date</label><input type="date" id="loan-due"></div>
+      </div>
+      <div class="f-group"><label>Loan structure</label>
+        <select id="loan-structure">
+          <option value="fixed">Fixed payment schedule</option>
+          <option value="interest-only">Interest only + lump sum payoff</option>
+          <option value="flexible">Flexible — log payments as they happen</option>
+        </select>
+      </div>
+      <div class="grid-2" id="loan-payment-fields">
+        <div class="f-group"><label>Monthly payment ($)</label><input type="number" id="loan-payment" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Payment frequency</label>
+          <select id="loan-frequency">
+            <option value="monthly">Monthly</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Bi-weekly</option>
+            <option value="lump">Lump sum at end</option>
+          </select>
+        </div>
+      </div>
+      <div class="f-group"><label>Notes</label><input type="text" id="loan-notes" placeholder="Purpose, collateral, terms..."></div>
+      <div class="modal-section-title">Log a payment now (optional)</div>
+      <div class="grid-2">
+        <div class="f-group"><label>Payment amount ($)</label><input type="number" id="loan-first-payment" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Payment date</label><input type="date" id="loan-first-date"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('loan-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLoan()">Save loan</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOAN DETAIL / PAYMENT MODAL -->
+<div class="overlay" id="loan-pay-overlay">
+  <div class="modal">
+    <div class="modal-header"><h3 id="loan-pay-title">Log payment</h3><button class="modal-close" onclick="closeModal('loan-pay-overlay')">✕</button></div>
+    <div class="modal-body">
+      <div id="loan-pay-summary" style="background:var(--bg);border-radius:var(--radius);padding:12px 14px;margin-bottom:1rem;font-size:13px;"></div>
+      <div class="grid-2">
+        <div class="f-group"><label>Payment amount ($)</label><input type="number" id="lp-amount" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Date</label><input type="date" id="lp-date"></div>
+      </div>
+      <div class="f-group"><label>Note (optional)</label><input type="text" id="lp-note" placeholder="e.g. Monthly payment, partial, interest only..."></div>
+      <div style="margin-top:1rem;">
+        <div class="card-title" style="margin-bottom:8px;font-size:13px;">Payment history</div>
+        <table class="tbl"><thead><tr><th>Date</th><th>Amount</th><th>Principal</th><th>Interest</th><th>Balance after</th><th>Note</th></tr></thead>
+        <tbody id="loan-pay-history"></tbody></table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('loan-pay-overlay')">Close</button>
+      <button class="btn btn-primary" onclick="logLoanPayment()">Log payment</button>
+    </div>
+  </div>
+</div>
+
 <!-- SETUP MODAL -->
 <div class="overlay" id="setup-overlay">
   <div class="modal" style="max-width:460px;">
@@ -1302,6 +1427,7 @@ function navTo(pageId,btn){
   if(pg)pg.classList.add('active');
   if(btn)btn.classList.add('active');
   if(pageId==='pl'){initPL();renderPL();}
+  if(pageId==='loans'){initLoans();}
   if(pageId==='bills')renderBills();
   if(pageId==='leases')renderLeases();
   if(pageId==='payments')renderPayLog();
@@ -2532,6 +2658,235 @@ function autoToggleReceipt(methodId, checkboxId) {
   // Zelle sends its own notification, Check rarely needs one — uncheck by default
   // Cash and Other default to checked
   checkbox.checked = (method === 'Cash' || method === 'Other');
+}
+
+// ── LOANS ──
+let loans = [];
+
+function initLoans() {
+  const saved = JSON.parse(localStorage.getItem('pm_loans') || '[]');
+  loans = saved;
+  // Populate property dropdown
+  const sel = document.getElementById('loan-property');
+  sel.innerHTML = '<option value="">None</option>' + sites.map(s => `<option value="${s.id}">${displayName(s)}</option>`).join('');
+  // Populate notice property dropdown
+  const nsel = document.getElementById('n-prop');
+  if(nsel) nsel.innerHTML = '<option value="">Select property...</option>' + sites.map(s => `<option value="${s.id}">${displayName(s)}</option>`).join('');
+  renderLoans();
+}
+
+function saveLoans() {
+  localStorage.setItem('pm_loans', JSON.stringify(loans));
+}
+
+function openLoanModal(direction, editIdx = null) {
+  document.getElementById('loan-direction').value = direction;
+  document.getElementById('loan-edit-idx').value = editIdx !== null ? editIdx : '';
+  document.getElementById('loan-modal-title').textContent = (editIdx !== null ? 'Edit' : 'Add') + ' — ' + (direction === 'lent' ? 'Loan I made' : 'Loan I took');
+  document.getElementById('loan-party-label').textContent = direction === 'lent' ? 'Borrower name' : 'Lender name';
+  document.getElementById('loan-start').value = today();
+  document.getElementById('loan-first-date').value = today();
+
+  if (editIdx !== null) {
+    const l = loans[editIdx];
+    document.getElementById('loan-party').value = l.party || '';
+    document.getElementById('loan-property').value = l.property || '';
+    document.getElementById('loan-amount').value = l.amount || '';
+    document.getElementById('loan-rate').value = l.rate || '';
+    document.getElementById('loan-start').value = l.start || today();
+    document.getElementById('loan-due').value = l.due || '';
+    document.getElementById('loan-structure').value = l.structure || 'flexible';
+    document.getElementById('loan-payment').value = l.payment || '';
+    document.getElementById('loan-frequency').value = l.frequency || 'monthly';
+    document.getElementById('loan-notes').value = l.notes || '';
+  } else {
+    ['loan-party','loan-amount','loan-rate','loan-due','loan-payment','loan-notes','loan-first-payment'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('loan-structure').value = 'flexible';
+    document.getElementById('loan-frequency').value = 'monthly';
+  }
+  document.getElementById('loan-overlay').classList.add('open');
+}
+
+function saveLoan() {
+  const direction = document.getElementById('loan-direction').value;
+  const party = document.getElementById('loan-party').value.trim();
+  const amount = parseFloat(document.getElementById('loan-amount').value) || 0;
+  if (!party || !amount) { showToast('Please enter a name and amount.'); return; }
+
+  const editIdx = document.getElementById('loan-edit-idx').value;
+  const firstPayment = parseFloat(document.getElementById('loan-first-payment').value) || 0;
+  const firstDate = document.getElementById('loan-first-date').value || today();
+
+  const loan = {
+    direction,
+    party,
+    property: document.getElementById('loan-property').value,
+    amount,
+    rate: parseFloat(document.getElementById('loan-rate').value) || 0,
+    start: document.getElementById('loan-start').value,
+    due: document.getElementById('loan-due').value,
+    structure: document.getElementById('loan-structure').value,
+    payment: parseFloat(document.getElementById('loan-payment').value) || 0,
+    frequency: document.getElementById('loan-frequency').value,
+    notes: document.getElementById('loan-notes').value.trim(),
+    payments: [],
+    status: 'active'
+  };
+
+  if (editIdx !== '') {
+    loan.payments = loans[editIdx].payments || [];
+    loans[editIdx] = loan;
+  } else {
+    loans.push(loan);
+  }
+
+  // Log first payment if entered
+  if (firstPayment > 0) {
+    const idx = editIdx !== '' ? parseInt(editIdx) : loans.length - 1;
+    addLoanPaymentToLoan(idx, firstPayment, firstDate, '');
+  }
+
+  saveLoans();
+  closeModal('loan-overlay');
+  renderLoans();
+  showToast(`Loan ${editIdx !== '' ? 'updated' : 'added'}: ${party}`);
+}
+
+function getLoanBalance(loan) {
+  const totalPaid = (loan.payments || []).reduce((a, p) => a + (p.principal || p.amount || 0), 0);
+  return Math.max(0, loan.amount - totalPaid);
+}
+
+function getLoanInterestDue(loan) {
+  if (!loan.rate || loan.rate === 0) return 0;
+  const balance = getLoanBalance(loan);
+  return parseFloat(((balance * loan.rate / 100) / 12).toFixed(2));
+}
+
+function addLoanPaymentToLoan(loanIdx, amount, date, note) {
+  const loan = loans[loanIdx];
+  const balance = getLoanBalance(loan);
+  const monthlyInterest = getLoanInterestDue(loan);
+  const principal = Math.max(0, amount - monthlyInterest);
+  const newBalance = Math.max(0, balance - principal);
+
+  loan.payments = loan.payments || [];
+  loan.payments.push({
+    date, amount,
+    principal: parseFloat(principal.toFixed(2)),
+    interest: parseFloat(monthlyInterest.toFixed(2)),
+    balance: parseFloat(newBalance.toFixed(2)),
+    note: note || ''
+  });
+
+  if (newBalance <= 0) loan.status = 'paid';
+  saveLoans();
+}
+
+let activeLoanIdx = null;
+function openLoanPayModal(idx) {
+  activeLoanIdx = idx;
+  const loan = loans[idx];
+  const balance = getLoanBalance(loan);
+  const interest = getLoanInterestDue(loan);
+
+  document.getElementById('loan-pay-title').textContent = `Payments — ${loan.party}`;
+  document.getElementById('lp-date').value = today();
+  document.getElementById('lp-amount').value = loan.payment || '';
+  document.getElementById('lp-note').value = '';
+
+  document.getElementById('loan-pay-summary').innerHTML =
+    `<div style="display:flex;gap:20px;flex-wrap:wrap;">
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Original amount</div><div style="font-weight:700;">${fmt(loan.amount)}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Current balance</div><div style="font-weight:700;color:${balance > 0 ? 'var(--red)' : 'var(--green)'};">${fmt(balance)}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Interest rate</div><div style="font-weight:700;">${loan.rate ? loan.rate + '% / yr' : 'None'}</div></div>
+      ${loan.rate ? `<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Interest this month</div><div style="font-weight:700;color:var(--amber);">${fmt(interest)}</div></div>` : ''}
+    </div>`;
+
+  const history = loan.payments || [];
+  document.getElementById('loan-pay-history').innerHTML = history.length
+    ? [...history].reverse().map(p => `<tr>
+        <td>${p.date}</td>
+        <td style="font-weight:600;">${fmt(p.amount)}</td>
+        <td style="color:var(--green);">${fmt(p.principal)}</td>
+        <td style="color:var(--amber);">${p.interest > 0 ? fmt(p.interest) : '—'}</td>
+        <td style="color:${p.balance > 0 ? 'var(--red)' : 'var(--green)'};">${fmt(p.balance)}</td>
+        <td style="color:var(--text3);font-size:12px;">${p.note || ''}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="color:var(--text3);font-style:italic;padding:1rem;">No payments logged yet.</td></tr>';
+
+  document.getElementById('loan-pay-overlay').classList.add('open');
+}
+
+function logLoanPayment() {
+  if (activeLoanIdx === null) return;
+  const amount = parseFloat(document.getElementById('lp-amount').value) || 0;
+  const date = document.getElementById('lp-date').value || today();
+  const note = document.getElementById('lp-note').value.trim();
+  if (!amount) { showToast('Please enter a payment amount.'); return; }
+  addLoanPaymentToLoan(activeLoanIdx, amount, date, note);
+  openLoanPayModal(activeLoanIdx); // refresh the modal
+  renderLoans();
+  showToast('Payment logged.');
+}
+
+function renderLoans() {
+  const lent = loans.filter(l => l.direction === 'lent');
+  const borrowed = loans.filter(l => l.direction === 'borrowed');
+
+  // Metrics
+  const totalLent = lent.reduce((a, l) => a + getLoanBalance(l), 0);
+  const totalBorrowed = borrowed.reduce((a, l) => a + getLoanBalance(l), 0);
+  const totalInterestEarning = lent.filter(l => l.rate > 0).reduce((a, l) => a + getLoanInterestDue(l), 0);
+  const overdue = loans.filter(l => l.due && l.due < today() && l.status === 'active').length;
+
+  document.getElementById('loan-metrics').innerHTML = `
+    <div class="pl-metric income"><div class="lbl">Owed to me</div><div class="val positive">${fmt(totalLent)}</div><div class="sub">${lent.filter(l=>l.status==='active').length} active loans</div></div>
+    <div class="pl-metric expense"><div class="lbl">I owe</div><div class="val negative">${fmt(totalBorrowed)}</div><div class="sub">${borrowed.filter(l=>l.status==='active').length} active loans</div></div>
+    <div class="pl-metric margin"><div class="lbl">Interest earning / mo</div><div class="val" style="color:var(--amber);">${fmt(totalInterestEarning)}</div><div class="sub">from active loans</div></div>
+    <div class="pl-metric ${overdue > 0 ? 'expense' : 'income'}"><div class="lbl">Overdue loans</div><div class="val ${overdue > 0 ? 'red' : 'green'}">${overdue}</div><div class="sub">${overdue > 0 ? 'Past due date' : 'All current'}</div></div>
+  `;
+
+  const renderTable = (tbodyId, list) => {
+    const tbody = document.getElementById(tbodyId);
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text3);font-style:italic;padding:1rem;">No loans yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map((l, i) => {
+      const realIdx = loans.indexOf(l);
+      const balance = getLoanBalance(l);
+      const pct = Math.round(((l.amount - balance) / l.amount) * 100);
+      const isOverdue = l.due && l.due < today() && l.status === 'active';
+      const statusCls = l.status === 'paid' ? 'loan-status-paid' : isOverdue ? 'loan-status-overdue' : 'loan-status-active';
+      const statusTxt = l.status === 'paid' ? 'Paid off' : isOverdue ? 'Overdue' : 'Active';
+      return `<tr>
+        <td><div class="tbl-name">${l.party}</div><div class="tbl-sub">${l.notes || (l.property ? sites.find(s=>s.id===l.property)?.name||'' : '')}</div></td>
+        <td>${fmt(l.amount)}</td>
+        <td>${l.rate ? l.rate + '%' : '—'}</td>
+        <td style="font-size:12px;color:var(--text2);">${{fixed:'Fixed',flexible:'Flexible','interest-only':'Interest only'}[l.structure]||l.structure}</td>
+        <td>${l.start||'—'}</td>
+        <td>
+          <div class="loan-progress">
+            <div class="loan-progress-bar"><div class="loan-progress-fill" style="width:${pct}%"></div></div>
+            <div style="font-size:11px;color:${balance>0?'var(--red)':'var(--green)'};">${fmt(balance)} left</div>
+          </div>
+        </td>
+        <td><span class="badge ${statusCls}" style="border-radius:20px;font-size:11px;padding:3px 9px;">${statusTxt}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-xs btn-primary" onclick="openLoanPayModal(${realIdx})">Payments</button>
+            <button class="btn btn-xs btn-secondary" onclick="openLoanModal('${l.direction}',${realIdx})">Edit</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  };
+
+  renderTable('loans-lent-tbody', lent);
+  renderTable('loans-borrowed-tbody', borrowed);
 }
 
 // UTILS
