@@ -346,20 +346,14 @@ function checkPw(){
     sessionStorage.setItem(PK,'1');
     document.getElementById('pw-card').style.display='none';
     if(errEl)errEl.style.display='none';
-    var cfg=JSON.parse(localStorage.getItem(CK)||'{}');
-    var demo=localStorage.getItem(DMK)==='1';
-    if(demo||cfg.clientId){
-      document.getElementById('auth-screen').style.display='none';
-      // Wait for main script to be ready then launch
-      var attempts=0;
-      var tryLaunch=function(){
-        if(typeof launchApp==='function'){launchApp();}
-        else if(attempts++<50){setTimeout(tryLaunch,100);}
-      };
-      tryLaunch();
-    } else {
-      document.getElementById('setup-card').style.display='block';
-    }
+    // Always launch app — Supabase handles auth, no Google setup needed
+    document.getElementById('auth-screen').style.display='none';
+    var attempts=0;
+    var tryLaunch=function(){
+      if(typeof launchApp==='function'){launchApp();}
+      else if(attempts++<50){setTimeout(tryLaunch,100);}
+    };
+    tryLaunch();
   } else {
     if(errEl){errEl.textContent='Incorrect username or password.';errEl.style.display='block';}
     inputEl.value='';
@@ -389,6 +383,16 @@ function demoModeEarly(){
   };
   tryLaunch();
 }
+function skipSetup(){
+  // Skip Google setup — using Supabase now
+  document.getElementById('auth-screen').style.display='none';
+  var attempts=0;
+  var tryLaunch=function(){
+    if(typeof launchApp==='function'){launchApp();}
+    else if(attempts++<50){setTimeout(tryLaunch,100);}
+  };
+  tryLaunch();
+}
 </script>
 </head>
 <body>
@@ -405,23 +409,12 @@ function demoModeEarly(){
     <button class="btn btn-primary btn-block" onclick="checkPw()">Sign in</button>
     <p class="auth-note">Authorized access only · juggleryan.github.io</p>
   </div>
-  <div class="auth-card" id="setup-card" style="display:none;max-width:460px;">
-    <div class="auth-logo">🔗</div>
-    <h1>Connect Google</h1>
-    <p>Link your Google Sheets database and Gmail for Zelle detection.</p>
-    <div class="auth-steps">
-      <p><span class="step-n">1</span><span>Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> → create a project</span></p>
-      <p><span class="step-n">2</span><span>Enable <strong>Google Sheets API</strong> and <strong>Gmail API</strong></span></p>
-      <p><span class="step-n">3</span><span>Create an <strong>API Key</strong> + <strong>OAuth 2.0 Client ID</strong> (Web app type)</span></p>
-      <p><span class="step-n">4</span><span>Add <code>https://juggleryan.github.io</code> to Authorized JS origins</span></p>
-      <p><span class="step-n">5</span><span>Create a Sheet with tabs: <strong>Sites · Payments · Bills · Leases</strong></span></p>
-    </div>
-    <div class="f-group"><label>OAuth Client ID</label><input type="text" id="cfg-cid" placeholder="xxxxx.apps.googleusercontent.com"></div>
-    <div class="f-group"><label>API Key</label><input type="text" id="cfg-key" placeholder="AIzaSy..."></div>
-    <div class="f-group"><label>Google Sheet ID</label><input type="text" id="cfg-sid" placeholder="Paste Sheet ID from URL"></div>
-    <button class="btn btn-primary btn-block" onclick="connectGoogle()">Connect to Google Sheets</button>
-    <button class="btn btn-secondary btn-block" style="margin-top:6px;" onclick="demoModeEarly()">Skip — use demo mode</button>
-    <p class="auth-note">Credentials saved in your browser only. Never shared.</p>
+  <div class="auth-card" id="setup-card" style="display:none;max-width:420px;">
+    <div class="auth-logo">🏠</div>
+    <h1>Almost there</h1>
+    <p>Your account is ready. Click below to enter the dashboard.</p>
+    <button class="btn-primary btn-block" onclick="skipSetup()">Enter dashboard</button>
+    <button class="btn-secondary btn-block" style="margin-top:6px;" onclick="demoModeEarly()">Use demo mode instead</button>
   </div>
 </div>
 
@@ -1304,8 +1297,9 @@ function init(){
   config=JSON.parse(localStorage.getItem(CK)||'{}');
   isDemoMode=localStorage.getItem(DMK)==='1';
   if(sessionStorage.getItem(PK)==='1'){
-    if(isDemoMode||config.clientId){document.getElementById('auth-screen').style.display='none';launchApp();if(!isDemoMode&&config.clientId)loadGapi();}
-    else{document.getElementById('pw-card').style.display='none';document.getElementById('setup-card').style.display='block';}
+    // Always launch — Supabase handles database, no Google needed
+    document.getElementById('auth-screen').style.display='none';
+    launchApp();
   }
 }
 
