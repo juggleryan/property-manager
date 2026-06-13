@@ -10,6 +10,7 @@
 <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#f7f8fa;--white:#ffffff;--border:#e4e6ea;--border2:#c9cdd4;
@@ -328,6 +329,8 @@ button{font-family:var(--sans);}
 <script>
 // Constants needed by early auth functions
 var CK='pm_config',DK='pm_data',DMK='pm_demo',PK='pm_authed';
+var SUPABASE_URL='https://ioliuikhxzbexjzfeaus.supabase.co';
+var SUPABASE_KEY='sb_publishable_ajHlDgE9q7myl0EF84MYVQ_CDz3uoFv';
 // Early auth function — defined before main script to prevent "not defined" errors
 function checkPw(){
   var userEl=document.getElementById('pw-user');
@@ -1208,6 +1211,21 @@ function demoModeEarly(){
 
 <script>
 // ══ CONSTANTS ══ (declared in early script above)
+let supabase = null;
+let supabaseReady = false;
+
+function initSupabase() {
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseReady = true;
+    setSyncStatus('ok');
+    return true;
+  } catch(e) {
+    console.error('Supabase init error:', e);
+    setSyncStatus('err');
+    return false;
+  }
+}
 const BILL_TYPES=['Water','Sewer/Septic','Electrical','Yard maintenance','Propane','Water backflow','Property tax'];
 const BILL_ICONS={Water:'💧','Sewer/Septic':'🚿',Electrical:'⚡','Yard maintenance':'🌿',Propane:'🔥','Water backflow':'🔄','Property tax':'🏛️',Other:'📄'};
 const PROP_DEFS=[
@@ -1308,35 +1326,14 @@ function saveLocal(){localStorage.setItem(DK,JSON.stringify({sites,payments,bill
 
 // ══ GAPI ══
 function loadGapi(){
-  const s=document.createElement('script');s.src='https://apis.google.com/js/api.js';
-  s.onload=()=>gapi.load('client',async()=>{
-    await gapi.client.init({apiKey:config.apiKey});
-    await gapi.client.load('https://sheets.googleapis.com/$discovery/rest?version=v4');
-    await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest');
-    gapiReady=true;loadGIS();
-  });
-  document.head.appendChild(s);
+  // Legacy Google Sheets connection — kept for backup export only
+  console.log('Google Sheets integration disabled — using Supabase');
 }
-function loadGIS(){
-  const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';
-  s.onload=()=>{
-    tokenClient=google.accounts.oauth2.initTokenClient({
-      client_id:config.clientId,
-      scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.readonly',
-      callback:(r)=>{
-        if(r.error){setSyncStatus('err');showToast('Sign-in failed: '+r.error);return;}
-        accessToken=r.access_token;gapi.client.setToken({access_token:accessToken});
-        setSyncStatus('ok');showToast('Google connected ✓');loadFromSheets();
-      }
-    });
-    setSyncStatus('loading');tokenClient.requestAccessToken({prompt:'consent'});
-  };
-  document.head.appendChild(s);
-}
+function loadGIS(){ console.log('GIS disabled — using Supabase'); }
 function setSyncStatus(s){
   const dot=document.getElementById('sync-dot'),txt=document.getElementById('sync-text');
   dot.className='sync-dot';
-  const map={ok:['ok','Sheets connected'],err:['err','Connection error'],loading:['loading','Syncing...'],demo:['','Demo mode'],idle:['','Not connected']};
+  const map={ok:['ok','Supabase connected'],err:['err','Connection error'],loading:['loading','Syncing...'],demo:['','Demo mode'],idle:['','Not connected']};
   const[cls,label]=map[s]||['','—'];
   if(cls)dot.classList.add(cls);txt.textContent=label;
 }
@@ -1366,30 +1363,62 @@ async function loadFromSheets(){
 }
 
 async function saveToSheets(){
-  if(isDemoMode){showToast('Connect Google Sheets to save.');return;}
-  if(!gapiReady){showToast('Google API not ready.');return;}
-  if(!accessToken){tokenClient.requestAccessToken({prompt:''});return;}
+  await saveToSupabase();
+}
+
+async function saveToSupabase(){
+  if(isDemoMode){showToast('Connect to Supabase to save.');return;}
+  if(!supabaseReady && !initSupabase()){showToast('Supabase not ready.');return;}
   setSyncStatus('loading');
   try{
-    const sHdr=['ID','Name','Address','Type','State','Tenant','Rent','Mortgage','Paid','Lease Start','Lease End','Term','Status','Lease File','Yard','Tax Amt','Tax H1','Tax H2','Tax Notes','Notes','Nickname','Tenant Email','Purchase Date','Purchase Price','Current Value'];
-    const sRows=sites.map(s=>[s.id,s.name,s.addr,s.type,s.state,s.tenant,s.rent,s.mortgage||0,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.yard||'',s.taxAmt||0,s.tax1||'',s.tax2||'',s.taxNotes||'',JSON.stringify(s.notes||[]),s.nickname||'',s.tenantEmail||'',s.purchaseDate||'',s.purchasePrice||0,s.currentValue||0]);
-    const pHdr=['Date','Site','Tenant','Type','Amount','Method','Source'];
-    const pRows=payments.map(p=>[p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||'']);
-    const bHdr=['Date','Property','Type','Amount','Notes'];
-    const bRows=bills.map(b=>[b.date,b.prop,b.type,b.amount,b.notes||'']);
-    const nHdr=['Property','Type','Date','Deadline','Amount','Notes','Outcome'];
-    const nRows=notices.map(n=>[n.prop,n.type,n.date,n.deadline,n.amt||0,n.notes||'',n.outcome||'Pending']);
-    await gapi.client.sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId:config.sheetId,
-      resource:{valueInputOption:'USER_ENTERED',data:[
-        {range:'Sites!A1',values:[sHdr,...sRows]},
-        {range:'Payments!A1',values:[pHdr,...pRows]},
-        {range:'Bills!A1',values:[bHdr,...bRows]},
-        {range:'Notices!A1',values:[nHdr,...nRows]}
-      ]}
-    });
-    saveLocal();setSyncStatus('ok');showToast('Saved to Google Sheets ✓');
-  }catch(e){console.error(e);setSyncStatus('err');showToast('Save failed.');}
+    // Upsert sites
+    const siteData = sites.map(s => ({
+      id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
+      nickname: s.nickname||'', tenant: s.tenant, tenant_email: s.tenantEmail||'',
+      rent: s.rent||0, mortgage: s.mortgage||0, paid: s.paid||0,
+      lease_start: s.start||null, lease_end: s.end||null, lease_term: s.term||'12',
+      status: s.status||'vacant', lease_file: s.lease||null, yard: s.yard||'',
+      tax_amt: s.taxAmt||0, tax_h1: s.tax1||'', tax_h2: s.tax2||'', tax_notes: s.taxNotes||'',
+      purchase_date: s.purchaseDate||null, purchase_price: s.purchasePrice||0,
+      current_value: s.currentValue||0, notes: s.notes||[],
+      updated_at: new Date().toISOString()
+    }));
+
+    // Upsert payments (only new ones without an id)
+    const newPayments = payments.filter(p => !p.id).map(p => ({
+      date: p.date, site_id: p.site, tenant: p.tenant,
+      type: p.type, amount: p.amount, method: p.method, source: p.source||''
+    }));
+
+    // Upsert bills (only new ones)
+    const newBills = bills.filter(b => !b.id).map(b => ({
+      date: b.date, prop: b.prop, type: b.type, amount: b.amount, notes: b.notes||''
+    }));
+
+    // Upsert notices (only new ones)
+    const newNotices = notices.filter(n => !n.id).map(n => ({
+      prop: n.prop, type: n.type, date: n.date, deadline: n.deadline||null,
+      amount: n.amt||0, notes: n.notes||'', outcome: n.outcome||'Pending'
+    }));
+
+    const ops = [supabase.from('sites').upsert(siteData, {onConflict:'id'})];
+    if(newPayments.length) ops.push(supabase.from('payments').insert(newPayments));
+    if(newBills.length) ops.push(supabase.from('bills').insert(newBills));
+    if(newNotices.length) ops.push(supabase.from('notices').insert(newNotices));
+
+    const results = await Promise.all(ops);
+    const errors = results.filter(r => r.error);
+    if(errors.length) throw errors[0].error;
+
+    saveLocal(); setSyncStatus('ok');
+    showToast('Saved to Supabase ✓');
+    // Reload to get IDs assigned by DB
+    await loadFromSupabase();
+  } catch(e) {
+    console.error('Supabase save error:', e);
+    setSyncStatus('err');
+    showToast('Save failed: ' + (e.message||e));
+  }
 }
 
 async function syncZelle(){
