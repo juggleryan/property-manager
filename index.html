@@ -10,7 +10,7 @@
 <script src="https://unpkg.com/docx@8.5.0/build/index.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js" crossorigin></script>
 <style>
 :root{
   --bg:#f7f8fa;--white:#ffffff;--border:#e4e6ea;--border2:#c9cdd4;
@@ -1204,12 +1204,12 @@ function skipSetup(){
 
 <script>
 // ══ CONSTANTS ══ (declared in early script above)
-let supabase = null;
-let supabaseReady = false;
+var supabaseClient = null;
+var supabaseReady = false;
 
 function initSupabase() {
   try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     supabaseReady = true;
     setSyncStatus('ok');
     return true;
@@ -1232,9 +1232,9 @@ const PROP_DEFS=[
 ];
 
 // ══ STATE ══
-let isDemoMode=false,config={},gapiReady=false,tokenClient=null,accessToken=null;
-let editIdx=null,detailIdx=null,prevPage=null,pendingUpload=null,uploadForIdx=null,activeFilter='all';
-let sites=[],payments=[],bills=[],notices=[];
+var isDemoMode=false,config={},gapiReady=false,tokenClient=null,accessToken=null;
+var editIdx=null,detailIdx=null,prevPage=null,pendingUpload=null,uploadForIdx=null,activeFilter='all';
+var sites=[],payments=[],bills=[],notices=[];
 
 function today(){return new Date().toISOString().slice(0,10);}
 function now(){return new Date().toLocaleString();}
@@ -1395,10 +1395,10 @@ async function saveToSupabase(){
       amount: n.amt||0, notes: n.notes||'', outcome: n.outcome||'Pending'
     }));
 
-    const ops = [supabase.from('sites').upsert(siteData, {onConflict:'id'})];
-    if(newPayments.length) ops.push(supabase.from('payments').insert(newPayments));
-    if(newBills.length) ops.push(supabase.from('bills').insert(newBills));
-    if(newNotices.length) ops.push(supabase.from('notices').insert(newNotices));
+    const ops = [supabaseClient.from('sites').upsert(siteData, {onConflict:'id'})];
+    if(newPayments.length) ops.push(supabaseClient.from('payments').insert(newPayments));
+    if(newBills.length) ops.push(supabaseClient.from('bills').insert(newBills));
+    if(newNotices.length) ops.push(supabaseClient.from('notices').insert(newNotices));
 
     const results = await Promise.all(ops);
     const errors = results.filter(r => r.error);
@@ -2690,7 +2690,7 @@ function autoToggleReceipt(methodId, checkboxId) {
 }
 
 // ── LOANS ──
-let loans = [];
+var loans = [];
 
 function initLoans() {
   const saved = JSON.parse(localStorage.getItem('pm_loans') || '[]');
