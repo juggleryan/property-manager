@@ -1370,7 +1370,7 @@ async function loadFromSheets(){
     if(pr.values&&pr.values.length)payments=pr.values.map(r=>({date:r[0]||'',site:r[1]||'',tenant:r[2]||'',type:r[3]||'',amount:parseFloat(r[4])||0,method:r[5]||'',source:r[6]||''}));
     if(br.values&&br.values.length)bills=br.values.map(r=>({date:r[0]||'',prop:r[1]||'',type:r[2]||'',amount:parseFloat(r[3])||0,notes:r[4]||''}));
     if(nr.values&&nr.values.length)notices=nr.values.map(r=>({prop:r[0]||'',type:r[1]||'',date:r[2]||'',deadline:r[3]||'',amt:parseFloat(r[4])||0,notes:r[5]||'',outcome:r[6]||'Pending'}));
-    saveLocal();render();setSyncStatus('ok');showToast('Loaded from Google Sheets.');
+    autoSave();render();setSyncStatus('ok');showToast('Loaded from Google Sheets.');
   }catch(e){console.error(e);setSyncStatus('err');showToast('Failed to load. Check console.');}
 }
 
@@ -1457,7 +1457,7 @@ async function syncZelle(){
       if(site){site.paid=Math.round((site.paid||0)+amt);if(site.paid>=site.rent)site.status='current';}
       found++;
     }
-    saveLocal();render();setSyncStatus('ok');
+    autoSave();render();setSyncStatus('ok');
     showToast(found?`Found ${found} new Zelle payment${found>1?'s':''} ✓`:'No new payments found.');
   }catch(e){console.error(e);setSyncStatus('err');showToast('Gmail scan failed.');}
 }
@@ -1671,7 +1671,7 @@ function addNote(){
   if(!sites[detailIdx].notes)sites[detailIdx].notes=[];
   sites[detailIdx].notes.push({ts:now(),text:txt});
   document.getElementById('new-note-text').value='';
-  saveLocal();renderNotes(detailIdx);showToast('Note saved.');
+  autoSave();renderNotes(detailIdx);showToast('Note saved.');
 }
 
 function renderDetailNotices(idx){
@@ -1771,12 +1771,12 @@ function markPaid(i){
   const s=sites[i];if(s.status==='vacant'){showToast('Cannot mark vacant as paid.');return;}
   const rem=s.rent-(s.paid||0);if(rem<=0){showToast(`${s.name} already fully paid.`);return;}
   payments.unshift({date:today(),site:s.id,tenant:s.tenant,type:'Rent',amount:rem,method:'Zelle',source:'Manual'});
-  s.paid=s.rent;s.status='current';saveLocal();render();showToast(`${s.name} marked as paid.`);
+  s.paid=s.rent;s.status='current';autoSave();render();showToast(`${s.name} marked as paid.`);
 }
 function logLate(i){
   const s=sites[i];if(s.status==='vacant'){showToast('Cannot log late fee for vacant.');return;}
   payments.unshift({date:today(),site:s.id,tenant:s.tenant,type:'Late fee',amount:50,method:'Manual',source:'Manual'});
-  s.status='late';saveLocal();render();showToast(`$50 late fee logged for ${s.name}.`);
+  s.status='late';autoSave();render();showToast(`$50 late fee logged for ${s.name}.`);
 }
 function addPayment(){
   const site=document.getElementById('ap-site').value;
@@ -1789,7 +1789,7 @@ function addPayment(){
   payments.unshift({date,site,tenant:s?s.tenant:'',type,amount:Math.round(amt),method,source:'Manual'});
   if(type==='Rent'&&s){s.paid=Math.round((s.paid||0)+amt);if(s.paid>=s.rent)s.status='current';}
   document.getElementById('ap-site').value='';document.getElementById('ap-amt').value='';
-  saveLocal();render();renderPayLog();
+  autoSave();render();renderPayLog();
   const sendRec = document.getElementById('ap-send-receipt').checked;
   if(sendRec){
     sendReceipt(site,type,amt,method,date).then(sent=>{
@@ -1810,7 +1810,7 @@ function submitAddPay(){
   payments.unshift({date,site,tenant:s?s.tenant:'',type,amount:Math.round(amt),method,source:'Manual'});
   if(type==='Rent'&&s){s.paid=Math.round((s.paid||0)+amt);if(s.paid>=s.rent)s.status='current';}
   document.getElementById('ap2-site').value='';document.getElementById('ap2-amt').value='';
-  closeModal('addpay-overlay');saveLocal();render();
+  closeModal('addpay-overlay');autoSave();render();
   const sendRec2 = document.getElementById('ap2-send-receipt').checked;
   if(sendRec2){
     sendReceipt(site,type,amt,method,date).then(sent=>{
@@ -1829,7 +1829,7 @@ function saveBill(){
   if(!amt||isNaN(amt)){showToast('Please enter an amount.');return;}
   bills.unshift({date,prop,type,amount:amt,notes});
   document.getElementById('b-amt').value='';document.getElementById('b-notes').value='';
-  closeModal('bill-overlay');saveLocal();renderBills();showToast(`${type} payment logged.`);
+  closeModal('bill-overlay');autoSave();renderBills();showToast(`${type} payment logged.`);
 }
 function saveNotice(){
   const prop=document.getElementById('n-prop').value;
@@ -1897,7 +1897,7 @@ function saveEdit(){
   s.tax1=document.getElementById('e-tax1').value;
   s.tax2=document.getElementById('e-tax2').value;
   s.taxNotes=document.getElementById('e-tax-notes').value.trim();
-  closeModal('edit-overlay');saveLocal();render();
+  closeModal('edit-overlay');autoSave();render();
   if(detailIdx===editIdx)renderDetailOverview(editIdx);
   showToast('Property updated.');
 }
@@ -1944,7 +1944,7 @@ function handleUpload(e){
   const f=e.target.files[0];if(!f)return;
   if(uploadForIdx!==null){
     sites[uploadForIdx].lease=f.name;uploadForIdx=null;
-    saveLocal();renderLeases();showToast(`Lease uploaded: ${f.name}`);
+    autoSave();renderLeases();showToast(`Lease uploaded: ${f.name}`);
   } else {
     pendingUpload=f.name;
     document.getElementById('assign-filename').textContent=`File: ${f.name}`;
@@ -1954,7 +1954,7 @@ function handleUpload(e){
 }
 function confirmAssign(){
   const idx=parseInt(document.getElementById('assign-site').value);
-  if(!isNaN(idx)&&pendingUpload){sites[idx].lease=pendingUpload;saveLocal();renderLeases();showToast(`Lease assigned to ${sites[idx].name}`);}
+  if(!isNaN(idx)&&pendingUpload){sites[idx].lease=pendingUpload;autoSave();renderLeases();showToast(`Lease assigned to ${sites[idx].name}`);}
   closeModal('assign-overlay');pendingUpload=null;
 }
 
@@ -2705,6 +2705,17 @@ function autoToggleReceipt(methodId, checkboxId) {
   // Zelle sends its own notification, Check rarely needs one — uncheck by default
   // Cash and Other default to checked
   checkbox.checked = (method === 'Cash' || method === 'Other');
+}
+
+// AUTO-SAVE TO SUPABASE
+var autoSaveTimer = null;
+function autoSave() {
+  saveLocal();
+  if(isDemoMode || !supabaseReady) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(function() {
+    saveToSupabase();
+  }, 1500); // debounce 1.5 seconds
 }
 
 // ── LOANS ──
