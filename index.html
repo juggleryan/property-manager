@@ -1371,15 +1371,21 @@ async function saveToSheets(){
   if(!accessToken){tokenClient.requestAccessToken({prompt:''});return;}
   setSyncStatus('loading');
   try{
+    const sHdr=['ID','Name','Address','Type','State','Tenant','Rent','Mortgage','Paid','Lease Start','Lease End','Term','Status','Lease File','Yard','Tax Amt','Tax H1','Tax H2','Tax Notes','Notes','Nickname','Tenant Email','Purchase Date','Purchase Price','Current Value'];
     const sRows=sites.map(s=>[s.id,s.name,s.addr,s.type,s.state,s.tenant,s.rent,s.mortgage||0,s.paid,s.start,s.end,s.term,s.status,s.lease||'',s.yard||'',s.taxAmt||0,s.tax1||'',s.tax2||'',s.taxNotes||'',JSON.stringify(s.notes||[]),s.nickname||'',s.tenantEmail||'',s.purchaseDate||'',s.purchasePrice||0,s.currentValue||0]);
+    const pHdr=['Date','Site','Tenant','Type','Amount','Method','Source'];
     const pRows=payments.map(p=>[p.date,p.site,p.tenant,p.type,p.amount,p.method,p.source||'']);
+    const bHdr=['Date','Property','Type','Amount','Notes'];
     const bRows=bills.map(b=>[b.date,b.prop,b.type,b.amount,b.notes||'']);
+    const nHdr=['Property','Type','Date','Deadline','Amount','Notes','Outcome'];
     const nRows=notices.map(n=>[n.prop,n.type,n.date,n.deadline,n.amt||0,n.notes||'',n.outcome||'Pending']);
     await gapi.client.sheets.spreadsheets.values.batchUpdate({
       spreadsheetId:config.sheetId,
       resource:{valueInputOption:'USER_ENTERED',data:[
-        {range:'Sites!A2',values:sRows},{range:'Payments!A2',values:pRows},
-        {range:'Bills!A2',values:bRows},{range:'Notices!A2',values:nRows}
+        {range:'Sites!A1',values:[sHdr,...sRows]},
+        {range:'Payments!A1',values:[pHdr,...pRows]},
+        {range:'Bills!A1',values:[bHdr,...bRows]},
+        {range:'Notices!A1',values:[nHdr,...nRows]}
       ]}
     });
     saveLocal();setSyncStatus('ok');showToast('Saved to Google Sheets ✓');
