@@ -1208,14 +1208,25 @@ var supabaseClient = null;
 var supabaseReady = false;
 
 function initSupabase() {
+  console.log('[Supabase] initSupabase called');
+  console.log('[Supabase] window.supabase:', typeof window.supabase);
+  console.log('[Supabase] SUPABASE_URL:', SUPABASE_URL);
   try {
+    if(!window.supabase){
+      console.error('[Supabase] window.supabase is not defined — library not loaded');
+      setSyncStatus('err');
+      showToast('Supabase library not loaded. Try hard refresh.');
+      return false;
+    }
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('[Supabase] client created:', !!supabaseClient);
     supabaseReady = true;
     setSyncStatus('ok');
     return true;
   } catch(e) {
-    console.error('Supabase init error:', e);
+    console.error('[Supabase] init error:', e);
     setSyncStatus('err');
+    showToast('Supabase error: ' + e.message);
     return false;
   }
 }
@@ -1306,9 +1317,16 @@ function init(){
 function launchApp(){
   document.getElementById('app').style.display='block';
   setToday();populateSiteDropdowns();render();
-  setSyncStatus(isDemoMode?'demo':'idle');
   emailjs.init('yMtMxURljjHQMjT16');
   document.getElementById('dash-month').textContent=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  if(isDemoMode){
+    setSyncStatus('demo');
+  } else {
+    setSyncStatus('loading');
+    if(initSupabase()){
+      loadFromSupabase();
+    }
+  }
 }
 function setToday(){
   const t=today();
