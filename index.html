@@ -298,6 +298,11 @@ button{font-family:var(--sans);}
 .acq-equity{font-size:11px;color:var(--text3);}
 .acq-return{font-size:12px;font-weight:600;}
 .negative{color:var(--red);font-weight:600;}
+/* DRAG AND DROP */
+.drag-handle{cursor:grab;color:var(--text3);padding:0 6px;font-size:16px;line-height:1;user-select:none;}
+.drag-handle:active{cursor:grabbing;}
+.drag-over{background:var(--blue-bg)!important;border-top:2px solid var(--blue);}
+.dragging{opacity:0.4;}
 /* MOBILE */
 @media(max-width:768px){
   :root{--sidebar-w:0px;}
@@ -517,7 +522,7 @@ function skipSetup(){
         <div class="card">
           <div class="card-body no-pad">
             <table class="tbl">
-              <thead><tr><th>Property</th><th>Type</th><th>Tenant</th><th>Rent / Mortgage</th><th>Paid</th><th>Lease</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th style="width:30px;"></th><th>Property</th><th>Type</th><th>Tenant</th><th>Rent / Mortgage</th><th>Paid</th><th>Lease</th><th>Status</th><th></th></tr></thead>
               <tbody id="props-tbody"></tbody>
             </table>
           </div>
@@ -1722,7 +1727,10 @@ function propRow(s,idx,mini=false){
       <td><span class="badge ${s.status}"><span class="badge-dot"></span>${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span>${hasNotice?'<span class="badge notice" style="margin-left:4px;"><span class="badge-dot"></span>Notice</span>':''}</td>
     </tr>`;
   }
-  return `<tr style="cursor:pointer;" onclick="openDetail(${idx})">
+  return `<tr draggable="true" data-idx="${idx}" style="cursor:pointer;"
+      ondragstart="dragStart(event,${idx})" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropRow(event,${idx})" ondragend="dragEnd(event)"
+      onclick="openDetail(${idx})">
+    <td onclick="event.stopPropagation()" style="width:30px;padding:12px 4px 12px 12px;"><span class="drag-handle" title="Drag to reorder">⠿</span></td>
     <td>${displayLabel(s)}</td>
     <td><span class="type-tag ${s.type}">${s.type==='rv'?'RV':'House'}</span></td>
     <td style="color:${s.status==='vacant'?'var(--text3)':'var(--text)'};">${s.tenant}</td>
@@ -3154,6 +3162,39 @@ function renderLoans() {
 
   renderTable('loans-lent-tbody', lent);
   renderTable('loans-borrowed-tbody', borrowed);
+}
+
+// DRAG AND DROP — property reordering
+var dragSrcIdx = null;
+
+function dragStart(e, idx) {
+  dragSrcIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+function dragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function dragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('#props-tbody tr').forEach(r => r.classList.remove('drag-over'));
+}
+function dropRow(e, targetIdx) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+  // Reorder sites array
+  const moved = sites.splice(dragSrcIdx, 1)[0];
+  sites.splice(targetIdx, 0, moved);
+  dragSrcIdx = null;
+  autoSave();
+  renderPropsTable();
+  showToast('Order saved.');
 }
 
 // UTILS
