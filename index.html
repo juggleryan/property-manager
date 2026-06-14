@@ -1351,7 +1351,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',parcel:'',size:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
+    nickname:'',sortOrder:0,sortOrder:0,parcel:'',size:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1395,7 +1395,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',parcel:'',size:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1453,7 +1453,7 @@ async function loadFromSupabase(){
   setSyncStatus('loading');
   try{
     const [sitesRes, paymentsRes, billsRes, noticesRes] = await Promise.all([
-      supabaseClient.from('sites').select('*').order('name'),
+      supabaseClient.from('sites').select('*').order('sort_order', {ascending:true, nullsFirst:false}),
       supabaseClient.from('payments').select('*').order('date', {ascending:false}),
       supabaseClient.from('bills').select('*').order('date', {ascending:false}),
       supabaseClient.from('notices').select('*').order('date', {ascending:false})
@@ -1466,7 +1466,7 @@ async function loadFromSupabase(){
     if(sitesRes.data && sitesRes.data.length){
       sites = sitesRes.data.map(r => ({
         id:r.id, name:r.name||'', addr:r.addr||'', type:r.type||'rv', state:r.state||'wa',
-        parcel:r.parcel||'', size:r.size||'', ampUrl:r.amp_url||'', atipUrl:r.atip_url||'',
+        sortOrder:r.sort_order||0, parcel:r.parcel||'', size:r.size||'', ampUrl:r.amp_url||'', atipUrl:r.atip_url||'',
         loanAmt:parseFloat(r.loan_amt)||0, loanTerm:parseFloat(r.loan_term)||0,
         loanRate:parseFloat(r.loan_rate)||0, loanBalance:parseFloat(r.loan_balance)||0,
         lender:r.lender||'',
@@ -1521,7 +1521,7 @@ async function saveToSupabase(){
   setSyncStatus('loading');
   try{
     // Upsert sites
-    const siteData = sites.map(s => ({
+    const siteData = sites.map((s, i) => ({
       id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
       parcel: s.parcel||'', size: s.size||'', amp_url: s.ampUrl||'', atip_url: s.atipUrl||'',
       loan_amt: s.loanAmt||0, loan_term: s.loanTerm||0,
@@ -1536,7 +1536,7 @@ async function saveToSupabase(){
       tax_amt: s.taxAmt||0, tax_h1: s.tax1||'', tax_h2: s.tax2||'', tax_notes: s.taxNotes||'',
       purchase_date: s.purchaseDate||null, purchase_price: s.purchasePrice||0,
       current_value: s.currentValue||0, notes: s.notes||[],
-      updated_at: new Date().toISOString()
+      sort_order: i, updated_at: new Date().toISOString()
     }));
 
     // Upsert payments (only new ones without an id)
