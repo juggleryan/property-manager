@@ -748,8 +748,18 @@ function skipSetup(){
   <div class="modal" style="max-width:560px;">
     <div class="modal-header"><h3 id="edit-title">Edit property</h3><button class="modal-close" onclick="closeModal('edit-overlay')">✕</button></div>
     <div class="modal-body">
-      <div class="modal-section-title">Property nickname</div>
-      <div class="f-group"><label>Nickname (optional)</label><input type="text" id="e-nickname" placeholder="e.g. The Corner Lot, Mike's Place, Spanaway S1..."></div>
+      <div class="modal-section-title">Property details</div>
+      <div class="f-group"><label>Property name</label><input type="text" id="e-name" placeholder="e.g. 166th Spanaway — Site 1"></div>
+      <div class="f-group"><label>Full address</label><input type="text" id="e-addr" placeholder="1512 101st St S, Tacoma WA 98444"></div>
+      <div class="f-group"><label>Nickname (optional)</label><input type="text" id="e-nickname" placeholder="e.g. The Corner Lot, Mike's Place..."></div>
+      <div class="grid-2">
+        <div class="f-group"><label>Property type</label>
+          <select id="e-type"><option value="rv">RV site</option><option value="house">House</option></select>
+        </div>
+        <div class="f-group"><label>State</label>
+          <select id="e-state"><option value="wa">Washington</option><option value="az">Arizona</option><option value="other">Other</option></select>
+        </div>
+      </div>
       <div class="modal-section-title">Tenant</div>
       <div class="grid-2">
         <div class="f-group"><label>Tenant name</label><input type="text" id="e-tenant" placeholder="Full name"></div>
@@ -762,6 +772,33 @@ function skipSetup(){
       </div>
       <div class="f-group"><label>Yard maintenance responsibility</label>
         <select id="e-yard"><option value="">Not specified</option><option value="Tenant">Tenant</option><option value="Owner">Owner</option><option value="Shared">Shared</option><option value="HOA">HOA</option><option value="Management">Property management</option></select>
+      </div>
+      <div class="modal-section-title">Security deposit</div>
+      <div class="grid-2">
+        <div class="f-group"><label>Deposit amount ($)</label><input type="number" id="e-deposit-amt" min="0" step="1" placeholder="0"></div>
+        <div class="f-group"><label>Date collected</label><input type="date" id="e-deposit-date"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>How collected</label>
+          <select id="e-deposit-method">
+            <option value="">Not collected yet</option>
+            <option value="Cash">Cash</option>
+            <option value="Zelle">Zelle</option>
+            <option value="Check">Check</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="f-group"><label>Deposit status</label>
+          <select id="e-deposit-status">
+            <option value="held">Held</option>
+            <option value="returned">Returned to tenant</option>
+            <option value="kept">Kept — partial or full</option>
+          </select>
+        </div>
+      </div>
+      <div class="f-group"><label>Date returned / kept</label><input type="date" id="e-deposit-resolved-date"></div>
+      <div class="f-group"><label>Reason kept / deductions (if applicable)</label>
+        <textarea id="e-deposit-reason" placeholder="e.g. Cleaning $150, carpet damage $200, unpaid rent $400..." rows="2"></textarea>
       </div>
       <div class="modal-section-title">Acquisition</div>
       <div class="grid-3">
@@ -1317,7 +1354,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',purchasePrice:0,purchaseDate:'',currentValue:0,...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1388,6 +1425,9 @@ async function loadFromSupabase(){
     if(sitesRes.data && sitesRes.data.length){
       sites = sitesRes.data.map(r => ({
         id:r.id, name:r.name||'', addr:r.addr||'', type:r.type||'rv', state:r.state||'wa',
+        depositAmt:parseFloat(r.deposit_amt)||0, depositDate:r.deposit_date||'',
+        depositMethod:r.deposit_method||'', depositStatus:r.deposit_status||'held',
+        depositResolvedDate:r.deposit_resolved_date||'', depositReason:r.deposit_reason||'',
         nickname:r.nickname||'', tenant:r.tenant||'(Vacant)', tenantEmail:r.tenant_email||'',
         rent:parseFloat(r.rent)||0, mortgage:parseFloat(r.mortgage)||0, paid:parseFloat(r.paid)||0,
         start:r.lease_start||'', end:r.lease_end||'', term:r.lease_term||'12',
@@ -1438,6 +1478,9 @@ async function saveToSupabase(){
     // Upsert sites
     const siteData = sites.map(s => ({
       id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
+      deposit_amt: s.depositAmt||0, deposit_date: s.depositDate||null,
+      deposit_method: s.depositMethod||'', deposit_status: s.depositStatus||'held',
+      deposit_resolved_date: s.depositResolvedDate||null, deposit_reason: s.depositReason||'',
       nickname: s.nickname||'', tenant: s.tenant, tenant_email: s.tenantEmail||'',
       rent: s.rent||0, mortgage: s.mortgage||0, paid: s.paid||0,
       lease_start: s.start||null, lease_end: s.end||null, lease_term: s.term||'12',
@@ -1911,7 +1954,19 @@ function exportCSV(){
 function openEditModal(i){
   editIdx=i;const s=sites[i];
   document.getElementById('edit-title').textContent=`Edit — ${s.nickname||s.name}`;
+  document.getElementById('e-name').value=s.name||'';
+  document.getElementById('e-addr').value=s.addr||'';
   document.getElementById('e-nickname').value=s.nickname||'';
+  document.getElementById('e-type').value=s.type||'rv';
+  document.getElementById('e-state').value=s.state||'wa';
+  document.getElementById('e-name').value=s.name||'';
+  document.getElementById('e-addr').value=s.addr||'';
+  document.getElementById('e-deposit-amt').value=s.depositAmt||'';
+  document.getElementById('e-deposit-date').value=s.depositDate||'';
+  document.getElementById('e-deposit-method').value=s.depositMethod||'';
+  document.getElementById('e-deposit-status').value=s.depositStatus||'held';
+  document.getElementById('e-deposit-resolved-date').value=s.depositResolvedDate||'';
+  document.getElementById('e-deposit-reason').value=s.depositReason||'';
   document.getElementById('e-purchase-date').value=s.purchaseDate||'';
   document.getElementById('e-purchase-price').value=s.purchasePrice||'';
   document.getElementById('e-current-value').value=s.currentValue||'';
@@ -1933,6 +1988,16 @@ function openEditModal(i){
 function saveEdit(){
   if(editIdx===null)return;const s=sites[editIdx];
   s.nickname=document.getElementById('e-nickname').value.trim();
+  s.name=document.getElementById('e-name').value.trim()||s.name;
+  s.addr=document.getElementById('e-addr').value.trim()||s.addr;
+  s.type=document.getElementById('e-type').value;
+  s.state=document.getElementById('e-state').value;
+  s.depositAmt=parseInt(document.getElementById('e-deposit-amt').value)||0;
+  s.depositDate=document.getElementById('e-deposit-date').value;
+  s.depositMethod=document.getElementById('e-deposit-method').value;
+  s.depositStatus=document.getElementById('e-deposit-status').value;
+  s.depositResolvedDate=document.getElementById('e-deposit-resolved-date').value;
+  s.depositReason=document.getElementById('e-deposit-reason').value.trim();
   s.purchaseDate=document.getElementById('e-purchase-date').value;
   s.purchasePrice=parseInt(document.getElementById('e-purchase-price').value)||0;
   s.currentValue=parseInt(document.getElementById('e-current-value').value)||0;
