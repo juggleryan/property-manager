@@ -553,7 +553,7 @@ function skipSetup(){
         </div>
         <div id="detail-history" style="display:none;">
           <div class="card"><div class="card-header"><div class="card-title">Payment history</div></div>
-            <table class="tbl"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Method</th><th>Source</th></tr></thead><tbody id="detail-pay-tbody"></tbody></table>
+            <table class="tbl"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Method</th><th>Source</th><th></th></tr></thead><tbody id="detail-pay-tbody"></tbody></table>
           </div>
         </div>
         <div id="detail-notes" style="display:none;">
@@ -752,6 +752,7 @@ function skipSetup(){
       <div class="f-group"><label>Property name</label><input type="text" id="e-name" placeholder="e.g. 166th Spanaway — Site 1"></div>
       <div class="f-group"><label>Full address</label><input type="text" id="e-addr" placeholder="1512 101st St S, Tacoma WA 98444"></div>
       <div class="f-group"><label>Nickname (optional)</label><input type="text" id="e-nickname" placeholder="e.g. The Corner Lot, Mike's Place..."></div>
+      <div class="f-group"><label>Parcel number (APN)</label><input type="text" id="e-parcel" placeholder="e.g. 511-71-020J"></div>
       <div class="grid-2">
         <div class="f-group"><label>Property type</label>
           <select id="e-type"><option value="rv">RV site</option><option value="house">House</option></select>
@@ -800,6 +801,16 @@ function skipSetup(){
       <div class="f-group"><label>Reason kept / deductions (if applicable)</label>
         <textarea id="e-deposit-reason" placeholder="e.g. Cleaning $150, carpet damage $200, unpaid rent $400..." rows="2"></textarea>
       </div>
+      <div class="modal-section-title">Mortgage / loan</div>
+      <div class="grid-2">
+        <div class="f-group"><label>Loan amount ($)</label><input type="number" id="e-loan-amt" min="0" step="1" placeholder="0"></div>
+        <div class="f-group"><label>Loan term (years)</label><input type="number" id="e-loan-term" min="1" step="1" placeholder="e.g. 30"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Interest rate (%)</label><input type="number" id="e-loan-rate" min="0" step="0.01" placeholder="e.g. 6.5"></div>
+        <div class="f-group"><label>Current balance owed ($)</label><input type="number" id="e-loan-balance" min="0" step="1" placeholder="0"></div>
+      </div>
+      <div class="f-group"><label>Lender name</label><input type="text" id="e-lender" placeholder="e.g. Chase, Wells Fargo..."></div>
       <div class="modal-section-title">Acquisition</div>
       <div class="grid-3">
         <div class="f-group"><label>Purchase date</label><input type="date" id="e-purchase-date"></div>
@@ -951,11 +962,22 @@ function skipSetup(){
         </div>
         <div class="f-group"><label>Monthly rent ($)</label><input type="number" id="np-rent" placeholder="0" min="0" step="1"></div>
       </div>
+      <div class="f-group"><label>Parcel number (APN)</label><input type="text" id="np-parcel" placeholder="e.g. 511-71-020J"></div>
+      <div class="modal-section-title">Mortgage / loan</div>
       <div class="grid-2">
-        <div class="f-group"><label>Mortgage payment ($)</label><input type="number" id="np-mortgage" placeholder="0" min="0" step="1"></div>
-        <div class="f-group"><label>Yard maintenance</label>
-          <select id="np-yard"><option value="">Not specified</option><option value="Tenant">Tenant</option><option value="Owner">Owner</option><option value="Shared">Shared</option><option value="HOA">HOA</option><option value="Management">Property management</option></select>
-        </div>
+        <div class="f-group"><label>Loan amount ($)</label><input type="number" id="np-loan-amt" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Loan term (years)</label><input type="number" id="np-loan-term" placeholder="e.g. 30" min="1" step="1"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Interest rate (%)</label><input type="number" id="np-loan-rate" placeholder="e.g. 6.5" min="0" step="0.01"></div>
+        <div class="f-group"><label>Monthly payment ($)</label><input type="number" id="np-mortgage" placeholder="0" min="0" step="1"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Current balance owed ($)</label><input type="number" id="np-loan-balance" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Lender name</label><input type="text" id="np-lender" placeholder="e.g. Chase, Wells Fargo..."></div>
+      </div>
+      <div class="f-group"><label>Yard maintenance</label>
+        <select id="np-yard"><option value="">Not specified</option><option value="Tenant">Tenant</option><option value="Owner">Owner</option><option value="Shared">Shared</option><option value="HOA">HOA</option><option value="Management">Property management</option></select>
       </div>
       <div class="modal-section-title">Tenant (optional — can add later)</div>
       <div class="grid-2">
@@ -1310,7 +1332,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
+    nickname:'',parcel:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1354,7 +1376,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',parcel:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1425,6 +1447,10 @@ async function loadFromSupabase(){
     if(sitesRes.data && sitesRes.data.length){
       sites = sitesRes.data.map(r => ({
         id:r.id, name:r.name||'', addr:r.addr||'', type:r.type||'rv', state:r.state||'wa',
+        parcel:r.parcel||'',
+        loanAmt:parseFloat(r.loan_amt)||0, loanTerm:parseFloat(r.loan_term)||0,
+        loanRate:parseFloat(r.loan_rate)||0, loanBalance:parseFloat(r.loan_balance)||0,
+        lender:r.lender||'',
         depositAmt:parseFloat(r.deposit_amt)||0, depositDate:r.deposit_date||'',
         depositMethod:r.deposit_method||'', depositStatus:r.deposit_status||'held',
         depositResolvedDate:r.deposit_resolved_date||'', depositReason:r.deposit_reason||'',
@@ -1478,6 +1504,9 @@ async function saveToSupabase(){
     // Upsert sites
     const siteData = sites.map(s => ({
       id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
+      parcel: s.parcel||'',
+      loan_amt: s.loanAmt||0, loan_term: s.loanTerm||0,
+      loan_rate: s.loanRate||0, loan_balance: s.loanBalance||0, lender: s.lender||'',
       deposit_amt: s.depositAmt||0, deposit_date: s.depositDate||null,
       deposit_method: s.depositMethod||'', deposit_status: s.depositStatus||'held',
       deposit_resolved_date: s.depositResolvedDate||null, deposit_reason: s.depositReason||'',
@@ -1742,8 +1771,23 @@ function renderDetailHistory(idx){
   const s=sites[idx];
   const propPays=payments.filter(p=>p.site===s.id).sort((a,b)=>b.date.localeCompare(a.date));
   document.getElementById('detail-pay-tbody').innerHTML=propPays.length?
-    propPays.map(p=>`<tr><td>${p.date}</td><td>${p.type}</td><td style="color:${p.type==='Late fee'?'var(--red)':'var(--green)'};font-weight:600;">${fmt(p.amount)}</td><td>${p.method}</td><td style="font-size:11px;color:var(--text3);">${p.source||''}</td></tr>`).join(''):
-    '<tr><td colspan="5" style="color:var(--text3);font-style:italic;padding:1rem;">No payment history for this property.</td></tr>';
+    propPays.map((p,i)=>{
+      const realIdx=payments.indexOf(p);
+      return `<tr>
+        <td>${p.date}</td><td>${p.type}</td>
+        <td style="color:${p.type==='Late fee'?'var(--red)':'var(--green)'};font-weight:600;">${fmt(p.amount)}</td>
+        <td>${p.method}</td>
+        <td style="font-size:11px;color:var(--text3);">${p.source||''}</td>
+        <td><button class="btn btn-xs btn-danger" onclick="deletePayment(${realIdx},${idx})">✕</button></td>
+      </tr>`;
+    }).join(''):
+    '<tr><td colspan="6" style="color:var(--text3);font-style:italic;padding:1rem;">No payment history for this property.</td></tr>';
+}
+function deletePayment(payIdx, siteIdx){
+  if(!confirm('Delete this payment?')) return;
+  payments.splice(payIdx,1);
+  autoSave();renderDetailHistory(siteIdx);renderMetrics();
+  showToast('Payment deleted.');
 }
 
 function renderNotes(idx){
@@ -1957,6 +2001,12 @@ function openEditModal(i){
   document.getElementById('e-name').value=s.name||'';
   document.getElementById('e-addr').value=s.addr||'';
   document.getElementById('e-nickname').value=s.nickname||'';
+  document.getElementById('e-parcel').value=s.parcel||'';
+  document.getElementById('e-loan-amt').value=s.loanAmt||'';
+  document.getElementById('e-loan-term').value=s.loanTerm||'';
+  document.getElementById('e-loan-rate').value=s.loanRate||'';
+  document.getElementById('e-loan-balance').value=s.loanBalance||'';
+  document.getElementById('e-lender').value=s.lender||'';
   document.getElementById('e-type').value=s.type||'rv';
   document.getElementById('e-state').value=s.state||'wa';
   document.getElementById('e-name').value=s.name||'';
@@ -1988,6 +2038,12 @@ function openEditModal(i){
 function saveEdit(){
   if(editIdx===null)return;const s=sites[editIdx];
   s.nickname=document.getElementById('e-nickname').value.trim();
+  s.parcel=document.getElementById('e-parcel').value.trim();
+  s.loanAmt=parseInt(document.getElementById('e-loan-amt').value)||0;
+  s.loanTerm=parseInt(document.getElementById('e-loan-term').value)||0;
+  s.loanRate=parseFloat(document.getElementById('e-loan-rate').value)||0;
+  s.loanBalance=parseInt(document.getElementById('e-loan-balance').value)||0;
+  s.lender=document.getElementById('e-lender').value.trim();
   s.name=document.getElementById('e-name').value.trim()||s.name;
   s.addr=document.getElementById('e-addr').value.trim()||s.addr;
   s.type=document.getElementById('e-type').value;
@@ -2097,8 +2153,8 @@ function populateSiteDropdowns(){
 // ADD PROPERTY
 function openAddPropModal(){
   // reset all fields
-  ['np-name','np-nick','np-addr','np-tenant','np-notes'].forEach(id=>document.getElementById(id).value='');
-  ['np-rent','np-mortgage'].forEach(id=>document.getElementById(id).value='');
+  ['np-name','np-nick','np-addr','np-parcel','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
+  ['np-rent','np-mortgage','np-loan-amt','np-loan-term','np-loan-rate','np-loan-balance'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('np-type').value='house';
   document.getElementById('np-state').value='wa';
   document.getElementById('np-status').value='vacant';
@@ -2137,6 +2193,12 @@ function saveNewProp(){
     lease:null,
     yard:document.getElementById('np-yard').value,
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',
+    parcel: document.getElementById('np-parcel').value.trim(),
+    loanAmt: parseInt(document.getElementById('np-loan-amt').value)||0,
+    loanTerm: parseInt(document.getElementById('np-loan-term').value)||0,
+    loanRate: parseFloat(document.getElementById('np-loan-rate').value)||0,
+    loanBalance: parseInt(document.getElementById('np-loan-balance').value)||0,
+    lender: document.getElementById('np-lender').value.trim(),
     tenantEmail: document.getElementById('np-email').value.trim(),
     notes: document.getElementById('np-notes').value.trim()
       ? [{ts:now(), text:document.getElementById('np-notes').value.trim()}]
