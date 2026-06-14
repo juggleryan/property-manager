@@ -1184,14 +1184,29 @@ function skipSetup(){
 
 <!-- SETUP MODAL -->
 <div class="overlay" id="setup-overlay">
-  <div class="modal" style="max-width:460px;">
-    <div class="modal-header"><h3>Settings &amp; Google integration</h3><button class="modal-close" onclick="closeModal('setup-overlay')">✕</button></div>
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header"><h3>⚙ Settings</h3><button class="modal-close" onclick="closeModal('setup-overlay')">✕</button></div>
     <div class="modal-body">
-      <div class="f-group"><label>OAuth Client ID</label><input type="text" id="s-cid"></div>
-      <div class="f-group"><label>API Key</label><input type="text" id="s-key"></div>
-      <div class="f-group"><label>Sheet ID</label><input type="text" id="s-sid"></div>
-      <div class="f-group"><label>Gmail Zelle search query</label><input type="text" id="s-query" placeholder='subject:"You received money"'></div>
-      <p style="font-size:11px;color:var(--text3);margin-top:.5rem;">Required Google Sheet tabs: Sites · Payments · Bills · Leases</p>
+
+      <div class="modal-section-title">Supabase database</div>
+      <div style="background:var(--bg);border-radius:var(--radius);padding:12px 14px;font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.8;">
+        <div><strong>Project URL:</strong> <code style="font-size:11px;">https://ioliuikhxzbexjzfeaus.supabase.co</code></div>
+        <div><strong>Dashboard:</strong> <a href="https://supabase.com/dashboard/project/ioliuikhxzbexjzfeaus" target="_blank" style="color:var(--blue);">supabase.com → your project</a></div>
+        <div style="margin-top:8px;"><strong>Tables:</strong> sites · payments · bills · notices · loans</div>
+        <div style="margin-top:4px;font-size:11px;color:var(--text3);">If data is missing: hit ↑ Save to force a full sync. If connection fails: hard refresh (Ctrl+Shift+R) and log in again.</div>
+      </div>
+
+      <div class="modal-section-title">Zelle email detection</div>
+      <div class="f-group"><label>Gmail search query</label><input type="text" id="s-query" placeholder='subject:"You received money"'></div>
+      <p style="font-size:11px;color:var(--text3);">Tip — customize per bank: Chase → <code>subject:"You received money" from:chase.com</code></p>
+
+      <div class="modal-section-title">Account</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+        <div><strong>Username:</strong> rcadmin</div>
+        <div><strong>GitHub repo:</strong> <a href="https://github.com/juggleryan/property-manager" target="_blank" style="color:var(--blue);">juggleryan/property-manager</a></div>
+        <div><strong>Live URL:</strong> <a href="https://juggleryan.github.io/property-manager" target="_blank" style="color:var(--blue);">juggleryan.github.io/property-manager</a></div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('setup-overlay')">Close</button>
@@ -1351,28 +1366,65 @@ function setSyncStatus(s){
 }
 
 async function loadFromSheets(){
-  if(!gapiReady||isDemoMode)return;setSyncStatus('loading');
+  await loadFromSupabase();
+}
+
+async function loadFromSupabase(){
+  if(isDemoMode)return;
+  if(!supabaseReady && !initSupabase())return;
+  setSyncStatus('loading');
   try{
-    const r=await gapi.client.sheets.spreadsheets.values.batchGet({
-      spreadsheetId:config.sheetId,ranges:['Sites!A2:T100','Payments!A2:G500','Bills!A2:F500','Notices!A2:H200']
-    });
-    const[sr,pr,br,nr]=r.result.valueRanges;
-    if(sr.values&&sr.values.length){
-      sites=sr.values.map(r=>({
-        id:r[0]||'',name:r[1]||'',addr:r[2]||'',type:r[3]||'rv',state:r[4]||'wa',
-        nickname:r[20]||'',tenantEmail:r[21]||'',purchaseDate:r[22]||'',purchasePrice:parseFloat(r[23])||0,currentValue:parseFloat(r[24])||0,tenant:r[5]||'',rent:parseFloat(r[6])||0,mortgage:parseFloat(r[7])||0,paid:parseFloat(r[8])||0,
-        start:r[9]||'',end:r[10]||'',term:r[11]||'12',status:r[12]||'vacant',
-        lease:r[13]||null,yard:r[14]||'',taxAmt:parseFloat(r[15])||0,
-        tax1:r[16]||'',tax2:r[17]||'',taxNotes:r[18]||'',
-        notes:r[19]?JSON.parse(r[19]):[]
+    const [sitesRes, paymentsRes, billsRes, noticesRes] = await Promise.all([
+      supabaseClient.from('sites').select('*').order('name'),
+      supabaseClient.from('payments').select('*').order('date', {ascending:false}),
+      supabaseClient.from('bills').select('*').order('date', {ascending:false}),
+      supabaseClient.from('notices').select('*').order('date', {ascending:false})
+    ]);
+    if(sitesRes.error) throw sitesRes.error;
+    if(paymentsRes.error) throw paymentsRes.error;
+    if(billsRes.error) throw billsRes.error;
+    if(noticesRes.error) throw noticesRes.error;
+
+    if(sitesRes.data && sitesRes.data.length){
+      sites = sitesRes.data.map(r => ({
+        id:r.id, name:r.name||'', addr:r.addr||'', type:r.type||'rv', state:r.state||'wa',
+        nickname:r.nickname||'', tenant:r.tenant||'(Vacant)', tenantEmail:r.tenant_email||'',
+        rent:parseFloat(r.rent)||0, mortgage:parseFloat(r.mortgage)||0, paid:parseFloat(r.paid)||0,
+        start:r.lease_start||'', end:r.lease_end||'', term:r.lease_term||'12',
+        status:r.status||'vacant', lease:r.lease_file||null, yard:r.yard||'',
+        taxAmt:parseFloat(r.tax_amt)||0, tax1:r.tax_h1||'', tax2:r.tax_h2||'', taxNotes:r.tax_notes||'',
+        purchaseDate:r.purchase_date||'', purchasePrice:parseFloat(r.purchase_price)||0,
+        currentValue:parseFloat(r.current_value)||0, notes:r.notes||[]
       }));
     }
-    if(pr.values&&pr.values.length)payments=pr.values.map(r=>({date:r[0]||'',site:r[1]||'',tenant:r[2]||'',type:r[3]||'',amount:parseFloat(r[4])||0,method:r[5]||'',source:r[6]||''}));
-    if(br.values&&br.values.length)bills=br.values.map(r=>({date:r[0]||'',prop:r[1]||'',type:r[2]||'',amount:parseFloat(r[3])||0,notes:r[4]||''}));
-    if(nr.values&&nr.values.length)notices=nr.values.map(r=>({prop:r[0]||'',type:r[1]||'',date:r[2]||'',deadline:r[3]||'',amt:parseFloat(r[4])||0,notes:r[5]||'',outcome:r[6]||'Pending'}));
-    autoSave();render();setSyncStatus('ok');showToast('Loaded from Google Sheets.');
-  }catch(e){console.error(e);setSyncStatus('err');showToast('Failed to load. Check console.');}
+    if(paymentsRes.data && paymentsRes.data.length){
+      payments = paymentsRes.data.map(r => ({
+        id:r.id, date:r.date||'', site:r.site_id||'', tenant:r.tenant||'',
+        type:r.type||'', amount:parseFloat(r.amount)||0, method:r.method||'', source:r.source||''
+      }));
+    }
+    if(billsRes.data && billsRes.data.length){
+      bills = billsRes.data.map(r => ({
+        id:r.id, date:r.date||'', prop:r.prop||'', type:r.type||'',
+        amount:parseFloat(r.amount)||0, notes:r.notes||''
+      }));
+    }
+    if(noticesRes.data && noticesRes.data.length){
+      notices = noticesRes.data.map(r => ({
+        id:r.id, prop:r.prop||'', type:r.type||'', date:r.date||'',
+        deadline:r.deadline||'', amt:parseFloat(r.amount)||0,
+        notes:r.notes||'', outcome:r.outcome||'Pending'
+      }));
+    }
+    saveLocal(); render(); setSyncStatus('ok');
+    showToast('Loaded from Supabase ✓');
+  } catch(e) {
+    console.error('Supabase load error:', e);
+    setSyncStatus('err');
+    showToast('Load failed: ' + (e.message||e));
+  }
 }
+
 
 async function saveToSheets(){
   await saveToSupabase();
@@ -1922,19 +1974,13 @@ function openNoticeModal(){
   document.getElementById('notice-overlay').classList.add('open');
 }
 function openSetupModal(){
-  document.getElementById('s-cid').value=config.clientId||'';
-  document.getElementById('s-key').value=config.apiKey||'';
-  document.getElementById('s-sid').value=config.sheetId||'';
   document.getElementById('s-query').value=config.gmailQuery||'subject:"You received money"';
   document.getElementById('setup-overlay').classList.add('open');
 }
 function saveSetup(){
-  config.clientId=document.getElementById('s-cid').value.trim();
-  config.apiKey=document.getElementById('s-key').value.trim();
-  config.sheetId=document.getElementById('s-sid').value.trim();
   config.gmailQuery=document.getElementById('s-query').value.trim();
   localStorage.setItem(CK,JSON.stringify(config));
-  closeModal('setup-overlay');showToast('Settings saved. Reload to reconnect.');
+  closeModal('setup-overlay');showToast('Settings saved.');
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
