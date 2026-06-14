@@ -1795,10 +1795,18 @@ function renderDetailHistory(idx){
     }).join(''):
     '<tr><td colspan="6" style="color:var(--text3);font-style:italic;padding:1rem;">No payment history for this property.</td></tr>';
 }
-function deletePayment(payIdx, siteIdx){
+async function deletePayment(payIdx, siteIdx){
   if(!confirm('Delete this payment?')) return;
+  const p = payments[payIdx];
+  // Delete from Supabase if it has a DB id
+  if(p.id && supabaseReady){
+    const {error} = await supabaseClient.from('payments').delete().eq('id', p.id);
+    if(error){ showToast('Delete failed: ' + error.message); return; }
+  }
   payments.splice(payIdx,1);
-  autoSave();renderDetailHistory(siteIdx);renderMetrics();
+  saveLocal();
+  renderDetailHistory(siteIdx);
+  renderMetrics();
   showToast('Payment deleted.');
 }
 
