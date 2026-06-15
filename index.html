@@ -298,6 +298,11 @@ button{font-family:var(--sans);}
 .acq-equity{font-size:11px;color:var(--text3);}
 .acq-return{font-size:12px;font-weight:600;}
 .negative{color:var(--red);font-weight:600;}
+/* LOAN DOCUMENTS */
+.loan-doc-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;}
+.loan-doc-icon{font-size:18px;flex-shrink:0;}
+.loan-doc-name{flex:1;font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.loan-doc-size{font-size:11px;color:var(--text3);flex-shrink:0;}
 /* DRAG AND DROP */
 .drag-handle{cursor:grab;color:var(--text3);padding:0 6px;font-size:16px;line-height:1;user-select:none;}
 .drag-handle:active{cursor:grabbing;}
@@ -1254,6 +1259,14 @@ function skipSetup(){
       </div>
       <div class="f-group"><label>Note (optional)</label><input type="text" id="lp-note" placeholder="e.g. Monthly payment, partial, interest only..."></div>
       <div style="margin-top:1rem;">
+        <div class="card-title" style="margin-bottom:8px;font-size:13px;">Documents</div>
+        <div id="loan-docs-list" style="margin-bottom:10px;"></div>
+        <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+          📎 Upload document <input type="file" id="loan-doc-upload" style="display:none;" onchange="uploadLoanDoc(event)">
+        </label>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Loan agreement, promissory note, deed of trust, etc.</div>
+      </div>
+      <div style="margin-top:1rem;">
         <div class="card-title" style="margin-bottom:8px;font-size:13px;">Payment history</div>
         <table class="tbl"><thead><tr><th>Date</th><th>Amount</th><th>Principal</th><th>Interest</th><th>Balance after</th><th>Note</th></tr></thead>
         <tbody id="loan-pay-history"></tbody></table>
@@ -1262,6 +1275,28 @@ function skipSetup(){
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('loan-pay-overlay')">Close</button>
       <button class="btn btn-primary" onclick="logLoanPayment()">Log payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOAN DOC PREVIEW MODAL -->
+<div class="overlay" id="doc-preview-overlay">
+  <div class="modal" style="max-width:780px;max-height:92vh;">
+    <div class="modal-header">
+      <h3 id="doc-preview-title">Document preview</h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <a id="doc-preview-download" href="#" download class="btn btn-sm btn-secondary">↓ Download</a>
+        <button class="modal-close" onclick="closeModal('doc-preview-overlay')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:0;height:70vh;">
+      <iframe id="doc-preview-frame" style="width:100%;height:100%;border:none;border-radius:0 0 var(--radius-xl) var(--radius-xl);"></iframe>
+      <div id="doc-preview-fallback" style="display:none;padding:2rem;text-align:center;">
+        <div style="font-size:48px;margin-bottom:1rem;">📄</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:8px;" id="doc-preview-filename"></div>
+        <p style="color:var(--text2);margin-bottom:1rem;">This file type can't be previewed in the browser.</p>
+        <a id="doc-fallback-download" href="#" download class="btn btn-primary">↓ Download file</a>
+      </div>
     </div>
   </div>
 </div>
@@ -3131,6 +3166,7 @@ function openLoanPayModal(idx) {
       </tr>`).join('')
     : '<tr><td colspan="6" style="color:var(--text3);font-style:italic;padding:1rem;">No payments logged yet.</td></tr>';
 
+  renderLoanDocs(idx);
   document.getElementById('loan-pay-overlay').classList.add('open');
 }
 
@@ -3234,6 +3270,103 @@ function dropRow(e, targetIdx) {
   autoSave();
   renderPropsTable();
   showToast('Order saved.');
+}
+
+// ── LOAN DOCUMENTS ──
+function docIcon(name) {
+  var ext = name.split('.').pop().toLowerCase();
+  if(ext==='pdf') return '📄';
+  if(['doc','docx'].includes(ext)) return '📝';
+  if(['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️';
+  return '📎';
+}
+function fmtBytes(bytes) {
+  if(!bytes) return '';
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+async function uploadLoanDoc(e) {
+  var file = e.target.files[0];
+  if(!file || activeLoanIdx === null) return;
+  if(!supabaseReady){ showToast('Supabase not connected.'); return; }
+
+  showToast('Uploading...');
+  var path = 'loan_' + activeLoanIdx + '_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+
+  var {data, error} = await supabaseClient.storage.from('loan-documents').upload(path, file);
+  if(error){ showToast('Upload failed: ' + error.message); return; }
+
+  var loan = loans[activeLoanIdx];
+  if(!loan.docs) loan.docs = [];
+  loan.docs.push({ path: path, name: file.name, size: file.size, uploaded: new Date().toISOString() });
+  saveLoans();
+  renderLoanDocs(activeLoanIdx);
+  showToast('Document uploaded: ' + file.name);
+  e.target.value = '';
+}
+
+async function previewLoanDoc(path, name) {
+  showToast('Loading...');
+  var {data, error} = await supabaseClient.storage.from('loan-documents').createSignedUrl(path, 3600);
+  if(error){ showToast('Could not load file: ' + error.message); return; }
+
+  var url = data.signedUrl;
+  var ext = name.split('.').pop().toLowerCase();
+  var isPDF = ext === 'pdf';
+  var isImage = ['jpg','jpeg','png','gif','webp'].includes(ext);
+
+  document.getElementById('doc-preview-title').textContent = name;
+  document.getElementById('doc-preview-download').href = url;
+  document.getElementById('doc-preview-download').download = name;
+
+  if(isPDF || isImage) {
+    document.getElementById('doc-preview-frame').src = url;
+    document.getElementById('doc-preview-frame').style.display = 'block';
+    document.getElementById('doc-preview-fallback').style.display = 'none';
+  } else {
+    document.getElementById('doc-preview-frame').src = '';
+    document.getElementById('doc-preview-frame').style.display = 'none';
+    document.getElementById('doc-preview-fallback').style.display = 'block';
+    document.getElementById('doc-preview-filename').textContent = name;
+    document.getElementById('doc-fallback-download').href = url;
+    document.getElementById('doc-fallback-download').download = name;
+  }
+  document.getElementById('doc-preview-overlay').classList.add('open');
+}
+
+async function deleteLoanDoc(loanIdx, docIdx) {
+  if(!confirm('Delete this document permanently?')) return;
+  var loan = loans[loanIdx];
+  var doc = loan.docs[docIdx];
+  if(!supabaseReady){ showToast('Supabase not connected.'); return; }
+  var {error} = await supabaseClient.storage.from('loan-documents').remove([doc.path]);
+  if(error){ showToast('Delete failed: ' + error.message); return; }
+  loan.docs.splice(docIdx, 1);
+  saveLoans();
+  renderLoanDocs(loanIdx);
+  showToast('Document deleted.');
+}
+
+function renderLoanDocs(loanIdx) {
+  var el = document.getElementById('loan-docs-list');
+  if(!el) return;
+  var loan = loans[loanIdx];
+  var docs = loan.docs || [];
+  if(!docs.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic;">No documents uploaded yet.</div>';
+    return;
+  }
+  el.innerHTML = docs.map(function(doc, i) {
+    return '<div class="loan-doc-item">' +
+      '<span class="loan-doc-icon">' + docIcon(doc.name) + '</span>' +
+      '<span class="loan-doc-name" title="' + doc.name + '">' + doc.name + '</span>' +
+      '<span class="loan-doc-size">' + fmtBytes(doc.size) + '</span>' +
+      '<button class="btn btn-xs btn-secondary" onclick="previewLoanDoc(' + JSON.stringify(doc.path) + ',' + JSON.stringify(doc.name) + ')">Preview</button>' +
+      '<button class="btn btn-xs btn-danger" onclick="deleteLoanDoc(' + loanIdx + ',' + i + ')">✕</button>' +
+      '</div>';
+  }).join('');
 }
 
 // UTILS
