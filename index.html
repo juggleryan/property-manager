@@ -1250,10 +1250,10 @@ function skipSetup(){
       <div class="f-group"><label>Notes</label><input type="text" id="loan-notes" placeholder="Purpose, collateral, terms..."></div>
       <div class="modal-section-title">Documents</div>
       <div id="loan-docs-list" style="margin-bottom:10px;"></div>
-      <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-        📎 Attach document <input type="file" id="loan-doc-upload" style="display:none;" onchange="uploadLoanDoc(event)">
+      <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="loan-upload-label">
+        📎 Attach document <input type="file" id="loan-doc-upload" style="display:none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="uploadLoanDoc(event)">
       </label>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">Loan agreement, promissory note, deed of trust, etc. Stored privately in Supabase.</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">PDF, Word, or image · Stored privately · PDFs and images can be previewed in-app</div>
       <div class="modal-section-title">Log a payment now (optional)</div>
       <div class="grid-2">
         <div class="f-group"><label>Payment amount ($)</label><input type="number" id="loan-first-payment" placeholder="0" min="0" step="1"></div>
@@ -3344,13 +3344,19 @@ function fmtBytes(bytes) {
 
 async function uploadLoanDoc(e) {
   var file = e.target.files[0];
-  if(!file || activeLoanIdx === null) return;
+  if(!file) return;
+  if(activeLoanIdx === null){ showToast('Save the loan first, then reopen to attach documents.'); return; }
   if(!supabaseReady){ showToast('Supabase not connected.'); return; }
 
-  showToast('Uploading...');
-  var path = 'loan_' + activeLoanIdx + '_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  var label = document.getElementById('loan-upload-label');
+  if(label) label.textContent = '⏳ Uploading...';
+  showToast('Uploading ' + file.name + '...');
 
+  var path = 'loan_' + activeLoanIdx + '_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
   var {data, error} = await supabaseClient.storage.from('loan-documents').upload(path, file);
+
+  if(label) label.innerHTML = '📎 Attach document <input type="file" id="loan-doc-upload" style="display:none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="uploadLoanDoc(event)">';
+
   if(error){ showToast('Upload failed: ' + error.message); return; }
 
   var loan = loans[activeLoanIdx];
@@ -3358,7 +3364,7 @@ async function uploadLoanDoc(e) {
   loan.docs.push({ path: path, name: file.name, size: file.size, uploaded: new Date().toISOString() });
   saveLoans();
   renderLoanDocs(activeLoanIdx);
-  showToast('Document uploaded: ' + file.name);
+  showToast('✓ ' + file.name + ' uploaded successfully');
   e.target.value = '';
 }
 
@@ -3410,16 +3416,25 @@ function renderLoanDocs(loanIdx) {
   var loan = loans[loanIdx];
   var docs = loan.docs || [];
   if(!docs.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic;">No documents uploaded yet.</div>';
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic;padding:8px 0;">No documents attached yet. Use the button below to upload.</div>';
     return;
   }
   el.innerHTML = docs.map(function(doc, i) {
+    var uploaded = doc.uploaded ? new Date(doc.uploaded).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+    var ext = doc.name.split('.').pop().toLowerCase();
+    var canPreview = ['pdf','jpg','jpeg','png','gif','webp'].indexOf(ext) >= 0;
     return '<div class="loan-doc-item">' +
       '<span class="loan-doc-icon">' + docIcon(doc.name) + '</span>' +
-      '<span class="loan-doc-name" title="' + doc.name + '">' + doc.name + '</span>' +
-      '<span class="loan-doc-size">' + fmtBytes(doc.size) + '</span>' +
-      '<button class="btn btn-xs btn-secondary" onclick="previewLoanDoc(' + JSON.stringify(doc.path) + ',' + JSON.stringify(doc.name) + ')">Preview</button>' +
-      '<button class="btn btn-xs btn-danger" onclick="deleteLoanDoc(' + loanIdx + ',' + i + ')">✕</button>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div class="loan-doc-name" title="' + doc.name + '">' + doc.name + '</div>' +
+        '<div style="font-size:10px;color:var(--text3);margin-top:2px;">' +
+          fmtBytes(doc.size) + (uploaded ? ' · Uploaded ' + uploaded : '') +
+        '</div>' +
+      '</div>' +
+      '<button class="btn btn-xs ' + (canPreview ? 'btn-primary' : 'btn-secondary') + '" onclick="previewLoanDoc(' + JSON.stringify(doc.path) + ',' + JSON.stringify(doc.name) + ')" title="' + (canPreview ? 'Preview in app' : 'Download file') + '">' +
+        (canPreview ? '👁 Preview' : '↓ Download') +
+      '</button>' +
+      '<button class="btn btn-xs btn-danger" onclick="deleteLoanDoc(' + loanIdx + ',' + i + ')" title="Delete document">✕</button>' +
       '</div>';
   }).join('');
 }
