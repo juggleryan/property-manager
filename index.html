@@ -1234,6 +1234,12 @@ function skipSetup(){
         </div>
       </div>
       <div class="f-group"><label>Notes</label><input type="text" id="loan-notes" placeholder="Purpose, collateral, terms..."></div>
+      <div class="modal-section-title">Documents</div>
+      <div id="loan-docs-list" style="margin-bottom:10px;"></div>
+      <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+        📎 Attach document <input type="file" id="loan-doc-upload" style="display:none;" onchange="uploadLoanDoc(event)">
+      </label>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">Loan agreement, promissory note, deed of trust, etc. Stored privately in Supabase.</div>
       <div class="modal-section-title">Log a payment now (optional)</div>
       <div class="grid-2">
         <div class="f-group"><label>Payment amount ($)</label><input type="number" id="loan-first-payment" placeholder="0" min="0" step="1"></div>
@@ -1258,14 +1264,6 @@ function skipSetup(){
         <div class="f-group"><label>Date</label><input type="date" id="lp-date"></div>
       </div>
       <div class="f-group"><label>Note (optional)</label><input type="text" id="lp-note" placeholder="e.g. Monthly payment, partial, interest only..."></div>
-      <div style="margin-top:1rem;">
-        <div class="card-title" style="margin-bottom:8px;font-size:13px;">Documents</div>
-        <div id="loan-docs-list" style="margin-bottom:10px;"></div>
-        <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-          📎 Upload document <input type="file" id="loan-doc-upload" style="display:none;" onchange="uploadLoanDoc(event)">
-        </label>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Loan agreement, promissory note, deed of trust, etc.</div>
-      </div>
       <div style="margin-top:1rem;">
         <div class="card-title" style="margin-bottom:8px;font-size:13px;">Payment history</div>
         <table class="tbl"><thead><tr><th>Date</th><th>Amount</th><th>Principal</th><th>Interest</th><th>Balance after</th><th>Note</th></tr></thead>
@@ -3055,6 +3053,10 @@ function openLoanModal(direction, editIdx = null) {
     document.getElementById('loan-structure').value = 'flexible';
     document.getElementById('loan-frequency').value = 'monthly';
   }
+  // Load existing docs if editing
+  var editingIdx = document.getElementById('loan-edit-idx').value;
+  if(editingIdx !== '') renderLoanDocs(parseInt(editingIdx));
+  else { var dl=document.getElementById('loan-docs-list'); if(dl) dl.innerHTML='<div style="font-size:12px;color:var(--text3);font-style:italic;">Save the loan first to attach documents.</div>'; }
   document.getElementById('loan-overlay').classList.add('open');
 }
 
@@ -3100,7 +3102,7 @@ function saveLoan() {
   saveLoans();
   closeModal('loan-overlay');
   renderLoans();
-  showToast(`Loan ${editIdx !== '' ? 'updated' : 'added'}: ${party}`);
+  showToast('Loan ' + (editIdx !== '' ? 'updated' : 'added') + ': ' + party);
 }
 
 function getLoanBalance(loan) {
@@ -3166,7 +3168,6 @@ function openLoanPayModal(idx) {
       </tr>`).join('')
     : '<tr><td colspan="6" style="color:var(--text3);font-style:italic;padding:1rem;">No payments logged yet.</td></tr>';
 
-  renderLoanDocs(idx);
   document.getElementById('loan-pay-overlay').classList.add('open');
 }
 
