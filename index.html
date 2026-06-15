@@ -348,7 +348,7 @@ function checkPw(){
   var user=userEl.value.trim().toLowerCase();
   var input=inputEl.value;
   if(user==='rcadmin'&&input==='juggleryan2026!'){
-    sessionStorage.setItem(PK,'1');
+    setAuthed();
     document.getElementById('pw-card').style.display='none';
     if(errEl)errEl.style.display='none';
     // Always launch app — Supabase handles auth, no Google setup needed
@@ -374,12 +374,13 @@ function connectGoogle(){
   if(!c||!a||!s){alert('Please fill in all three fields.');return;}
   localStorage.setItem('pm_config',JSON.stringify({clientId:c,apiKey:a,sheetId:s,gmailQuery:'subject:"You received money"'}));
   localStorage.removeItem('pm_demo');
-  sessionStorage.setItem(PK,'1');
+  setAuthed();
   location.reload();
 }
 function demoModeEarly(){
   localStorage.setItem('pm_demo','1');
-  sessionStorage.setItem(PK,'1');
+  setAuthed();
+  setAuthed();
   document.getElementById('auth-screen').style.display='none';
   var attempts=0;
   var tryLaunch=function(){
@@ -1387,8 +1388,21 @@ function defaultData(){
 // checkPw moved to early script
 
 function demoMode(){localStorage.setItem(DMK,'1');isDemoMode=true;document.getElementById('auth-screen').style.display='none';launchApp();}
-function signOut(){localStorage.removeItem(DMK);localStorage.removeItem(CK);sessionStorage.removeItem(PK);if(accessToken&&window.google)google.accounts.oauth2.revoke(accessToken,()=>{});location.reload();}
+function signOut(){localStorage.removeItem(DMK);localStorage.removeItem(CK);clearAuthed();if(accessToken&&window.google)google.accounts.oauth2.revoke(accessToken,()=>{});location.reload();}
 
+function isAuthed(){
+  // Check localStorage auth with 12-hour expiry
+  const auth=JSON.parse(localStorage.getItem(PK)||'null');
+  if(!auth)return false;
+  if(Date.now()-auth.ts > 12*60*60*1000){localStorage.removeItem(PK);return false;}
+  return true;
+}
+function setAuthed(){
+  localStorage.setItem(PK,JSON.stringify({ts:Date.now()}));
+}
+function clearAuthed(){
+  localStorage.removeItem(PK);
+}
 function init(){
   const saved=localStorage.getItem(DK);
   if(saved){
@@ -1400,8 +1414,7 @@ function init(){
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
   isDemoMode=localStorage.getItem(DMK)==='1';
-  if(sessionStorage.getItem(PK)==='1'){
-    // Always launch — Supabase handles database, no Google needed
+  if(isAuthed()){
     document.getElementById('auth-screen').style.display='none';
     launchApp();
   }
