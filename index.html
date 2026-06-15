@@ -769,6 +769,7 @@ function skipSetup(){
         <div class="f-group"><label>About My Property URL</label><input type="url" id="e-amp-url" placeholder="https://..."></div>
         <div class="f-group"><label>ATIP URL (Assessor Treasurer)</label><input type="url" id="e-atip-url" placeholder="https://..."></div>
       </div>
+      <div class="f-group"><label>Claude chat links (one per line)</label><textarea id="e-claude-links" rows="3" placeholder="https://claude.ai/chat/...&#10;https://claude.ai/chat/..."></textarea></div>
       <div class="grid-2">
         <div class="f-group"><label>Property type</label>
           <select id="e-type"><option value="rv">RV site</option><option value="house">House</option></select>
@@ -986,6 +987,7 @@ function skipSetup(){
         <div class="f-group"><label>About My Property URL</label><input type="url" id="np-amp-url" placeholder="https://..."></div>
         <div class="f-group"><label>ATIP URL (Assessor Treasurer)</label><input type="url" id="np-atip-url" placeholder="https://..."></div>
       </div>
+      <div class="f-group"><label>Claude chat links (one per line)</label><textarea id="np-claude-links" rows="3" placeholder="https://claude.ai/chat/...&#10;https://claude.ai/chat/..."></textarea></div>
       <div class="modal-section-title">Mortgage / loan</div>
       <div class="grid-2">
         <div class="f-group"><label>Loan amount ($)</label><input type="number" id="np-loan-amt" placeholder="0" min="0" step="1"></div>
@@ -1355,7 +1357,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',sortOrder:0,sortOrder:0,parcel:'',size:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
+    nickname:'',sortOrder:0,sortOrder:0,parcel:'',size:'',claudeLinks:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1399,7 +1401,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',claudeLinks:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1526,7 +1528,7 @@ async function saveToSupabase(){
     // Upsert sites
     const siteData = sites.map((s, i) => ({
       id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
-      parcel: s.parcel||'', size: s.size||'', amp_url: s.ampUrl||'', atip_url: s.atipUrl||'',
+      parcel: s.parcel||'', size: s.size||'', amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'',
       loan_amt: s.loanAmt||0, loan_term: s.loanTerm||0,
       loan_rate: s.loanRate||0, loan_balance: s.loanBalance||0, lender: s.lender||'',
       deposit_amt: s.depositAmt||0, deposit_date: s.depositDate||null,
@@ -1789,7 +1791,7 @@ function renderDetailOverview(idx){
       <div class="detail-item"><div class="detail-label">Time in unit</div><div class="detail-value">${li.duration}</div></div>
       <div class="detail-item"><div class="detail-label">Remaining</div><div class="detail-value"><span class="lease-pill ${li.pill}">${li.pillTxt}</span></div></div>
       <div class="detail-item"><div class="detail-label">Property tax / yr</div><div class="detail-value">${s.taxAmt?fmt(s.taxAmt):'—'}</div></div>
-      ${(()=>{if(!s.ampUrl&&!s.atipUrl)return '';let l='<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Property links</div><div class="detail-value" style="display:flex;gap:12px;flex-wrap:wrap;">';if(s.ampUrl)l+='<a href="'+s.ampUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 About My Property</a>';if(s.atipUrl)l+='<a href="'+s.atipUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 ATIP Portal</a>';return l+'</div></div>';})()}
+      ${(()=>{if(!s.ampUrl&&!s.atipUrl&&!s.claudeLinks)return '';let l='<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Property links</div><div class="detail-value" style="display:flex;gap:12px;flex-wrap:wrap;">';if(s.ampUrl)l+='<a href="'+s.ampUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 About My Property</a>';if(s.atipUrl)l+='<a href="'+s.atipUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 ATIP Portal</a>';if(s.claudeLinks){var cls=s.claudeLinks.split('\n').filter(function(x){return x.trim();});cls.forEach(function(cl,ci){l+='<a href="'+cl.trim()+'" target="_blank" style="color:var(--purple);font-size:13px;font-weight:600;">\uD83E\uDD16 Claude chat '+(ci+1)+'</a>';});}return l+'</div></div>';})()}
       <div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Tax payment status</div><div class="detail-value" style="font-size:13px;">${taxStatus.length?taxStatus.join(' · '):'Not recorded'}${s.taxNotes?` — ${s.taxNotes}`:''}</div></div>
     </div>
   `;
@@ -2071,6 +2073,7 @@ function openEditModal(i){
   document.getElementById('e-addr').value=s.addr||'';
   document.getElementById('e-nickname').value=s.nickname||'';
   document.getElementById('e-parcel').value=s.parcel||'';
+  document.getElementById('e-claude-links').value=s.claudeLinks||'';
   document.getElementById('e-size').value=s.size||'';
   document.getElementById('e-amp-url').value=s.ampUrl||'';
   document.getElementById('e-atip-url').value=s.atipUrl||'';
@@ -2111,6 +2114,7 @@ function saveEdit(){
   if(editIdx===null)return;const s=sites[editIdx];
   s.nickname=document.getElementById('e-nickname').value.trim();
   s.parcel=document.getElementById('e-parcel').value.trim();
+  s.claudeLinks=document.getElementById('e-claude-links').value.trim();
   s.size=document.getElementById('e-size').value.trim();
   s.ampUrl=document.getElementById('e-amp-url').value.trim();
   s.atipUrl=document.getElementById('e-atip-url').value.trim();
@@ -2228,7 +2232,7 @@ function populateSiteDropdowns(){
 // ADD PROPERTY
 function openAddPropModal(){
   // reset all fields
-  ['np-name','np-nick','np-addr','np-parcel','np-size','np-amp-url','np-atip-url','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
+  ['np-name','np-nick','np-addr','np-parcel','np-size','np-amp-url','np-atip-url','np-claude-links','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
   ['np-rent','np-mortgage','np-loan-amt','np-loan-term','np-loan-rate','np-loan-balance'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('np-type').value='house';
   document.getElementById('np-state').value='wa';
@@ -2269,6 +2273,7 @@ function saveNewProp(){
     yard:document.getElementById('np-yard').value,
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',
     parcel: document.getElementById('np-parcel').value.trim(),
+    claudeLinks: document.getElementById('np-claude-links').value.trim(),
     size: document.getElementById('np-size').value.trim(),
     ampUrl: document.getElementById('np-amp-url').value.trim(),
     atipUrl: document.getElementById('np-atip-url').value.trim(),
