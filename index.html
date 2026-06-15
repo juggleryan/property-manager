@@ -336,6 +336,9 @@ button{font-family:var(--sans);}
 var CK='pm_config',DK='pm_data',DMK='pm_demo',PK='pm_authed';
 var SUPABASE_URL='https://ioliuikhxzbexjzfeaus.supabase.co';
 var SUPABASE_KEY='sb_publishable_ajHlDgE9q7myl0EF84MYVQ_CDz3uoFv';
+function isAuthed(){var auth=JSON.parse(localStorage.getItem(PK)||'null');if(!auth)return false;if(Date.now()-auth.ts>12*60*60*1000){localStorage.removeItem(PK);return false;}return true;}
+function setAuthed(){localStorage.setItem(PK,JSON.stringify({ts:Date.now()}));}
+function clearAuthed(){localStorage.removeItem(PK);}
 // Early auth function — defined before main script to prevent "not defined" errors
 function checkPw(){
   var userEl=document.getElementById('pw-user');
@@ -1390,19 +1393,6 @@ function defaultData(){
 function demoMode(){localStorage.setItem(DMK,'1');isDemoMode=true;document.getElementById('auth-screen').style.display='none';launchApp();}
 function signOut(){localStorage.removeItem(DMK);localStorage.removeItem(CK);clearAuthed();if(accessToken&&window.google)google.accounts.oauth2.revoke(accessToken,()=>{});location.reload();}
 
-function isAuthed(){
-  // Check localStorage auth with 12-hour expiry
-  const auth=JSON.parse(localStorage.getItem(PK)||'null');
-  if(!auth)return false;
-  if(Date.now()-auth.ts > 12*60*60*1000){localStorage.removeItem(PK);return false;}
-  return true;
-}
-function setAuthed(){
-  localStorage.setItem(PK,JSON.stringify({ts:Date.now()}));
-}
-function clearAuthed(){
-  localStorage.removeItem(PK);
-}
 function init(){
   const saved=localStorage.getItem(DK);
   if(saved){
