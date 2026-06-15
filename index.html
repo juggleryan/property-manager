@@ -1780,6 +1780,7 @@ function renderDetailOverview(idx){
   const taxStatus=[];
   if(s.tax1==='paid')taxStatus.push('H1 paid');else if(s.tax1==='included')taxStatus.push('H1 included in payment');
   if(s.tax2==='full')taxStatus.push('Full year paid');else if(s.tax2==='paid')taxStatus.push('H2 paid');else if(s.tax2==='included')taxStatus.push('H2 included');
+  renderRecentNotes(idx);
   document.getElementById('detail-lease').innerHTML=`
     <div class="detail-grid">
       <div class="detail-item"><div class="detail-label">Lease start</div><div class="detail-value">${s.start||'—'}</div></div>
@@ -1788,10 +1789,7 @@ function renderDetailOverview(idx){
       <div class="detail-item"><div class="detail-label">Time in unit</div><div class="detail-value">${li.duration}</div></div>
       <div class="detail-item"><div class="detail-label">Remaining</div><div class="detail-value"><span class="lease-pill ${li.pill}">${li.pillTxt}</span></div></div>
       <div class="detail-item"><div class="detail-label">Property tax / yr</div><div class="detail-value">${s.taxAmt?fmt(s.taxAmt):'—'}</div></div>
-      ${s.ampUrl||s.atipUrl?`<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Property links</div><div class="detail-value" style="display:flex;gap:12px;flex-wrap:wrap;">
-        ${s.ampUrl?`<a href="${s.ampUrl}" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">🔗 About My Property</a>`:''}
-        ${s.atipUrl?`<a href="${s.atipUrl}" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">🔗 ATIP Portal</a>`:''}
-      </div></div>`:''}
+      ${(()=>{if(!s.ampUrl&&!s.atipUrl)return '';let l='<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Property links</div><div class="detail-value" style="display:flex;gap:12px;flex-wrap:wrap;">';if(s.ampUrl)l+='<a href="'+s.ampUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 About My Property</a>';if(s.atipUrl)l+='<a href="'+s.atipUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 ATIP Portal</a>';return l+'</div></div>';})()}
       <div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Tax payment status</div><div class="detail-value" style="font-size:13px;">${taxStatus.length?taxStatus.join(' · '):'Not recorded'}${s.taxNotes?` — ${s.taxNotes}`:''}</div></div>
     </div>
   `;
