@@ -1780,34 +1780,6 @@ function renderDetailOverview(idx){
   const taxStatus=[];
   if(s.tax1==='paid')taxStatus.push('H1 paid');else if(s.tax1==='included')taxStatus.push('H1 included in payment');
   if(s.tax2==='full')taxStatus.push('Full year paid');else if(s.tax2==='paid')taxStatus.push('H2 paid');else if(s.tax2==='included')taxStatus.push('H2 included');
-  // Recent notes rendered after lease section
-  const recentNotes = (s.notes||[]).slice(-3).reverse();
-  const recentNotesHtml = recentNotes.length
-    ? recentNotes.map(n => `
-        <div class="note-entry">
-          <div class="note-dot"></div>
-          <div class="note-body">
-            <div class="note-ts">${n.ts}</div>
-            <div class="note-text">${n.text}</div>
-          </div>
-        </div>`).join('')
-    : '<div class="note-empty">No notes yet. Add one in the Notes tab.</div>';
-
-  // Render after the lease card by appending to overview div
-  const overviewEl = document.getElementById('detail-overview');
-  // Remove old recent notes card if exists
-  const oldCard = document.getElementById('recent-notes-card');
-  if(oldCard) oldCard.remove();
-  const notesCard = document.createElement('div');
-  notesCard.id = 'recent-notes-card';
-  notesCard.className = 'card';
-  notesCard.style.marginTop = '1rem';
-    notesCard.innerHTML =
-    '<div class="card-header"><div><div class="card-title">Recent notes</div><div class="card-sub">Last 3 entries</div></div>' +
-    '<button class="btn btn-sm btn-secondary" onclick="detailTab('notes',document.querySelectorAll('#page-prop-detail .tab')[2])">View all →</button></div>' +
-    '<div class="card-body"><div class="notes-timeline">' + recentNotesHtml + '</div></div>';
-  overviewEl.appendChild(notesCard);
-
   document.getElementById('detail-lease').innerHTML=`
     <div class="detail-grid">
       <div class="detail-item"><div class="detail-label">Lease start</div><div class="detail-value">${s.start||'—'}</div></div>
