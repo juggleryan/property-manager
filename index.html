@@ -1796,23 +1796,20 @@ function renderDetailOverview(idx){
 }
 
 function renderRecentNotes(idx){
-  const s = sites[idx];
-  const notes = (s.notes||[]).slice(-3).reverse();
-  const oldCard = document.getElementById('recent-notes-card');
-  if(oldCard) oldCard.remove();
-  const card = document.createElement('div');
-  card.id = 'recent-notes-card';
-  card.className = 'card';
-  card.style.marginTop = '1rem';
-  const rows = notes.length
-    ? notes.map(n =>
-        '<div class="note-entry"><div class="note-dot"></div><div class="note-body"><div class="note-ts">'+n.ts+'</div><div class="note-text">'+n.text+'</div></div></div>'
-      ).join('')
-    : '<div class="note-empty">No notes yet. Add one in the Notes tab.</div>';
-  card.innerHTML =
-    '<div class="card-header"><div><div class="card-title">Recent notes</div><div class="card-sub">Last 3 entries</div></div>' +
-    '<button class="btn btn-sm btn-secondary" onclick="detailTab('notes',document.querySelectorAll('#page-prop-detail .tab')[2])">View all →</button></div>' +
-    '<div class="card-body"><div class="notes-timeline">' + rows + '</div></div>';
+  var s=sites[idx];
+  var recentNotes=(s.notes||[]).slice(-3).reverse();
+  var oldCard=document.getElementById('recent-notes-card');
+  if(oldCard)oldCard.remove();
+  var card=document.createElement('div');
+  card.id='recent-notes-card';
+  card.className='card';
+  card.style.marginTop='1rem';
+  var rows=recentNotes.length
+    ? recentNotes.map(function(n){return '<div class="note-entry"><div class="note-dot"></div><div class="note-body"><div class="note-ts">'+n.ts+'</div><div class="note-text">'+n.text+'</div></div></div>';}).join('')
+    : '<div class="note-empty">No notes yet.</div>';
+  var hdr='<div class="card-header"><div><div class="card-title">Recent notes</div><div class="card-sub">Last 3</div></div>';
+  var btn='<button class="btn btn-sm btn-secondary" onclick="detailTab(String.fromCharCode(110,111,116,101,115),document.querySelectorAll(String.fromCharCode(35,112,97,103,101,45,112,114,111,112,45,100,101,116,97,105,108)+String.fromCharCode(32,46,116,97,98))[2])">View all</button></div>';
+  card.innerHTML=hdr+btn+'<div class="card-body"><div class="notes-timeline">'+rows+'</div></div>';
   document.getElementById('detail-overview').appendChild(card);
 }
 
