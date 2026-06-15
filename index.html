@@ -1251,7 +1251,7 @@ function skipSetup(){
       <div class="modal-section-title">Documents</div>
       <div id="loan-docs-list" style="margin-bottom:10px;"></div>
       <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="loan-upload-label">
-        📎 Attach document <input type="file" id="loan-doc-upload" style="display:none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="uploadLoanDoc(event)">
+        📎 Attach document <input type="file" id="loan-doc-upload" style="display:none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.txt" onchange="uploadLoanDoc(event)">
       </label>
       <div style="font-size:11px;color:var(--text3);margin-top:6px;">PDF, Word, or image · Stored privately · PDFs and images can be previewed in-app</div>
       <div class="modal-section-title">Log a payment now (optional)</div>
@@ -3094,8 +3094,14 @@ function openLoanModal(direction, editIdx = null) {
   }
   // Load existing docs if editing
   var editingIdx = document.getElementById('loan-edit-idx').value;
-  if(editingIdx !== '') renderLoanDocs(parseInt(editingIdx));
-  else { var dl=document.getElementById('loan-docs-list'); if(dl) dl.innerHTML='<div style="font-size:12px;color:var(--text3);font-style:italic;">Save the loan first to attach documents.</div>'; }
+  if(editingIdx !== '') {
+    activeLoanIdx = parseInt(editingIdx);
+    renderLoanDocs(activeLoanIdx);
+  } else {
+    activeLoanIdx = null;
+    var dl=document.getElementById('loan-docs-list');
+    if(dl) dl.innerHTML='<div style="font-size:12px;color:var(--text3);font-style:italic;">Save the loan first, then reopen Edit to attach documents.</div>';
+  }
   document.getElementById('loan-overlay').classList.add('open');
 }
 
@@ -3138,10 +3144,12 @@ function saveLoan() {
     addLoanPaymentToLoan(idx, firstPayment, firstDate, '');
   }
 
+  var newIdx = editIdx !== '' ? parseInt(editIdx) : loans.length - 1;
+  activeLoanIdx = newIdx;
   saveLoans();
   closeModal('loan-overlay');
   renderLoans();
-  showToast('Loan ' + (editIdx !== '' ? 'updated' : 'added') + ': ' + party);
+  showToast('Loan ' + (editIdx !== '' ? 'updated' : 'added') + ': ' + party + '. Open Edit to attach documents.');
 }
 
 function deleteLoan(idx){
@@ -3370,7 +3378,7 @@ function fmtBytes(bytes) {
 async function uploadLoanDoc(e) {
   var file = e.target.files[0];
   if(!file) return;
-  if(activeLoanIdx === null){ showToast('Save the loan first, then reopen to attach documents.'); return; }
+  if(activeLoanIdx === null){ showToast('Please save the loan first using the Save button, then reopen Edit to attach documents.'); return; }
   if(!supabaseReady){ showToast('Supabase not connected.'); return; }
 
   var label = document.getElementById('loan-upload-label');
@@ -3380,7 +3388,7 @@ async function uploadLoanDoc(e) {
   var path = 'loan_' + activeLoanIdx + '_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
   var {data, error} = await supabaseClient.storage.from('loan-documents').upload(path, file);
 
-  if(label) label.innerHTML = '📎 Attach document <input type="file" id="loan-doc-upload" style="display:none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onchange="uploadLoanDoc(event)">';
+  if(label) label.innerHTML = '📎 Attach document <input type="file" id="loan-doc-upload" style="display:none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.txt" onchange="uploadLoanDoc(event)">';
 
   if(error){ showToast('Upload failed: ' + error.message); return; }
 
