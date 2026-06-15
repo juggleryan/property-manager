@@ -3272,7 +3272,7 @@ function renderLoans() {
       const statusCls = l.status === 'paid' ? 'loan-status-paid' : isOverdue ? 'loan-status-overdue' : 'loan-status-active';
       const statusTxt = l.status === 'paid' ? 'Paid off' : isOverdue ? 'Overdue' : 'Active';
       return `<tr>
-        <td><div class="tbl-name">${l.party}</div><div class="tbl-sub">${l.notes || (l.property ? sites.find(s=>s.id===l.property)?.name||'' : '')}</div></td>
+        <td style="cursor:pointer;" onclick="openLoanModal('${l.direction}',${realIdx})"><div class="tbl-name" style="color:var(--blue);text-decoration:underline;text-underline-offset:2px;">${l.party}</div><div class="tbl-sub">${l.notes || (l.property ? sites.find(s=>s.id===l.property)?.name||'' : '')}</div></td>
         <td>${fmt(l.amount)}</td>
         <td>${l.rate ? l.rate + '%' : '—'}</td>
         <td style="font-size:12px;color:var(--text2);">${{fixed:'Fixed',flexible:'Flexible','interest-only':'Interest only'}[l.structure]||l.structure}</td>
@@ -3310,7 +3310,7 @@ function renderLoans() {
         var totalPaid = (l.payments||[]).reduce(function(a,p){return a+p.amount;},0);
         var lastPay = l.payments && l.payments.length ? l.payments[l.payments.length-1].date : '—';
         return '<tr>' +
-          '<td><div class="tbl-name">' + l.party + '</div><div class="tbl-sub">' + (l.notes||'') + '</div></td>' +
+          '<td style="cursor:pointer;" onclick="openLoanModal(\'' + l.direction + '\','+realIdx+')"><div class="tbl-name" style="color:var(--blue);text-decoration:underline;text-underline-offset:2px;">' + l.party + '</div><div class="tbl-sub">' + (l.notes||'') + '</div></td>' +
           '<td><span class="badge ' + (l.direction==='lent'?'current':'pending') + '"><span class="badge-dot"></span>' + (l.direction==='lent'?'I lent':'I borrowed') + '</span></td>' +
           '<td>' + fmt(l.amount) + '</td>' +
           '<td>' + (l.rate?l.rate+'%':'—') + '</td>' +
