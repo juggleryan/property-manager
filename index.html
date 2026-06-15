@@ -1802,16 +1802,13 @@ function renderDetailOverview(idx){
   notesCard.id = 'recent-notes-card';
   notesCard.className = 'card';
   notesCard.style.marginTop = '1rem';
-  notesCard.innerHTML = \`
-    <div class="card-header">
-      <div><div class="card-title">Recent notes</div><div class="card-sub">Last 3 entries</div></div>
-      <button class="btn btn-sm btn-secondary" onclick="detailTab('notes', document.querySelectorAll('#page-prop-detail .tab')[2])">View all →</button>
-    </div>
-    <div class="card-body"><div class="notes-timeline">\${recentNotesHtml}</div></div>
-  \`;
+    notesCard.innerHTML =
+    '<div class="card-header"><div><div class="card-title">Recent notes</div><div class="card-sub">Last 3 entries</div></div>' +
+    '<button class="btn btn-sm btn-secondary" onclick="detailTab('notes',document.querySelectorAll('#page-prop-detail .tab')[2])">View all →</button></div>' +
+    '<div class="card-body"><div class="notes-timeline">' + recentNotesHtml + '</div></div>';
   overviewEl.appendChild(notesCard);
 
-  document.getElementById('detail-lease').innerHTML=\`
+  document.getElementById('detail-lease').innerHTML=`
     <div class="detail-grid">
       <div class="detail-item"><div class="detail-label">Lease start</div><div class="detail-value">${s.start||'—'}</div></div>
       <div class="detail-item"><div class="detail-label">Lease end</div><div class="detail-value">${s.end||'—'}</div></div>
