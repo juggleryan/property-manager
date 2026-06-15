@@ -1472,7 +1472,28 @@ function launchApp(){
       loadFromSupabase();
     }
   }
+  // Route to correct page based on URL hash
+  routeFromHash();
+  // Listen for browser back/forward
+  window.addEventListener('hashchange', function(){
+    routeFromHash();
+  });
 }
+function routeFromHash(){
+  var hash = window.location.hash.replace('#','');
+  if(!hash || hash==='dashboard'){navTo('dashboard',null,true);return;}
+  // Property detail
+  if(hash.startsWith('property/')){
+    var propId = hash.replace('property/','');
+    var idx = sites.findIndex(function(s){return s.id===propId;});
+    if(idx>=0){openDetail(idx);return;}
+  }
+  // Standard pages
+  var validPages = ['dashboard','payments','bills','leases','notices','pl','loans','all-props'];
+  if(validPages.indexOf(hash)>=0){navTo(hash,null,true);return;}
+  navTo('dashboard',null,true);
+}
+
 function setToday(){
   const t=today();
   ['ap-date','ap2-date','b-date','n-date','n-deadline'].forEach(id=>{
@@ -1662,12 +1683,14 @@ function matchTenant(text){
 }
 
 // ══ NAVIGATION ══
-function navTo(pageId,btn){
+function navTo(pageId,btn,skipHash){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   const pg=document.getElementById('page-'+pageId);
   if(pg)pg.classList.add('active');
-  if(btn)btn.classList.add('active');
+  // Highlight matching nav item if btn not passed
+  if(btn){btn.classList.add('active');}
+  else{document.querySelectorAll('.nav-item').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+pageId+"'"))b.classList.add('active');});}
   if(pageId==='pl'){initPL();renderPL();}
   if(pageId==='loans'){initLoans();}
   if(pageId==='bills')renderBills();
@@ -1675,23 +1698,25 @@ function navTo(pageId,btn){
   if(pageId==='payments')renderPayLog();
   if(pageId==='notices')renderAllNotices();
   if(pageId==='dashboard')render();
+  if(!skipHash) window.location.hash = pageId;
   closeSidebar();
 }
 function navToFilter(f,btn){
   activeFilter=f;
   const labels={late:'Late / overdue',current:'Current',vacant:'Vacant',rv:'RV sites',house:'Houses'};
   document.getElementById('props-heading').textContent=labels[f]||'Properties';
-  navTo('all-props',btn);
+  navTo('all-props',btn,true);
+  window.location.hash='all-props';
   renderPropsTable();
 }
-function navBack(){navTo(prevPage||'dashboard',null);}
+function navBack(){navTo(prevPage||'all-props',null);}
 function openDetail(idx){
   prevPage='all-props';detailIdx=idx;
   const s=sites[idx];
   document.getElementById('detail-name').textContent=displayName(s);
-  document.getElementById('detail-addr').textContent=s.nickname?`${s.name} · ${s.addr}`:s.addr;
   document.getElementById('detail-addr').textContent=s.addr;
-  navTo('prop-detail',null);
+  navTo('prop-detail',null,true);
+  window.location.hash='property/'+s.id;
   detailTab('overview',document.querySelector('#page-prop-detail .tab'));
   renderDetailOverview(idx);
 }
