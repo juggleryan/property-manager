@@ -1595,6 +1595,20 @@ async function loadFromSupabase(){
         notes:r.notes||'', outcome:r.outcome||'Pending'
       }));
     }
+    // Load loans from Supabase
+    var loansRes = await supabaseClient.from('loans').select('*').order('created_at',{ascending:true});
+    if(loansRes.error) throw loansRes.error;
+    if(loansRes.data && loansRes.data.length){
+      loans = loansRes.data.map(r=>({
+        id:r.id, direction:r.direction||'lent', party:r.party||'',
+        property:r.property_id||'', amount:parseFloat(r.amount)||0,
+        rate:parseFloat(r.rate)||0, start:r.start_date||'', due:r.due_date||'',
+        structure:r.structure||'flexible', payment:parseFloat(r.payment)||0,
+        frequency:r.frequency||'monthly', notes:r.notes||'',
+        status:r.status||'active', payments:r.payments||[], docs:r.docs||[]
+      }));
+      saveLoans();
+    }
     saveLocal(); render(); setSyncStatus('ok');
     showToast('Loaded from Supabase ✓');
   } catch(e) {
@@ -1650,10 +1664,22 @@ async function saveToSupabase(){
       amount: n.amt||0, notes: n.notes||'', outcome: n.outcome||'Pending'
     }));
 
+    // Upsert loans
+    const loanData = loans.map(l => ({
+      id: l.id||undefined,
+      direction: l.direction, party: l.party, property_id: l.property||null,
+      amount: l.amount||0, rate: l.rate||0, start_date: l.start||null,
+      due_date: l.due||null, structure: l.structure||'flexible',
+      payment: l.payment||0, frequency: l.frequency||'monthly',
+      notes: l.notes||'', status: l.status||'active',
+      payments: l.payments||[], docs: l.docs||[]
+    }));
+
     const ops = [supabaseClient.from('sites').upsert(siteData, {onConflict:'id'})];
     if(newPayments.length) ops.push(supabaseClient.from('payments').insert(newPayments));
     if(newBills.length) ops.push(supabaseClient.from('bills').insert(newBills));
     if(newNotices.length) ops.push(supabaseClient.from('notices').insert(newNotices));
+    if(loanData.length) ops.push(supabaseClient.from('loans').upsert(loanData, {onConflict:'id'}));
 
     const results = await Promise.all(ops);
     const errors = results.filter(r => r.error);
@@ -2425,32 +2451,66 @@ function openLeaseTemplateModal() {
   document.getElementById('lease-template-overlay').classList.add('open');
 }
 
-function updateTemplateStatus() {
+async function updateTemplateStatus() {
   const saved = JSON.parse(localStorage.getItem('pm_templates') || '{}');
   leaseTemplates.rv = saved.rv || null;
   leaseTemplates.house = saved.house || null;
-  document.getElementById('rv-template-status').textContent = leaseTemplates.rv ? 'Template loaded ✓' : 'No template uploaded';
-  document.getElementById('house-template-status').textContent = leaseTemplates.house ? 'Template loaded ✓' : 'No template uploaded';
+
+  // Also check Supabase for templates not in localStorage
+  if(supabaseReady){
+    for(const type of ['rv','house']){
+      if(!leaseTemplates[type]){
+        const path = type + '_lease_template.docx';
+        const {data} = await supabaseClient.storage.from('lease-templates').list('', {search: path});
+        if(data && data.length){
+          leaseTemplates[type] = { name: path, path: path, fromSupabase: true };
+        }
+      }
+    }
+  }
+
+  document.getElementById('rv-template-status').textContent = leaseTemplates.rv ? (leaseTemplates.rv.fromSupabase ? 'Template in Supabase ✓' : 'Template loaded ✓') : 'No template uploaded';
+  document.getElementById('house-template-status').textContent = leaseTemplates.house ? (leaseTemplates.house.fromSupabase ? 'Template in Supabase ✓' : 'Template loaded ✓') : 'No template uploaded';
   document.getElementById('rv-template-download').style.display = leaseTemplates.rv ? 'inline-flex' : 'none';
   document.getElementById('house-template-download').style.display = leaseTemplates.house ? 'inline-flex' : 'none';
 }
 
-function handleTemplateUpload(e, type) {
+async function handleTemplateUpload(e, type) {
   const f = e.target.files[0]; if (!f) return;
+  if(!supabaseReady){ showToast('Supabase not connected.'); return; }
+  showToast('Uploading template...');
+  const path = type + '_lease_template.docx';
+  // Remove old version first
+  await supabaseClient.storage.from('lease-templates').remove([path]);
+  const {data, error} = await supabaseClient.storage.from('lease-templates').upload(path, f, {upsert:true});
+  if(error){ showToast('Upload failed: ' + error.message); return; }
+  // Also cache in localStorage for offline use
   const reader = new FileReader();
   reader.onload = (ev) => {
     const saved = JSON.parse(localStorage.getItem('pm_templates') || '{}');
-    saved[type] = { name: f.name, data: ev.target.result };
+    saved[type] = { name: f.name, data: ev.target.result, path: path };
     localStorage.setItem('pm_templates', JSON.stringify(saved));
     leaseTemplates[type] = saved[type];
     updateTemplateStatus();
-    showToast(`${type === 'rv' ? 'RV' : 'House'} lease template uploaded.`);
+    showToast((type === 'rv' ? 'RV' : 'House') + ' lease template uploaded to Supabase ✓');
   };
   reader.readAsDataURL(f);
   e.target.value = '';
 }
 
-function downloadTemplate(type) {
+async function downloadTemplate(type) {
+  const path = type + '_lease_template.docx';
+  if(supabaseReady){
+    const {data, error} = await supabaseClient.storage.from('lease-templates').createSignedUrl(path, 3600);
+    if(!error && data){
+      const a = document.createElement('a');
+      a.href = data.signedUrl;
+      a.download = type + '_lease_template.docx';
+      a.click();
+      return;
+    }
+  }
+  // Fallback to localStorage cache
   const t = leaseTemplates[type];
   if (!t) return;
   const a = document.createElement('a');
@@ -2559,13 +2619,14 @@ async function generateLease() {
     UTILITY_TRASH: 'Included', UTILITY_INTERNET: 'Not provided',
   };
 
-  // Get template from storage
+  // Get template — try localStorage first, then Supabase
   const saved = JSON.parse(localStorage.getItem('pm_templates') || '{}');
   const templateKey = isRV ? 'rv' : 'house';
   const template = saved[templateKey];
+  const templatePath = templateKey + '_lease_template.docx';
 
-  if (!template) {
-    showToast(`No ${isRV ? 'RV' : 'house'} lease template uploaded. Go to ⚙ Manage templates first.`);
+  if (!template && !supabaseReady) {
+    showToast('No ' + (isRV ? 'RV' : 'house') + ' lease template found. Go to ⚙ Manage templates first.');
     return;
   }
 
@@ -2573,9 +2634,18 @@ async function generateLease() {
   closeModal('generate-lease-overlay');
 
   try {
-    // Fetch template as arraybuffer
-    const res = await fetch(template.data);
-    const arrayBuf = await res.arrayBuffer();
+    let arrayBuf;
+    if(template && template.data && !template.fromSupabase){
+      // Use cached localStorage version
+      const res = await fetch(template.data);
+      arrayBuf = await res.arrayBuffer();
+    } else {
+      // Pull from Supabase Storage
+      const {data: urlData, error: urlErr} = await supabaseClient.storage.from('lease-templates').createSignedUrl(templatePath, 300);
+      if(urlErr){ showToast('Could not load template: ' + urlErr.message); return; }
+      const res = await fetch(urlData.signedUrl);
+      arrayBuf = await res.arrayBuffer();
+    }
     const uint8 = new Uint8Array(arrayBuf);
 
     // Use JSZip to open the docx and replace placeholders in document.xml
@@ -3085,6 +3155,38 @@ function initLoans() {
 
 function saveLoans() {
   localStorage.setItem('pm_loans', JSON.stringify(loans));
+  // Auto-sync loans to Supabase
+  if(!supabaseReady || isDemoMode) return;
+  var loanData = loans.map(function(l) {
+    return {
+      id: l.id||undefined,
+      direction: l.direction, party: l.party, property_id: l.property||null,
+      amount: l.amount||0, rate: l.rate||0, start_date: l.start||null,
+      due_date: l.due||null, structure: l.structure||'flexible',
+      payment: l.payment||0, frequency: l.frequency||'monthly',
+      notes: l.notes||'', status: l.status||'active',
+      payments: l.payments||[], docs: l.docs||[]
+    };
+  });
+  supabaseClient.from('loans').upsert(loanData, {onConflict:'id'}).then(function(res){
+    if(res.error) console.error('Loan sync error:', res.error);
+    else {
+      // Refresh loans to get IDs assigned by DB
+      supabaseClient.from('loans').select('*').order('created_at',{ascending:true}).then(function(r){
+        if(!r.error && r.data && r.data.length){
+          loans = r.data.map(function(row){return {
+            id:row.id, direction:row.direction||'lent', party:row.party||'',
+            property:row.property_id||'', amount:parseFloat(row.amount)||0,
+            rate:parseFloat(row.rate)||0, start:row.start_date||'', due:row.due_date||'',
+            structure:row.structure||'flexible', payment:parseFloat(row.payment)||0,
+            frequency:row.frequency||'monthly', notes:row.notes||'',
+            status:row.status||'active', payments:row.payments||[], docs:row.docs||[]
+          };});
+          localStorage.setItem('pm_loans', JSON.stringify(loans));
+        }
+      });
+    }
+  });
 }
 
 function openLoanModal(direction, editIdx = null) {
@@ -3174,10 +3276,15 @@ function saveLoan() {
   showToast('Loan ' + (editIdx !== '' ? 'updated' : 'added') + ': ' + party + '. Open Edit to attach documents.');
 }
 
-function deleteLoan(idx){
+async function deleteLoan(idx){
   if(!confirm('Delete this loan? Documents in Supabase storage will be kept.')) return;
+  var loan = loans[idx];
+  if(loan.id && supabaseReady){
+    var {error} = await supabaseClient.from('loans').delete().eq('id', loan.id);
+    if(error){ showToast('Delete failed: ' + error.message); return; }
+  }
   loans.splice(idx,1);
-  saveLoans();
+  localStorage.setItem('pm_loans', JSON.stringify(loans));
   renderLoans();
   showToast('Loan deleted. Documents preserved.');
 }
