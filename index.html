@@ -874,6 +874,12 @@ function skipSetup(){
         <div class="f-group"><label>Purchase price ($)</label><input type="number" id="e-purchase-price" min="0" step="1" placeholder="0"></div>
         <div class="f-group"><label>Estimated current value ($)</label><input type="number" id="e-current-value" min="0" step="1" placeholder="0"></div>
       </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Assessed value ($)</label><input type="number" id="e-assessed-value" min="0" step="1" placeholder="0"></div>
+        <div class="f-group"><label>Assessment year</label><input type="number" id="e-assessed-year" min="2000" step="1" placeholder="e.g. 2024"></div>
+      </div>
+      <button class="btn btn-sm btn-secondary" type="button" onclick="addAssessedHistory()" style="margin-bottom:0.5rem;">+ Save to history</button>
+      <div id="e-assessed-history-list" style="margin-top:6px;"></div>
       <div class="modal-section-title">Lease</div>
       <div class="grid-3">
         <div class="f-group"><label>Lease start</label><input type="date" id="e-start"></div>
@@ -1425,7 +1431,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',sortOrder:0,sortOrder:0,parcel:'',size:'',claudeLinks:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
+    nickname:'',sortOrder:0,sortOrder:0,parcel:'',size:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1469,7 +1475,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',claudeLinks:'',ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1631,7 +1637,7 @@ async function saveToSupabase(){
     // Upsert sites
     const siteData = sites.map((s, i) => ({
       id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
-      parcel: s.parcel||'', size: s.size||'', amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'',
+      parcel: s.parcel||'', size: s.size||'', amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'', assessed_value: s.assessedValue||0, assessed_year: s.assessedYear||'', assessed_history: s.assessedHistory||[],
       loan_amt: s.loanAmt||0, loan_term: s.loanTerm||0,
       loan_rate: s.loanRate||0, loan_balance: s.loanBalance||0, lender: s.lender||'',
       deposit_amt: s.depositAmt||0, deposit_date: s.depositDate||null,
@@ -1898,6 +1904,7 @@ function renderDetailOverview(idx){
     <div class="detail-item"><div class="detail-label">Yard maintenance</div><div class="detail-value">${s.yard||'Not specified'}</div></div>
     <div class="detail-item"><div class="detail-label">Property type</div><div class="detail-value">${s.type==='rv'?'RV site':'House'}</div></div>
     <div class="detail-item"><div class="detail-label">Property size</div><div class="detail-value">${s.size||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Assessed value</div><div class="detail-value">${s.assessedValue?fmt(s.assessedValue)+(s.assessedYear?' ('+s.assessedYear+')':''):'—'}</div></div>
   `;
   const taxStatus=[];
   if(s.tax1==='paid')taxStatus.push('H1 paid');else if(s.tax1==='included')taxStatus.push('H1 included in payment');
@@ -1912,6 +1919,13 @@ function renderDetailOverview(idx){
       <div class="detail-item"><div class="detail-label">Remaining</div><div class="detail-value"><span class="lease-pill ${li.pill}">${li.pillTxt}</span></div></div>
       <div class="detail-item"><div class="detail-label">Property tax / yr</div><div class="detail-value">${s.taxAmt?fmt(s.taxAmt):'—'}</div></div>
       ${(()=>{if(!s.ampUrl&&!s.atipUrl&&!s.claudeLinks)return '';let l='<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Property links</div><div class="detail-value" style="display:flex;gap:12px;flex-wrap:wrap;">';if(s.ampUrl)l+='<a href="'+s.ampUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 About My Property</a>';if(s.atipUrl)l+='<a href="'+s.atipUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 ATIP Portal</a>';if(s.claudeLinks){var cls=s.claudeLinks.split('\n').filter(function(x){return x.trim();});cls.forEach(function(cl,ci){l+='<a href="'+cl.trim()+'" target="_blank" style="color:var(--purple);font-size:13px;font-weight:600;">\uD83E\uDD16 Claude chat '+(ci+1)+'</a>';});}return l+'</div></div>';})()}
+      ${(s.assessedHistory&&s.assessedHistory.length>1)?`<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Assessed value history</div><div class="detail-value" style="font-size:13px;">
+        ${[...s.assessedHistory].sort((a,b)=>b.year-a.year).map((h,i,arr)=>{
+          var prev=arr[i+1];
+          var change=prev?h.value-prev.value:null;
+          return h.year+': '+fmt(h.value)+(change!==null?' <span style="color:'+(change>=0?'var(--green)':'var(--red)')+';">('+(change>=0?'+':'')+fmt(change)+')</span>':'');
+        }).join(' &nbsp;·&nbsp; ')}
+      </div></div>`:''}
       <div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Tax payment status</div><div class="detail-value" style="font-size:13px;">${taxStatus.length?taxStatus.join(' · '):'Not recorded'}${s.taxNotes?` — ${s.taxNotes}`:''}</div></div>
     </div>
   `;
@@ -2193,6 +2207,9 @@ function openEditModal(i){
   document.getElementById('e-addr').value=s.addr||'';
   document.getElementById('e-nickname').value=s.nickname||'';
   document.getElementById('e-parcel').value=s.parcel||'';
+  document.getElementById('e-assessed-value').value=s.assessedValue||'';
+  document.getElementById('e-assessed-year').value=s.assessedYear||'';
+  renderAssessedHistory(s.assessedHistory||[]);
   document.getElementById('e-claude-links').value=s.claudeLinks||'';
   document.getElementById('e-size').value=s.size||'';
   document.getElementById('e-amp-url').value=s.ampUrl||'';
@@ -2234,6 +2251,8 @@ function saveEdit(){
   if(editIdx===null)return;const s=sites[editIdx];
   s.nickname=document.getElementById('e-nickname').value.trim();
   s.parcel=document.getElementById('e-parcel').value.trim();
+  s.assessedValue=parseInt(document.getElementById('e-assessed-value').value)||0;
+  s.assessedYear=document.getElementById('e-assessed-year').value.trim();
   s.claudeLinks=document.getElementById('e-claude-links').value.trim();
   s.size=document.getElementById('e-size').value.trim();
   s.ampUrl=document.getElementById('e-amp-url').value.trim();
@@ -2352,7 +2371,8 @@ function populateSiteDropdowns(){
 // ADD PROPERTY
 function openAddPropModal(){
   // reset all fields
-  ['np-name','np-nick','np-addr','np-parcel','np-size','np-amp-url','np-atip-url','np-claude-links','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
+  ['np-name','np-nick','np-addr','np-parcel','np-size','np-amp-url','np-atip-url','np-claude-links','np-assessed-year','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
+  ['np-rent','np-mortgage','np-loan-amt','np-loan-term','np-loan-rate','np-loan-balance','np-purchase-price','np-current-value','np-assessed-value'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   ['np-rent','np-mortgage','np-loan-amt','np-loan-term','np-loan-rate','np-loan-balance'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('np-type').value='house';
   document.getElementById('np-state').value='wa';
@@ -2393,6 +2413,8 @@ function saveNewProp(){
     yard:document.getElementById('np-yard').value,
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',
     parcel: document.getElementById('np-parcel').value.trim(),
+    assessedValue: parseInt(document.getElementById('np-assessed-value').value)||0,
+    assessedYear: document.getElementById('np-assessed-year').value.trim(),
     claudeLinks: document.getElementById('np-claude-links').value.trim(),
     size: document.getElementById('np-size').value.trim(),
     ampUrl: document.getElementById('np-amp-url').value.trim(),
@@ -3680,6 +3702,61 @@ async function deleteDocFromPage(loanIdx, docIdx) {
   saveLoans();
   loadAllDocs();
   showToast('Document deleted.');
+}
+
+// ASSESSED VALUE HISTORY
+function renderAssessedHistory(history) {
+  var el = document.getElementById('e-assessed-history-list');
+  if(!el) return;
+  if(!history || !history.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3);font-style:italic;">No history yet. Enter a value and year above then click Save to history.</div>';
+    return;
+  }
+  var sorted = [...history].sort(function(a,b){return b.year - a.year;});
+  el.innerHTML = '<table class="tbl" style="margin-top:4px;"><thead><tr><th>Year</th><th>Assessed value</th><th>Change</th><th></th></tr></thead><tbody>' +
+    sorted.map(function(h, i) {
+      var prev = sorted[i+1];
+      var change = prev ? h.value - prev.value : null;
+      var changeTxt = change !== null
+        ? '<span style="color:' + (change >= 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:600;">' + (change >= 0 ? '+' : '') + '$' + Math.abs(Math.round(change)).toLocaleString() + '</span>'
+        : '—';
+      return '<tr>' +
+        '<td style="font-weight:600;">' + h.year + '</td>' +
+        '<td>' + fmt(h.value) + '</td>' +
+        '<td>' + changeTxt + '</td>' +
+        '<td><button class="btn btn-xs btn-danger" onclick="removeAssessedHistory(' + i + ')">✕</button></td>' +
+        '</tr>';
+    }).join('') +
+  '</tbody></table>';
+}
+
+function addAssessedHistory() {
+  if(editIdx === null) return;
+  var val = parseInt(document.getElementById('e-assessed-value').value) || 0;
+  var year = document.getElementById('e-assessed-year').value.trim();
+  if(!val || !year) { showToast('Enter both a value and year first.'); return; }
+  var s = sites[editIdx];
+  if(!s.assessedHistory) s.assessedHistory = [];
+  // Replace if same year exists
+  var existing = s.assessedHistory.findIndex(function(h){ return h.year === year; });
+  if(existing >= 0) {
+    if(!confirm('Replace existing ' + year + ' assessment of ' + fmt(s.assessedHistory[existing].value) + '?')) return;
+    s.assessedHistory[existing].value = val;
+  } else {
+    s.assessedHistory.push({ year: year, value: val, added: new Date().toISOString() });
+  }
+  renderAssessedHistory(s.assessedHistory);
+  showToast('Assessment history updated.');
+}
+
+function removeAssessedHistory(histIdx) {
+  if(editIdx === null) return;
+  var s = sites[editIdx];
+  var sorted = [...s.assessedHistory].sort(function(a,b){return b.year - a.year;});
+  var toRemove = sorted[histIdx];
+  s.assessedHistory = s.assessedHistory.filter(function(h){ return !(h.year === toRemove.year && h.value === toRemove.value); });
+  renderAssessedHistory(s.assessedHistory);
+  showToast('Entry removed.');
 }
 
 // UTILS
