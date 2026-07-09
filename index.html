@@ -299,6 +299,11 @@ button{font-family:var(--sans);}
 .acq-equity{font-size:11px;color:var(--text3);}
 .acq-return{font-size:12px;font-weight:600;}
 .negative{color:var(--red);font-weight:600;}
+/* WAITLIST */
+.wl-active{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.wl-contacted{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.wl-placed{background:var(--purple-bg);color:var(--purple);border:1px solid #ddd6fe;}
+.wl-removed{background:var(--bg);color:var(--text3);border:1px solid var(--border);}
 /* LOAN DOCUMENTS */
 .loan-doc-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;}
 .loan-doc-icon{font-size:18px;flex-shrink:0;}
@@ -469,6 +474,7 @@ function skipSetup(){
         <button class="nav-item" onclick="navTo('pl',this)"><span class="nav-icon">📈</span>P&amp;L Report</button>
         <button class="nav-item" onclick="navTo('loans',this)"><span class="nav-icon">💰</span>Loan tracker</button>
         <button class="nav-item" onclick="navTo('documents',this)"><span class="nav-icon">🗂</span>Documents</button>
+        <button class="nav-item" onclick="navTo('waitlist',this)"><span class="nav-icon">📋</span>Waitlist</button>
         <button class="nav-item" onclick="navTo('payments',this)"><span class="nav-icon">💳</span>Payments</button>
         <button class="nav-item" onclick="navTo('bills',this)"><span class="nav-icon">📋</span>Bills &amp; Utilities</button>
       </div>
@@ -783,6 +789,45 @@ function skipSetup(){
           </div>
           <div id="docs-page-body" style="padding:1rem;">
             <div style="color:var(--text3);font-style:italic;font-size:13px;">Loading documents...</div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── WAITLIST ── -->
+      <div class="page" id="page-waitlist">
+        <div class="page-header">
+          <div class="page-header-left"><h2>Waitlist</h2><p>Prospective tenants interested in your properties</p></div>
+          <div class="page-header-actions">
+            <select id="wl-filter" class="topbar-btn" style="cursor:pointer;" onchange="renderWaitlist()">
+              <option value="ALL">All statuses</option>
+              <option value="active">Active</option>
+              <option value="contacted">Contacted</option>
+              <option value="placed">Placed</option>
+              <option value="removed">Removed</option>
+            </select>
+            <select id="wl-type-filter" class="topbar-btn" style="cursor:pointer;" onchange="renderWaitlist()">
+              <option value="ALL">All types</option>
+              <option value="house">House</option>
+              <option value="rv">RV site</option>
+            </select>
+            <button class="btn btn-sm btn-primary" onclick="openWaitlistModal()">+ Add prospect</button>
+          </div>
+        </div>
+
+        <!-- METRICS -->
+        <div class="metrics" id="wl-metrics" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.25rem;"></div>
+
+        <!-- TABLE -->
+        <div class="card">
+          <div class="card-body no-pad">
+            <table class="tbl">
+              <thead><tr>
+                <th>Name</th><th>Contact</th><th>Type</th><th>Property interest</th>
+                <th>Budget</th><th>Move-in</th><th>Added</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="wl-tbody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1235,6 +1280,62 @@ function skipSetup(){
   </div>
 </div>
 
+<!-- WAITLIST MODAL -->
+<div class="overlay" id="waitlist-overlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h3 id="wl-modal-title">Add prospect</h3>
+      <button class="modal-close" onclick="closeModal('waitlist-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-title">Contact info</div>
+      <input type="hidden" id="wl-edit-idx">
+      <div class="grid-2">
+        <div class="f-group"><label>Full name</label><input type="text" id="wl-name" placeholder="First Last"></div>
+        <div class="f-group"><label>Phone</label><input type="tel" id="wl-phone" placeholder="(253) 555-0000"></div>
+      </div>
+      <div class="f-group"><label>Email</label><input type="email" id="wl-email" placeholder="email@example.com"></div>
+
+      <div class="modal-section-title">Housing preference</div>
+      <div class="grid-2">
+        <div class="f-group"><label>Housing type</label>
+          <select id="wl-type">
+            <option value="">No preference</option>
+            <option value="house">House</option>
+            <option value="rv">RV site</option>
+          </select>
+        </div>
+        <div class="f-group"><label>Specific property interest</label>
+          <select id="wl-property"><option value="">No preference / any</option></select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Max budget ($/month)</label><input type="number" id="wl-budget" placeholder="0" min="0" step="50"></div>
+        <div class="f-group"><label>Desired move-in date</label><input type="date" id="wl-movein"></div>
+      </div>
+
+      <div class="modal-section-title">Details</div>
+      <div class="f-group"><label>Number of occupants</label><input type="text" id="wl-occupants" placeholder="e.g. 2 adults, 1 child"></div>
+      <div class="f-group"><label>Pets</label><input type="text" id="wl-pets" placeholder="e.g. 1 small dog, no pets"></div>
+      <div class="f-group"><label>Status</label>
+        <select id="wl-status">
+          <option value="active">Active — still looking</option>
+          <option value="contacted">Contacted — reached out</option>
+          <option value="placed">Placed — became a tenant</option>
+          <option value="removed">Removed — no longer interested</option>
+        </select>
+      </div>
+      <div class="f-group"><label>Notes</label>
+        <textarea id="wl-notes" rows="3" placeholder="How they heard about you, special requirements, follow-up reminders..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('waitlist-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWaitlistEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOAN MODAL -->
 <div class="overlay" id="loan-overlay">
   <div class="modal" style="max-width:540px;">
@@ -1517,7 +1618,7 @@ function routeFromHash(){
     if(idx>=0){openDetail(idx);return;}
   }
   // Standard pages
-  var validPages = ['dashboard','payments','bills','leases','notices','pl','loans','all-props','documents'];
+  var validPages = ['dashboard','payments','bills','leases','notices','pl','loans','all-props','documents','waitlist'];
   if(validPages.indexOf(hash)>=0){navTo(hash,null,true);return;}
   navTo('dashboard',null,true);
 }
@@ -1748,6 +1849,7 @@ function navTo(pageId,btn,skipHash){
   if(pageId==='pl'){initPL();renderPL();}
   if(pageId==='loans'){initLoans();}
   if(pageId==='documents'){loadAllDocs();}
+  if(pageId==='waitlist'){loadWaitlist();}
   if(pageId==='bills')renderBills();
   if(pageId==='leases')renderLeases();
   if(pageId==='payments')renderPayLog();
@@ -1920,13 +2022,7 @@ function renderDetailOverview(idx){
       <div class="detail-item"><div class="detail-label">Remaining</div><div class="detail-value"><span class="lease-pill ${li.pill}">${li.pillTxt}</span></div></div>
       <div class="detail-item"><div class="detail-label">Property tax / yr</div><div class="detail-value">${s.taxAmt?fmt(s.taxAmt):'—'}</div></div>
       ${(()=>{if(!s.ampUrl&&!s.atipUrl&&!s.claudeLinks)return '';let l='<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Property links</div><div class="detail-value" style="display:flex;gap:12px;flex-wrap:wrap;">';if(s.ampUrl)l+='<a href="'+s.ampUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 About My Property</a>';if(s.atipUrl)l+='<a href="'+s.atipUrl+'" target="_blank" style="color:var(--blue);font-size:13px;font-weight:600;">\uD83D\uDD17 ATIP Portal</a>';if(s.claudeLinks){var cls=s.claudeLinks.split('\n').filter(function(x){return x.trim();});cls.forEach(function(cl,ci){l+='<a href="'+cl.trim()+'" target="_blank" style="color:var(--purple);font-size:13px;font-weight:600;">\uD83E\uDD16 Claude chat '+(ci+1)+'</a>';});}return l+'</div></div>';})()}
-      ${(s.assessedHistory&&s.assessedHistory.length>1)?`<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Assessed value history</div><div class="detail-value" style="font-size:13px;">
-        ${[...s.assessedHistory].sort((a,b)=>b.year-a.year).map((h,i,arr)=>{
-          var prev=arr[i+1];
-          var change=prev?h.value-prev.value:null;
-          return h.year+': '+fmt(h.value)+(change!==null?' <span style="color:'+(change>=0?'var(--green)':'var(--red)')+';">('+(change>=0?'+':'')+fmt(change)+')</span>':'');
-        }).join(' &nbsp;·&nbsp; ')}
-      </div></div>`:''}
+      ${renderAssessedHistoryInline(s)}
       <div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Tax payment status</div><div class="detail-value" style="font-size:13px;">${taxStatus.length?taxStatus.join(' · '):'Not recorded'}${s.taxNotes?` — ${s.taxNotes}`:''}</div></div>
     </div>
   `;
@@ -3704,6 +3800,21 @@ async function deleteDocFromPage(loanIdx, docIdx) {
   showToast('Document deleted.');
 }
 
+// ASSESSED VALUE HISTORY INLINE RENDERER
+function renderAssessedHistoryInline(s) {
+  if(!s.assessedHistory || s.assessedHistory.length < 2) return '';
+  var sorted = [...s.assessedHistory].sort(function(a,b){return b.year-a.year;});
+  var parts = sorted.map(function(h,i,arr) {
+    var prev = arr[i+1];
+    var change = prev ? h.value - prev.value : null;
+    var changeHtml = change !== null
+      ? ' <span style="color:'+(change>=0?'var(--green)':'var(--red)')+';">('+(change>=0?'+':'')+fmt(change)+')</span>'
+      : '';
+    return h.year+': '+fmt(h.value)+changeHtml;
+  }).join(' &nbsp;&middot;&nbsp; ');
+  return '<div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Assessed value history</div><div class="detail-value" style="font-size:13px;">'+parts+'</div></div>';
+}
+
 // ASSESSED VALUE HISTORY
 function renderAssessedHistory(history) {
   var el = document.getElementById('e-assessed-history-list');
@@ -3757,6 +3868,210 @@ function removeAssessedHistory(histIdx) {
   s.assessedHistory = s.assessedHistory.filter(function(h){ return !(h.year === toRemove.year && h.value === toRemove.value); });
   renderAssessedHistory(s.assessedHistory);
   showToast('Entry removed.');
+}
+
+// ── WAITLIST ──
+var waitlist = [];
+
+function saveWaitlistToSupabase() {
+  if(!supabaseReady || isDemoMode) return;
+  // Store as a single JSON record in a settings-like table
+  // Use localStorage as primary, sync each entry as needed
+  localStorage.setItem('pm_waitlist', JSON.stringify(waitlist));
+  // Sync to Supabase via a dedicated table
+  supabaseClient.from('waitlist').upsert(
+    waitlist.map(function(w, i) {
+      return {
+        id: w.id || undefined,
+        name: w.name||'', phone: w.phone||'', email: w.email||'',
+        housing_type: w.type||'', property_id: w.property||null,
+        budget: w.budget||0, movein: w.movein||null,
+        occupants: w.occupants||'', pets: w.pets||'',
+        status: w.status||'active', notes: w.notes||'',
+        added: w.added||new Date().toISOString()
+      };
+    }),
+    {onConflict:'id'}
+  ).then(function(res) {
+    if(res.error) console.error('Waitlist sync error:', res.error);
+    else {
+      // Refresh to get IDs
+      supabaseClient.from('waitlist').select('*').order('added',{ascending:false}).then(function(r) {
+        if(!r.error && r.data) {
+          waitlist = r.data.map(mapWaitlistRow);
+          localStorage.setItem('pm_waitlist', JSON.stringify(waitlist));
+          renderWaitlist();
+        }
+      });
+    }
+  });
+}
+
+function mapWaitlistRow(r) {
+  return {
+    id: r.id, name: r.name||'', phone: r.phone||'', email: r.email||'',
+    type: r.housing_type||'', property: r.property_id||'',
+    budget: parseFloat(r.budget)||0, movein: r.movein||'',
+    occupants: r.occupants||'', pets: r.pets||'',
+    status: r.status||'active', notes: r.notes||'',
+    added: r.added||''
+  };
+}
+
+async function loadWaitlist() {
+  // Try localStorage first
+  var saved = JSON.parse(localStorage.getItem('pm_waitlist') || '[]');
+  waitlist = saved;
+  // Then load from Supabase
+  if(supabaseReady) {
+    var {data, error} = await supabaseClient.from('waitlist').select('*').order('added',{ascending:false});
+    if(!error && data && data.length) {
+      waitlist = data.map(mapWaitlistRow);
+      localStorage.setItem('pm_waitlist', JSON.stringify(waitlist));
+    }
+  }
+  renderWaitlist();
+}
+
+function openWaitlistModal(editIdx) {
+  var sel = document.getElementById('wl-property');
+  sel.innerHTML = '<option value="">No preference / any</option>' +
+    sites.map(function(s){ return '<option value="'+s.id+'">'+displayName(s)+'</option>'; }).join('');
+
+  document.getElementById('wl-edit-idx').value = editIdx !== undefined ? editIdx : '';
+  document.getElementById('wl-modal-title').textContent = editIdx !== undefined ? 'Edit prospect' : 'Add prospect';
+
+  if(editIdx !== undefined) {
+    var w = waitlist[editIdx];
+    document.getElementById('wl-name').value = w.name||'';
+    document.getElementById('wl-phone').value = w.phone||'';
+    document.getElementById('wl-email').value = w.email||'';
+    document.getElementById('wl-type').value = w.type||'';
+    document.getElementById('wl-property').value = w.property||'';
+    document.getElementById('wl-budget').value = w.budget||'';
+    document.getElementById('wl-movein').value = w.movein||'';
+    document.getElementById('wl-occupants').value = w.occupants||'';
+    document.getElementById('wl-pets').value = w.pets||'';
+    document.getElementById('wl-status').value = w.status||'active';
+    document.getElementById('wl-notes').value = w.notes||'';
+  } else {
+    ['wl-name','wl-phone','wl-email','wl-occupants','wl-pets','wl-notes'].forEach(function(id){
+      document.getElementById(id).value='';
+    });
+    document.getElementById('wl-type').value='';
+    document.getElementById('wl-property').value='';
+    document.getElementById('wl-budget').value='';
+    document.getElementById('wl-movein').value='';
+    document.getElementById('wl-status').value='active';
+  }
+  document.getElementById('waitlist-overlay').classList.add('open');
+}
+
+async function deleteWaitlistEntry(idx) {
+  if(!confirm('Remove this prospect from the waitlist?')) return;
+  var w = waitlist[idx];
+  if(w.id && supabaseReady) {
+    var {error} = await supabaseClient.from('waitlist').delete().eq('id', w.id);
+    if(error){ showToast('Delete failed: ' + error.message); return; }
+  }
+  waitlist.splice(idx, 1);
+  localStorage.setItem('pm_waitlist', JSON.stringify(waitlist));
+  renderWaitlist();
+  showToast('Prospect removed.');
+}
+
+function saveWaitlistEntry() {
+  var name = document.getElementById('wl-name').value.trim();
+  if(!name){ showToast('Please enter a name.'); return; }
+  var editIdx = document.getElementById('wl-edit-idx').value;
+
+  var entry = {
+    id: editIdx !== '' ? (waitlist[parseInt(editIdx)].id || undefined) : undefined,
+    name: name,
+    phone: document.getElementById('wl-phone').value.trim(),
+    email: document.getElementById('wl-email').value.trim(),
+    type: document.getElementById('wl-type').value,
+    property: document.getElementById('wl-property').value,
+    budget: parseInt(document.getElementById('wl-budget').value)||0,
+    movein: document.getElementById('wl-movein').value,
+    occupants: document.getElementById('wl-occupants').value.trim(),
+    pets: document.getElementById('wl-pets').value.trim(),
+    status: document.getElementById('wl-status').value,
+    notes: document.getElementById('wl-notes').value.trim(),
+    added: editIdx !== '' ? waitlist[parseInt(editIdx)].added : new Date().toISOString()
+  };
+
+  if(editIdx !== '') {
+    waitlist[parseInt(editIdx)] = entry;
+  } else {
+    waitlist.unshift(entry);
+  }
+
+  saveWaitlistToSupabase();
+  closeModal('waitlist-overlay');
+  renderWaitlist();
+  showToast((editIdx !== '' ? 'Prospect updated' : 'Prospect added') + ': ' + name);
+}
+
+function renderWaitlist() {
+  var statusFilter = document.getElementById('wl-filter') ? document.getElementById('wl-filter').value : 'ALL';
+  var typeFilter = document.getElementById('wl-type-filter') ? document.getElementById('wl-type-filter').value : 'ALL';
+
+  var filtered = waitlist.filter(function(w) {
+    if(statusFilter !== 'ALL' && w.status !== statusFilter) return false;
+    if(typeFilter !== 'ALL' && w.type !== typeFilter) return false;
+    return true;
+  });
+
+  // Metrics
+  var total = waitlist.length;
+  var active = waitlist.filter(function(w){ return w.status==='active'; }).length;
+  var contacted = waitlist.filter(function(w){ return w.status==='contacted'; }).length;
+  var placed = waitlist.filter(function(w){ return w.status==='placed'; }).length;
+
+  var metricsEl = document.getElementById('wl-metrics');
+  if(metricsEl) {
+    metricsEl.innerHTML =
+      '<div class="pl-metric income"><div class="lbl">Total prospects</div><div class="val" style="color:var(--blue);">'+total+'</div><div class="sub">All time</div></div>' +
+      '<div class="pl-metric net"><div class="lbl">Active</div><div class="val positive">'+active+'</div><div class="sub">Still looking</div></div>' +
+      '<div class="pl-metric margin"><div class="lbl">Contacted</div><div class="val" style="color:var(--amber);">'+contacted+'</div><div class="sub">Reached out</div></div>' +
+      '<div class="pl-metric income"><div class="lbl">Placed</div><div class="val" style="color:var(--purple);">'+placed+'</div><div class="sub">Became tenants</div></div>';
+  }
+
+  var statusLabels = {active:'Active',contacted:'Contacted',placed:'Placed',removed:'Removed'};
+  var statusCls = {active:'wl-active',contacted:'wl-contacted',placed:'wl-placed',removed:'wl-removed'};
+  var typeLabels = {house:'🏡 House',rv:'🚐 RV site','':"Any"};
+
+  var tbody = document.getElementById('wl-tbody');
+  if(!tbody) return;
+
+  if(!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="color:var(--text3);font-style:italic;padding:1rem;">No prospects found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(function(w, i) {
+    var realIdx = waitlist.indexOf(w);
+    var propName = w.property ? (sites.find(function(s){return s.id===w.property;})||{}).name||w.property : '—';
+    var added = w.added ? new Date(w.added).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    return '<tr>' +
+      '<td><div class="tbl-name" style="cursor:pointer;color:var(--blue);" onclick="openWaitlistModal('+realIdx+')">'+w.name+'</div>' +
+        (w.occupants?'<div class="tbl-sub">'+w.occupants+'</div>':'') +
+        (w.pets?'<div class="tbl-sub">🐾 '+w.pets+'</div>':'') +
+      '</td>' +
+      '<td><div style="font-size:12px;">'+(w.phone||'—')+'</div><div style="font-size:11px;color:var(--text3);">'+(w.email||'')+'</div></td>' +
+      '<td>'+(typeLabels[w.type]||'Any')+'</td>' +
+      '<td style="font-size:12px;">'+(w.property?propName:'Any')+'</td>' +
+      '<td>'+(w.budget?fmt(w.budget)+'/mo':'—')+'</td>' +
+      '<td style="font-size:12px;">'+(w.movein||'—')+'</td>' +
+      '<td style="font-size:11px;color:var(--text3);">'+added+'</td>' +
+      '<td><span class="badge '+(statusCls[w.status]||'wl-active')+'" style="border-radius:20px;font-size:11px;padding:3px 9px;">'+(statusLabels[w.status]||w.status)+'</span></td>' +
+      '<td><div class="row-actions">' +
+        '<button class="btn btn-xs btn-secondary" onclick="openWaitlistModal('+realIdx+')">Edit</button>' +
+        '<button class="btn btn-xs btn-danger" onclick="deleteWaitlistEntry('+realIdx+')">✕</button>' +
+      '</div></td>' +
+      '</tr>';
+  }).join('');
 }
 
 // UTILS
