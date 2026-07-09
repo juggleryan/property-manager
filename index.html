@@ -3720,7 +3720,11 @@ function renderLoanDocs(loanIdx) {
 }
 
 // ── DOCUMENTS PAGE ──
-async function loadAllDocs() {
+async function openLoanModalByIdx(idx) {
+  var loan = loans[idx];
+  if(loan) openLoanModal(loan.direction, idx);
+}
+function loadAllDocs() {
   var el = document.getElementById('docs-page-body');
   var countEl = document.getElementById('docs-count');
   if(!el) return;
@@ -3762,7 +3766,7 @@ async function loadAllDocs() {
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--border);">';
     html += '<div><div style="font-size:13px;font-weight:700;">' + l.party + '</div>';
     html += '<div style="font-size:11px;color:var(--text3);">' + dirLabel + ' · ' + (l.notes||'') + '</div></div>';
-    html += '<button class="btn btn-xs btn-secondary" onclick="openLoanModal('' + l.direction + '',' + group.loanIdx + ')">Edit loan</button>';
+    html += '<button class="btn btn-xs btn-secondary" onclick="openLoanModalByIdx(' + group.loanIdx + ')">Edit loan</button>';
     html += '</div>';
 
     group.docs.forEach(function(item) {
