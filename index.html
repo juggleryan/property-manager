@@ -2082,6 +2082,7 @@ function propRow(s,idx,mini=false){
     <td>${s.status!=='vacant'?`<div class="prog"><div class="prog-bar"><div class="prog-fill ${fillCls}" style="width:${pct}%"></div></div><div class="prog-label" style="color:${pct>=100?'var(--green)':pct>0?'var(--amber)':'var(--red)'}">${fmt(s.paid||0)}</div></div>`:'—'}</td>
     <td>${li.pillTxt!=='—'?`<span class="lease-pill ${li.pill}">${li.pillTxt}</span>`:'—'}</td>
     <td><span class="badge ${s.status}"><span class="badge-dot"></span>${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span>${hasNotice?'<span class="badge notice" style="margin-left:4px;"><span class="badge-dot"></span>Notice</span>':''}</td>
+    <td>${getScreeningBadge(s.id)}</td>
     <td onclick="event.stopPropagation()">
       <div class="row-actions">
         <button class="btn btn-xs btn-secondary" onclick="openEditModal(${idx})">Edit</button>
@@ -4396,6 +4397,25 @@ function updateUrlLink(inputId, spanId) {
   } else {
     span.innerHTML = '';
   }
+}
+
+// SCREENING BADGE FOR PROPERTY TABLE
+function getScreeningBadge(siteId) {
+  // Find most recent screening for this property
+  var matches = screenings.filter(function(s){ return s.property === siteId; });
+  if(!matches.length) return '<span style="color:var(--text3);font-size:11px;">—</span>';
+  // Sort by createdAt descending, take most recent
+  matches.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+  var s = matches[0];
+  var decisionCls = {pending:'scr-pending',approved:'scr-approved',denied:'scr-denied',conditional:'scr-conditional'};
+  var decisionLabels = {pending:'Pending',approved:'Approved',denied:'Denied',conditional:'Conditional'};
+  var statusCls = {sent:'scr-sent',completed:'scr-completed',expired:'scr-expired'};
+  var statusLabels = {sent:'Sent',completed:'Completed',expired:'Expired'};
+  // Show decision if not pending, otherwise show screening status
+  if(s.decision && s.decision !== 'pending') {
+    return '<span class="badge ' + (decisionCls[s.decision]||'scr-pending') + '" style="border-radius:20px;font-size:10px;padding:2px 7px;">' + (decisionLabels[s.decision]||s.decision) + '</span>';
+  }
+  return '<span class="badge ' + (statusCls[s.status]||'scr-sent') + '" style="border-radius:20px;font-size:10px;padding:2px 7px;">' + (statusLabels[s.status]||s.status) + '</span>';
 }
 
 // UTILS
