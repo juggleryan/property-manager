@@ -299,6 +299,14 @@ button{font-family:var(--sans);}
 .acq-equity{font-size:11px;color:var(--text3);}
 .acq-return{font-size:12px;font-weight:600;}
 .negative{color:var(--red);font-weight:600;}
+/* SCREENING */
+.scr-sent{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);}
+.scr-completed{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.scr-expired{background:var(--bg);color:var(--text3);border:1px solid var(--border);}
+.scr-approved{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.scr-denied{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);}
+.scr-pending{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);}
+.scr-conditional{background:var(--purple-bg);color:var(--purple);border:1px solid #ddd6fe;}
 /* WAITLIST */
 .wl-active{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
 .wl-contacted{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
@@ -475,6 +483,7 @@ function skipSetup(){
         <button class="nav-item" onclick="navTo('loans',this)"><span class="nav-icon">💰</span>Loan tracker</button>
         <button class="nav-item" onclick="navTo('documents',this)"><span class="nav-icon">🗂</span>Documents</button>
         <button class="nav-item" onclick="navTo('waitlist',this)"><span class="nav-icon">📋</span>Waitlist</button>
+        <button class="nav-item" onclick="navTo('screening',this)"><span class="nav-icon">🔍</span>Screening</button>
         <button class="nav-item" onclick="navTo('payments',this)"><span class="nav-icon">💳</span>Payments</button>
         <button class="nav-item" onclick="navTo('bills',this)"><span class="nav-icon">📋</span>Bills &amp; Utilities</button>
       </div>
@@ -827,6 +836,35 @@ function skipSetup(){
                 <th>Budget</th><th>Move-in</th><th>Added</th><th>Status</th><th></th>
               </tr></thead>
               <tbody id="wl-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── SCREENING ── -->
+      <div class="page" id="page-screening">
+        <div class="page-header">
+          <div class="page-header-left"><h2>Tenant screening</h2><p>TransUnion SmartMove background &amp; credit checks</p></div>
+          <div class="page-header-actions">
+            <a href="https://www.mysmartmove.com" target="_blank" class="btn btn-sm btn-secondary">🔗 Open SmartMove</a>
+            <button class="btn btn-sm btn-primary" onclick="openScreeningModal()">+ Add screening</button>
+          </div>
+        </div>
+
+        <!-- METRICS -->
+        <div class="metrics" id="scr-metrics" style="grid-template-columns:repeat(5,1fr);margin-bottom:1.25rem;"></div>
+
+        <!-- TABLE -->
+        <div class="card">
+          <div class="card-body no-pad">
+            <table class="tbl">
+              <thead><tr>
+                <th>Applicant</th><th>Property</th><th>Request #</th>
+                <th>Screening</th><th>Decision</th><th>Lease sent</th>
+                <th>Date</th><th>Notes</th><th></th>
+              </tr></thead>
+              <tbody id="scr-tbody"></tbody>
             </table>
           </div>
         </div>
@@ -1280,6 +1318,73 @@ function skipSetup(){
   </div>
 </div>
 
+<!-- SCREENING MODAL -->
+<div class="overlay" id="screening-overlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h3 id="scr-modal-title">Add screening</h3>
+      <button class="modal-close" onclick="closeModal('screening-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section-title">Applicant info</div>
+      <input type="hidden" id="scr-edit-idx">
+      <div class="grid-2">
+        <div class="f-group"><label>Applicant name</label><input type="text" id="scr-name" placeholder="Full name"></div>
+        <div class="f-group"><label>Email</label><input type="email" id="scr-email" placeholder="applicant@email.com"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Phone</label><input type="tel" id="scr-phone" placeholder="(253) 555-0000"></div>
+        <div class="f-group"><label>Property applying for</label>
+          <select id="scr-property"><option value="">Select property...</option></select>
+        </div>
+      </div>
+
+      <div class="modal-section-title">SmartMove details</div>
+      <div class="grid-2">
+        <div class="f-group"><label>SmartMove request #</label><input type="text" id="scr-request-num" placeholder="e.g. T20725276"></div>
+        <div class="f-group"><label>Date initiated</label><input type="date" id="scr-date"></div>
+      </div>
+      <div class="f-group">
+        <label>Screening status</label>
+        <select id="scr-status">
+          <option value="sent">Sent — awaiting applicant</option>
+          <option value="completed">Completed — report received</option>
+          <option value="expired">Expired — not completed</option>
+        </select>
+      </div>
+      <div class="f-group">
+        <label>Landlord decision</label>
+        <select id="scr-decision">
+          <option value="pending">Pending — under review</option>
+          <option value="approved">Approved</option>
+          <option value="denied">Denied</option>
+          <option value="conditional">Conditional approval</option>
+        </select>
+      </div>
+      <div class="f-group">
+        <label>Lease status</label>
+        <select id="scr-lease-status">
+          <option value="not_sent">Not sent yet</option>
+          <option value="sent">Lease sent to applicant</option>
+          <option value="signed">Lease signed</option>
+          <option value="na">N/A — not applicable</option>
+        </select>
+      </div>
+      <div class="f-group"><label>Notes</label>
+        <textarea id="scr-notes" rows="3" placeholder="Credit score, red flags, conditions, follow-up reminders..."></textarea>
+      </div>
+      <div style="background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--radius);padding:10px 14px;font-size:12px;margin-top:0.5rem;">
+        <strong>SmartMove Basic ($25):</strong> Landlord pays · Includes credit report, criminal background, and eviction history ·
+        <a href="https://www.mysmartmove.com" target="_blank" style="color:var(--blue);">Initiate screening →</a>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('screening-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveScreening()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- WAITLIST MODAL -->
 <div class="overlay" id="waitlist-overlay">
   <div class="modal" style="max-width:560px;">
@@ -1618,7 +1723,7 @@ function routeFromHash(){
     if(idx>=0){openDetail(idx);return;}
   }
   // Standard pages
-  var validPages = ['dashboard','payments','bills','leases','notices','pl','loans','all-props','documents','waitlist'];
+  var validPages = ['dashboard','payments','bills','leases','notices','pl','loans','all-props','documents','waitlist','screening'];
   if(validPages.indexOf(hash)>=0){navTo(hash,null,true);return;}
   navTo('dashboard',null,true);
 }
@@ -1850,6 +1955,7 @@ function navTo(pageId,btn,skipHash){
   if(pageId==='loans'){initLoans();}
   if(pageId==='documents'){loadAllDocs();}
   if(pageId==='waitlist'){loadWaitlist();}
+  if(pageId==='screening'){loadScreenings();}
   if(pageId==='bills')renderBills();
   if(pageId==='leases')renderLeases();
   if(pageId==='payments')renderPayLog();
@@ -4073,6 +4179,196 @@ function renderWaitlist() {
       '<td><div class="row-actions">' +
         '<button class="btn btn-xs btn-secondary" onclick="openWaitlistModal('+realIdx+')">Edit</button>' +
         '<button class="btn btn-xs btn-danger" onclick="deleteWaitlistEntry('+realIdx+')">✕</button>' +
+      '</div></td>' +
+      '</tr>';
+  }).join('');
+}
+
+// ── SCREENING ──
+var screenings = [];
+
+function saveScreeningsToSupabase() {
+  if(!supabaseReady || isDemoMode) return;
+  localStorage.setItem('pm_screenings', JSON.stringify(screenings));
+  supabaseClient.from('screenings').upsert(
+    screenings.map(function(s) {
+      return {
+        id: s.id||undefined, name: s.name||'', email: s.email||'', phone: s.phone||'',
+        property_id: s.property||null, request_num: s.requestNum||'',
+        date: s.date||null, status: s.status||'sent', decision: s.decision||'pending',
+        lease_status: s.leaseStatus||'not_sent', notes: s.notes||'',
+        created_at: s.createdAt||new Date().toISOString()
+      };
+    }), {onConflict:'id'}
+  ).then(function(res) {
+    if(res.error) console.error('Screening sync error:', res.error);
+    else {
+      supabaseClient.from('screenings').select('*').order('created_at',{ascending:false}).then(function(r) {
+        if(!r.error && r.data) {
+          screenings = r.data.map(mapScreeningRow);
+          localStorage.setItem('pm_screenings', JSON.stringify(screenings));
+          renderScreenings();
+        }
+      });
+    }
+  });
+}
+
+function mapScreeningRow(r) {
+  return {
+    id: r.id, name: r.name||'', email: r.email||'', phone: r.phone||'',
+    property: r.property_id||'', requestNum: r.request_num||'',
+    date: r.date||'', status: r.status||'sent', decision: r.decision||'pending',
+    leaseStatus: r.lease_status||'not_sent', notes: r.notes||'',
+    createdAt: r.created_at||''
+  };
+}
+
+async function loadScreenings() {
+  var saved = JSON.parse(localStorage.getItem('pm_screenings') || '[]');
+  screenings = saved;
+  if(supabaseReady) {
+    var {data, error} = await supabaseClient.from('screenings').select('*').order('created_at',{ascending:false});
+    if(!error && data) {
+      screenings = data.map(mapScreeningRow);
+      localStorage.setItem('pm_screenings', JSON.stringify(screenings));
+    }
+  }
+  renderScreenings();
+}
+
+function openScreeningModal(editIdx) {
+  var sel = document.getElementById('scr-property');
+  sel.innerHTML = '<option value="">Select property...</option>' +
+    sites.map(function(s){ return '<option value="'+s.id+'">'+displayName(s)+'</option>'; }).join('');
+
+  document.getElementById('scr-edit-idx').value = editIdx !== undefined ? editIdx : '';
+  document.getElementById('scr-modal-title').textContent = editIdx !== undefined ? 'Edit screening' : 'Add screening';
+
+  if(editIdx !== undefined) {
+    var s = screenings[editIdx];
+    document.getElementById('scr-name').value = s.name||'';
+    document.getElementById('scr-email').value = s.email||'';
+    document.getElementById('scr-phone').value = s.phone||'';
+    document.getElementById('scr-property').value = s.property||'';
+    document.getElementById('scr-request-num').value = s.requestNum||'';
+    document.getElementById('scr-date').value = s.date||'';
+    document.getElementById('scr-status').value = s.status||'sent';
+    document.getElementById('scr-decision').value = s.decision||'pending';
+    document.getElementById('scr-lease-status').value = s.leaseStatus||'not_sent';
+    document.getElementById('scr-notes').value = s.notes||'';
+  } else {
+    ['scr-name','scr-email','scr-phone','scr-request-num','scr-notes'].forEach(function(id){
+      document.getElementById(id).value='';
+    });
+    document.getElementById('scr-property').value='';
+    document.getElementById('scr-date').value=today();
+    document.getElementById('scr-status').value='sent';
+    document.getElementById('scr-decision').value='pending';
+    document.getElementById('scr-lease-status').value='not_sent';
+  }
+  document.getElementById('screening-overlay').classList.add('open');
+}
+
+async function deleteScreening(idx) {
+  if(!confirm('Delete this screening record?')) return;
+  var s = screenings[idx];
+  if(s.id && supabaseReady) {
+    var {error} = await supabaseClient.from('screenings').delete().eq('id', s.id);
+    if(error){ showToast('Delete failed: ' + error.message); return; }
+  }
+  screenings.splice(idx, 1);
+  localStorage.setItem('pm_screenings', JSON.stringify(screenings));
+  renderScreenings();
+  showToast('Screening deleted.');
+}
+
+function saveScreening() {
+  var name = document.getElementById('scr-name').value.trim();
+  if(!name){ showToast('Please enter an applicant name.'); return; }
+  var editIdx = document.getElementById('scr-edit-idx').value;
+
+  var entry = {
+    id: editIdx !== '' ? (screenings[parseInt(editIdx)].id||undefined) : undefined,
+    name: name,
+    email: document.getElementById('scr-email').value.trim(),
+    phone: document.getElementById('scr-phone').value.trim(),
+    property: document.getElementById('scr-property').value,
+    requestNum: document.getElementById('scr-request-num').value.trim(),
+    date: document.getElementById('scr-date').value,
+    status: document.getElementById('scr-status').value,
+    decision: document.getElementById('scr-decision').value,
+    leaseStatus: document.getElementById('scr-lease-status').value,
+    notes: document.getElementById('scr-notes').value.trim(),
+    createdAt: editIdx !== '' ? screenings[parseInt(editIdx)].createdAt : new Date().toISOString()
+  };
+
+  if(editIdx !== '') {
+    screenings[parseInt(editIdx)] = entry;
+  } else {
+    screenings.unshift(entry);
+  }
+
+  saveScreeningsToSupabase();
+  closeModal('screening-overlay');
+  renderScreenings();
+  showToast((editIdx !== '' ? 'Screening updated' : 'Screening added') + ': ' + name);
+}
+
+function renderScreenings() {
+  var statusLabels = {sent:'Sent',completed:'Completed',expired:'Expired'};
+  var statusCls = {sent:'scr-sent',completed:'scr-completed',expired:'scr-expired'};
+  var decisionLabels = {pending:'Pending',approved:'Approved',denied:'Denied',conditional:'Conditional'};
+  var decisionCls = {pending:'scr-pending',approved:'scr-approved',denied:'scr-denied',conditional:'scr-conditional'};
+  var leaseLabels = {'not_sent':'Not sent','sent':'Lease sent','signed':'Signed','na':'N/A'};
+  var leaseCls = {'not_sent':'scr-pending','sent':'scr-sent','signed':'scr-approved','na':'scr-expired'};
+
+  // Metrics
+  var total = screenings.length;
+  var pending = screenings.filter(function(s){return s.status==='sent';}).length;
+  var completed = screenings.filter(function(s){return s.status==='completed';}).length;
+  var approved = screenings.filter(function(s){return s.decision==='approved';}).length;
+  var denied = screenings.filter(function(s){return s.decision==='denied';}).length;
+
+  var metricsEl = document.getElementById('scr-metrics');
+  if(metricsEl) {
+    metricsEl.innerHTML =
+      '<div class="pl-metric"><div class="lbl">Total</div><div class="val" style="color:var(--blue);">'+total+'</div><div class="sub">All screenings</div></div>' +
+      '<div class="pl-metric margin"><div class="lbl">Awaiting</div><div class="val" style="color:var(--amber);">'+pending+'</div><div class="sub">Sent to applicant</div></div>' +
+      '<div class="pl-metric net"><div class="lbl">Completed</div><div class="val" style="color:var(--blue);">'+completed+'</div><div class="sub">Report received</div></div>' +
+      '<div class="pl-metric income"><div class="lbl">Approved</div><div class="val positive">'+approved+'</div><div class="sub">By landlord</div></div>' +
+      '<div class="pl-metric expense"><div class="lbl">Denied</div><div class="val negative">'+denied+'</div><div class="sub">By landlord</div></div>';
+  }
+
+  var tbody = document.getElementById('scr-tbody');
+  if(!tbody) return;
+  if(!screenings.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="color:var(--text3);font-style:italic;padding:1rem;">No screenings yet. Click + Add screening to get started.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = screenings.map(function(s, idx) {
+    var propName = s.property ? (sites.find(function(p){return p.id===s.property;})||{}).name||s.property : '—';
+    var dateStr = s.date ? new Date(s.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    return '<tr>' +
+      '<td style="cursor:pointer;" onclick="openScreeningModal('+idx+')">' +
+        '<div class="tbl-name" style="color:var(--blue);">'+s.name+'</div>' +
+        '<div class="tbl-sub">'+(s.email||'')+(s.phone?' · '+s.phone:'')+'</div>' +
+      '</td>' +
+      '<td style="font-size:12px;">'+propName+'</td>' +
+      '<td>' +
+        (s.requestNum
+          ? '<a href="https://www.mysmartmove.com" target="_blank" style="color:var(--blue);font-size:12px;font-family:monospace;">'+s.requestNum+'</a>'
+          : '<span style="color:var(--text3);font-size:12px;">—</span>') +
+      '</td>' +
+      '<td><span class="badge '+(statusCls[s.status]||'scr-sent')+'" style="border-radius:20px;font-size:11px;padding:3px 9px;">'+(statusLabels[s.status]||s.status)+'</span></td>' +
+      '<td><span class="badge '+(decisionCls[s.decision]||'scr-pending')+'" style="border-radius:20px;font-size:11px;padding:3px 9px;">'+(decisionLabels[s.decision]||s.decision)+'</span></td>' +
+      '<td><span class="badge '+(leaseCls[s.leaseStatus]||'scr-pending')+'" style="border-radius:20px;font-size:11px;padding:3px 9px;">'+(leaseLabels[s.leaseStatus]||s.leaseStatus)+'</span></td>' +
+      '<td style="font-size:12px;color:var(--text2);">'+dateStr+'</td>' +
+      '<td style="font-size:11px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+s.notes+'">'+(s.notes||'—')+'</td>' +
+      '<td><div class="row-actions">' +
+        '<button class="btn btn-xs btn-secondary" onclick="openScreeningModal('+idx+')">Edit</button>' +
+        '<button class="btn btn-xs btn-danger" onclick="deleteScreening('+idx+')">✕</button>' +
       '</div></td>' +
       '</tr>';
   }).join('');
