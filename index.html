@@ -1775,7 +1775,9 @@ async function loadFromSupabase(){
     if(sitesRes.data && sitesRes.data.length){
       sites = sitesRes.data.map(r => ({
         id:r.id, name:r.name||'', addr:r.addr||'', type:r.type||'rv', state:r.state||'wa',
-        sortOrder:r.sort_order||0, parcel:r.parcel||'', size:r.size||'', ampUrl:r.amp_url||'', atipUrl:r.atip_url||'',
+        sortOrder:r.sort_order||0, parcel:r.parcel||'', size:r.size||'', legalDesc:r.legal_desc||'',
+        ampUrl:r.amp_url||'', atipUrl:r.atip_url||'', claudeLinks:r.claude_links||'',
+        assessedValue:parseFloat(r.assessed_value)||0, assessedYear:r.assessed_year||'', assessedHistory:r.assessed_history||[],
         loanAmt:parseFloat(r.loan_amt)||0, loanTerm:parseFloat(r.loan_term)||0,
         loanRate:parseFloat(r.loan_rate)||0, loanBalance:parseFloat(r.loan_balance)||0,
         lender:r.lender||'',
@@ -1881,7 +1883,7 @@ async function saveToSupabase(){
 
     // Upsert loans
     const loanData = loans.map(l => ({
-      id: l.id||undefined,
+      ...(l.id ? {id: l.id} : {}),
       direction: l.direction, party: l.party, property_id: l.property||null,
       amount: l.amount||0, rate: l.rate||0, start_date: l.start||null,
       due_date: l.due||null, structure: l.structure||'flexible',
@@ -3390,7 +3392,7 @@ function saveLoans() {
   if(!supabaseReady || isDemoMode) return;
   var loanData = loans.map(function(l) {
     return {
-      id: l.id||undefined,
+      ...(l.id ? {id: l.id} : {}),
       direction: l.direction, party: l.party, property_id: l.property||null,
       amount: l.amount||0, rate: l.rate||0, start_date: l.start||null,
       due_date: l.due||null, structure: l.structure||'flexible',
@@ -4201,13 +4203,14 @@ function saveScreeningsToSupabase() {
   localStorage.setItem('pm_screenings', JSON.stringify(screenings));
   supabaseClient.from('screenings').upsert(
     screenings.map(function(s) {
-      return {
-        id: s.id||undefined, name: s.name||'', email: s.email||'', phone: s.phone||'',
+      var row = {
+        name: s.name||'', email: s.email||'', phone: s.phone||'',
         property_id: s.property||null, request_num: s.requestNum||'',
         date: s.date||null, status: s.status||'sent', decision: s.decision||'pending',
-        lease_status: s.leaseStatus||'not_sent', notes: s.notes||'',
-        created_at: s.createdAt||new Date().toISOString()
+        lease_status: s.leaseStatus||'not_sent', notes: s.notes||''
       };
+      if(s.id) row.id = s.id;
+      return row;
     }), {onConflict:'id'}
   ).then(function(res) {
     if(res.error) console.error('Screening sync error:', res.error);
