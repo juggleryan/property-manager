@@ -889,9 +889,10 @@ function skipSetup(){
         <div class="f-group"><label>Parcel number (APN)</label><input type="text" id="e-parcel" placeholder="e.g. 511-71-020J"></div>
         <div class="f-group"><label>Property size</label><input type="text" id="e-size" placeholder="e.g. 0.25 acres, 1,200 sq ft, 40x80 ft lot"></div>
       </div>
+      <div class="f-group"><label>Legal description</label><textarea id="e-legal-desc" rows="3" placeholder="e.g. LOT 4, BLOCK 12, SPANAWAY PARK DIVISION NO. 3..."></textarea></div>
       <div class="grid-2">
-        <div class="f-group"><label>About My Property URL</label><input type="url" id="e-amp-url" placeholder="https://..."></div>
-        <div class="f-group"><label>ATIP URL (Assessor Treasurer)</label><input type="url" id="e-atip-url" placeholder="https://..."></div>
+        <div class="f-group"><label>About My Property URL <span id="e-amp-link"></span></label><input type="url" id="e-amp-url" placeholder="https://..." oninput="updateUrlLink('e-amp-url','e-amp-link')"></div>
+        <div class="f-group"><label>ATIP URL (Assessor Treasurer) <span id="e-atip-link"></span></label><input type="url" id="e-atip-url" placeholder="https://..." oninput="updateUrlLink('e-atip-url','e-atip-link')"></div>
       </div>
       <div class="f-group"><label>Claude chat links (one per line)</label><textarea id="e-claude-links" rows="3" placeholder="https://claude.ai/chat/...&#10;https://claude.ai/chat/..."></textarea></div>
       <div class="grid-2">
@@ -1113,9 +1114,10 @@ function skipSetup(){
         <div class="f-group"><label>Parcel number (APN)</label><input type="text" id="np-parcel" placeholder="e.g. 511-71-020J"></div>
         <div class="f-group"><label>Property size</label><input type="text" id="np-size" placeholder="e.g. 0.25 acres, 1,200 sq ft, 40x80 ft lot"></div>
       </div>
+      <div class="f-group"><label>Legal description</label><textarea id="np-legal-desc" rows="3" placeholder="e.g. LOT 4, BLOCK 12, SPANAWAY PARK DIVISION NO. 3..."></textarea></div>
       <div class="grid-2">
-        <div class="f-group"><label>About My Property URL</label><input type="url" id="np-amp-url" placeholder="https://..."></div>
-        <div class="f-group"><label>ATIP URL (Assessor Treasurer)</label><input type="url" id="np-atip-url" placeholder="https://..."></div>
+        <div class="f-group"><label>About My Property URL <span id="np-amp-link"></span></label><input type="url" id="np-amp-url" placeholder="https://..." oninput="updateUrlLink('np-amp-url','np-amp-link')"></div>
+        <div class="f-group"><label>ATIP URL (Assessor Treasurer) <span id="np-atip-link"></span></label><input type="url" id="np-atip-url" placeholder="https://..." oninput="updateUrlLink('np-atip-url','np-atip-link')"></div>
       </div>
       <div class="f-group"><label>Claude chat links (one per line)</label><textarea id="np-claude-links" rows="3" placeholder="https://claude.ai/chat/...&#10;https://claude.ai/chat/..."></textarea></div>
       <div class="modal-section-title">Mortgage / loan</div>
@@ -1638,7 +1640,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',sortOrder:0,parcel:'',size:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
+    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1682,7 +1684,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1844,7 +1846,7 @@ async function saveToSupabase(){
     // Upsert sites
     const siteData = sites.map((s, i) => ({
       id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
-      parcel: s.parcel||'', size: s.size||'', amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'', assessed_value: s.assessedValue||0, assessed_year: s.assessedYear||'', assessed_history: s.assessedHistory||[],
+      parcel: s.parcel||'', size: s.size||'', legal_desc: s.legalDesc||'', amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'', assessed_value: s.assessedValue||0, assessed_year: s.assessedYear||'', assessed_history: s.assessedHistory||[],
       loan_amt: s.loanAmt||0, loan_term: s.loanTerm||0,
       loan_rate: s.loanRate||0, loan_balance: s.loanBalance||0, lender: s.lender||'',
       deposit_amt: s.depositAmt||0, deposit_date: s.depositDate||null,
@@ -2410,13 +2412,16 @@ function openEditModal(i){
   document.getElementById('e-addr').value=s.addr||'';
   document.getElementById('e-nickname').value=s.nickname||'';
   document.getElementById('e-parcel').value=s.parcel||'';
+  document.getElementById('e-legal-desc').value=s.legalDesc||'';
   document.getElementById('e-assessed-value').value=s.assessedValue||'';
   document.getElementById('e-assessed-year').value=s.assessedYear||'';
   renderAssessedHistory(s.assessedHistory||[]);
   document.getElementById('e-claude-links').value=s.claudeLinks||'';
   document.getElementById('e-size').value=s.size||'';
   document.getElementById('e-amp-url').value=s.ampUrl||'';
+  updateUrlLink('e-amp-url','e-amp-link');
   document.getElementById('e-atip-url').value=s.atipUrl||'';
+  updateUrlLink('e-atip-url','e-atip-link');
   document.getElementById('e-loan-amt').value=s.loanAmt||'';
   document.getElementById('e-loan-term').value=s.loanTerm||'';
   document.getElementById('e-loan-rate').value=s.loanRate||'';
@@ -2454,6 +2459,7 @@ function saveEdit(){
   if(editIdx===null)return;const s=sites[editIdx];
   s.nickname=document.getElementById('e-nickname').value.trim();
   s.parcel=document.getElementById('e-parcel').value.trim();
+  s.legalDesc=document.getElementById('e-legal-desc').value.trim();
   s.assessedValue=parseInt(document.getElementById('e-assessed-value').value)||0;
   s.assessedYear=document.getElementById('e-assessed-year').value.trim();
   s.claudeLinks=document.getElementById('e-claude-links').value.trim();
@@ -2574,7 +2580,7 @@ function populateSiteDropdowns(){
 // ADD PROPERTY
 function openAddPropModal(){
   // reset all fields
-  ['np-name','np-nick','np-addr','np-parcel','np-size','np-amp-url','np-atip-url','np-claude-links','np-assessed-year','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
+  ['np-name','np-nick','np-addr','np-parcel','np-size','np-legal-desc','np-amp-url','np-atip-url','np-claude-links','np-assessed-year','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
   ['np-rent','np-mortgage','np-loan-amt','np-loan-term','np-loan-rate','np-loan-balance','np-purchase-price','np-current-value','np-assessed-value'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   ['np-rent','np-mortgage','np-loan-amt','np-loan-term','np-loan-rate','np-loan-balance'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('np-type').value='house';
@@ -2616,6 +2622,7 @@ function saveNewProp(){
     yard:document.getElementById('np-yard').value,
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',
     parcel: document.getElementById('np-parcel').value.trim(),
+    legalDesc: document.getElementById('np-legal-desc').value.trim(),
     assessedValue: parseInt(document.getElementById('np-assessed-value').value)||0,
     assessedYear: document.getElementById('np-assessed-year').value.trim(),
     claudeLinks: document.getElementById('np-claude-links').value.trim(),
@@ -4372,6 +4379,18 @@ function renderScreenings() {
       '</div></td>' +
       '</tr>';
   }).join('');
+}
+
+// URL LINK ICONS
+function updateUrlLink(inputId, spanId) {
+  var url = document.getElementById(inputId).value.trim();
+  var span = document.getElementById(spanId);
+  if(!span) return;
+  if(url && (url.startsWith('http://') || url.startsWith('https://'))) {
+    span.innerHTML = '<a href="'+url+'" target="_blank" style="color:var(--blue);text-decoration:none;font-size:13px;margin-left:4px;" title="Open in new tab">🔗</a>';
+  } else {
+    span.innerHTML = '';
+  }
 }
 
 // UTILS
