@@ -2192,14 +2192,19 @@ function renderNotes(idx){
   const s=sites[idx];
   const tl=document.getElementById('notes-timeline');
   const notes=s.notes||[];
-  tl.innerHTML=notes.length?[...notes].reverse().map(n=>`
-    <div class="note-entry">
+  tl.innerHTML=notes.length?[...notes].reverse().map((n,ri)=>{
+    const realIdx=notes.length-1-ri;
+    return `<div class="note-entry">
       <div class="note-dot"></div>
       <div class="note-body">
-        <div class="note-ts">${n.ts}</div>
+        <div class="note-ts" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>${n.ts}</span>
+          <button class="btn btn-xs btn-danger" onclick="deleteNote(${realIdx})" style="padding:1px 6px;font-size:10px;">✕</button>
+        </div>
         <div class="note-text">${n.text}</div>
       </div>
-    </div>`).join(''):'<div class="note-empty">No notes yet. Add the first one above.</div>';
+    </div>`;
+  }).join(''):'<div class="note-empty">No notes yet. Add the first one above.</div>';
 }
 function addNote(){
   if(detailIdx===null)return;
@@ -2209,6 +2214,16 @@ function addNote(){
   sites[detailIdx].notes.push({ts:now(),text:txt});
   document.getElementById('new-note-text').value='';
   autoSave();renderNotes(detailIdx);showToast('Note saved.');
+}
+
+function deleteNote(noteIdx){
+  if(detailIdx===null)return;
+  if(!confirm('Delete this note?'))return;
+  sites[detailIdx].notes.splice(noteIdx,1);
+  autoSave();
+  renderNotes(detailIdx);
+  renderRecentNotes(detailIdx);
+  showToast('Note deleted.');
 }
 
 function renderDetailNotices(idx){
