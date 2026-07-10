@@ -3974,7 +3974,8 @@ function addAssessedHistory() {
     s.assessedHistory.push({ year: year, value: val, added: new Date().toISOString() });
   }
   renderAssessedHistory(s.assessedHistory);
-  showToast('Assessment history updated.');
+  autoSave();
+  showToast('Assessment history saved.');
 }
 
 function removeAssessedHistory(histIdx) {
@@ -3984,6 +3985,7 @@ function removeAssessedHistory(histIdx) {
   var toRemove = sorted[histIdx];
   s.assessedHistory = s.assessedHistory.filter(function(h){ return !(h.year === toRemove.year && h.value === toRemove.value); });
   renderAssessedHistory(s.assessedHistory);
+  autoSave();
   showToast('Entry removed.');
 }
 
