@@ -317,6 +317,15 @@ button{font-family:var(--sans);}
 .loan-doc-icon{font-size:18px;flex-shrink:0;}
 .loan-doc-name{flex:1;font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .loan-doc-size{font-size:11px;color:var(--text3);flex-shrink:0;}
+/* TAX ALERTS */
+.tax-alert{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:12px;}
+.tax-alert.overdue{background:var(--red-bg);border-color:var(--red-border);}
+.tax-alert.paid{background:var(--green-bg);border-color:var(--green-border);}
+.tax-alert-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.tax-alert-body{flex:1;}
+.tax-alert-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.tax-alert-sub{font-size:12px;color:var(--text2);}
+.tax-alert-props{font-size:11px;color:var(--text3);margin-top:4px;}
 /* DRAG AND DROP */
 .drag-handle{cursor:grab;color:var(--text3);padding:0 6px;font-size:16px;line-height:1;user-select:none;}
 .drag-handle:active{cursor:grabbing;}
@@ -523,6 +532,9 @@ function skipSetup(){
             <button class="btn btn-sm btn-primary" onclick="openAddPayModal()">+ Log payment</button>
           </div>
         </div>
+        <!-- TAX ALERT BANNER -->
+        <div id="tax-alert-banner" style="display:none;"></div>
+
         <div class="metrics">
           <div class="metric c-green"><div class="metric-label">Collected this month</div><div class="metric-value green" id="m-collected">$0</div><div class="metric-sub" id="m-collected-sub">of $0 expected</div></div>
           <div class="metric c-red"><div class="metric-label">Outstanding</div><div class="metric-value red" id="m-outstanding">$0</div><div class="metric-sub" id="m-outstanding-sub">0 properties behind</div></div>
@@ -2007,7 +2019,73 @@ function closeSidebar(){
 }
 
 // ══ RENDER ══
-function render(){renderMetrics();renderPropsTable();renderDashTable();updateBadges();}
+function render(){renderMetrics();renderPropsTable();renderDashTable();updateBadges();renderTaxAlerts();}
+
+function renderTaxAlerts(){
+  var banner = document.getElementById('tax-alert-banner');
+  if(!banner) return;
+
+  var now = new Date();
+  var year = now.getFullYear();
+  var alerts = [];
+
+  // WA tax dates: H1 = April 30, H2 = October 31
+  var waDates = [
+    {label:'First half (H1)', month:3, day:30, key:'tax1'},  // April = month 3
+    {label:'Second half (H2)', month:9, day:31, key:'tax2'}   // October = month 9
+  ];
+
+  sites.forEach(function(s) {
+    if(s.state !== 'wa' || !s.taxAmt) return;
+
+    waDates.forEach(function(td) {
+      var dueDate = new Date(year, td.month, td.day);
+      // If due date passed this year, look at next year for future alert
+      if(dueDate < now) dueDate = new Date(year+1, td.month, td.day);
+
+      var daysUntil = Math.ceil((dueDate - now) / (1000*60*60*24));
+      var taxStatus = s[td.key] || '';
+      var isPaid = taxStatus === 'paid' || taxStatus === 'included' || taxStatus === 'full';
+
+      if(isPaid) return; // Don't alert for paid taxes
+
+      if(daysUntil <= 0) {
+        alerts.push({type:'overdue', icon:'🚨', days:Math.abs(daysUntil),
+          title: s.name + ' — Property tax OVERDUE',
+          sub: td.label + ' was due ' + dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
+          taxAmt: s.taxAmt/2
+        });
+      } else if(daysUntil <= 60) {
+        alerts.push({type:'warning', icon:'⚠️', days:daysUntil,
+          title: s.name + ' — Property tax due in ' + daysUntil + ' days',
+          sub: td.label + ' due ' + dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
+          taxAmt: s.taxAmt/2
+        });
+      }
+    });
+  });
+
+  if(!alerts.length) {
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+    return;
+  }
+
+  banner.style.display = 'block';
+  banner.innerHTML = alerts.map(function(a) {
+    return '<div class="tax-alert ' + (a.type==='overdue'?'overdue':'') + '">' +
+      '<div class="tax-alert-icon">' + a.icon + '</div>' +
+      '<div class="tax-alert-body">' +
+        '<div class="tax-alert-title">' + a.title + '</div>' +
+        '<div class="tax-alert-sub">' + a.sub + ' · Est. ' + fmt(a.taxAmt) + '</div>' +
+        '<div class="tax-alert-props">Mark as paid in the property Edit modal under Property taxes</div>' +
+      '</div>' +
+      '<div style="font-size:' + (a.type==='overdue'?'20':'16') + 'px;font-weight:700;color:' + (a.type==='overdue'?'var(--red)':'var(--amber)') + ';flex-shrink:0;">' +
+        (a.type==='overdue' ? 'OVERDUE' : a.days + 'd') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
 
 function leaseInfo(s){
   if(!s.start||s.status==='vacant')return{pill:'vacant',pillTxt:'—',duration:'—',remaining:'—'};
@@ -2137,6 +2215,56 @@ function renderDetailOverview(idx){
       <div class="detail-item" style="grid-column:1/-1;"><div class="detail-label">Tax payment status</div><div class="detail-value" style="font-size:13px;">${taxStatus.length?taxStatus.join(' · '):'Not recorded'}${s.taxNotes?` — ${s.taxNotes}`:''}</div></div>
     </div>
   `;
+}
+
+function renderPropertyScreening(idx) {
+  var s = sites[idx];
+  // Remove old screening card if exists
+  var old = document.getElementById('prop-screening-card');
+  if(old) old.remove();
+
+  var matches = screenings.filter(function(sc){ return sc.property === s.id; });
+  if(!matches.length) return; // Don't show card if no screenings
+
+  matches.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+
+  var decisionCls = {pending:'scr-pending',approved:'scr-approved',denied:'scr-denied',conditional:'scr-conditional'};
+  var decisionLabels = {pending:'Pending review',approved:'Approved',denied:'Denied',conditional:'Conditional approval'};
+  var statusCls = {sent:'scr-sent',completed:'scr-completed',expired:'scr-expired'};
+  var statusLabels = {sent:'Sent — awaiting applicant',completed:'Completed',expired:'Expired'};
+  var leaseLabels = {'not_sent':'Not sent','sent':'Lease sent','signed':'Signed','na':'N/A'};
+
+  var rows = matches.map(function(sc, i) {
+    var realIdx = screenings.indexOf(sc);
+    var dateStr = sc.date ? new Date(sc.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">' +
+      '<div style="flex:1;">' +
+        '<div style="font-weight:600;font-size:13px;">'+sc.name+'</div>' +
+        '<div style="font-size:11px;color:var(--text3);">'+(sc.email||'')+(sc.phone?' · '+sc.phone:'')+'</div>' +
+        (sc.requestNum?'<div style="font-size:11px;color:var(--text3);font-family:monospace;">SmartMove: '+sc.requestNum+'</div>':'') +
+        (sc.notes?'<div style="font-size:11px;color:var(--text2);margin-top:3px;">'+sc.notes+'</div>':'') +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">' +
+        '<span class="badge '+(decisionCls[sc.decision]||'scr-pending')+'" style="border-radius:20px;font-size:11px;padding:3px 9px;">'+(decisionLabels[sc.decision]||sc.decision)+'</span>' +
+        '<span class="badge '+(statusCls[sc.status]||'scr-sent')+'" style="border-radius:20px;font-size:10px;padding:2px 7px;">'+(statusLabels[sc.status]||sc.status)+'</span>' +
+        '<span style="font-size:10px;color:var(--text3);">Lease: '+(leaseLabels[sc.leaseStatus]||sc.leaseStatus)+'</span>' +
+        '<span style="font-size:10px;color:var(--text3);">'+dateStr+'</span>' +
+      '</div>' +
+      '<button class="btn btn-xs btn-secondary" onclick="openScreeningModal('+realIdx+')" style="flex-shrink:0;">Edit</button>' +
+      '</div>';
+  }).join('');
+
+  var card = document.createElement('div');
+  card.id = 'prop-screening-card';
+  card.className = 'card';
+  card.style.marginTop = '1rem';
+  card.innerHTML =
+    '<div class="card-header">' +
+      '<div><div class="card-title">🔍 Tenant screenings</div><div class="card-sub">' + matches.length + ' screening' + (matches.length!==1?'s':'') + ' on file</div></div>' +
+      '<button class="btn btn-sm btn-secondary" onclick="navTo(String.fromCharCode(115,99,114,101,101,110,105,110,103),null)">View all →</button>' +
+    '</div>' +
+    '<div class="card-body">' + rows + '</div>';
+  document.getElementById('detail-overview').appendChild(card);
 }
 
 function renderRecentNotes(idx){
