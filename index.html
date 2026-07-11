@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+TYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -318,6 +318,11 @@ button{font-family:var(--sans);}
 .loan-doc-icon{font-size:18px;flex-shrink:0;}
 .loan-doc-name{flex:1;font-size:12px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .loan-doc-size{font-size:11px;color:var(--text3);flex-shrink:0;}
+/* VOICE ASSISTANT */
+#voice-btn:hover{transform:scale(1.08);}
+#voice-btn.listening{background:var(--red);animation:voicePulse 1.2s infinite;}
+#voice-btn.thinking{background:var(--amber);}
+@keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4);}50%{box-shadow:0 0 0 12px rgba(220,38,38,0);}}
 /* TAX ALERTS */
 .tax-alert{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:12px;}
 .tax-alert.overdue{background:var(--red-bg);border-color:var(--red-border);}
@@ -4613,6 +4618,144 @@ function getScreeningBadge(siteId) {
   return '<span class="badge ' + (statusCls[s.status]||'scr-sent') + '" style="border-radius:20px;font-size:10px;padding:2px 7px;">' + (statusLabels[s.status]||s.status) + '</span>';
 }
 
+// ── VOICE ASSISTANT ──
+var voiceRecognition = null;
+var voiceOpen = false;
+var voiceListening = false;
+
+function toggleVoice() {
+  if(!voiceOpen) { openVoice(); }
+  else if(voiceListening) { stopListening(); }
+  else { startListening(); }
+}
+
+function openVoice() {
+  voiceOpen = true;
+  document.getElementById('voice-panel').style.display = 'block';
+  setVoiceStatus('Tap the mic or a suggestion to get started.');
+  document.getElementById('voice-transcript').textContent = '';
+  document.getElementById('voice-response').textContent = '';
+}
+
+function closeVoice() {
+  voiceOpen = false;
+  stopListening();
+  document.getElementById('voice-panel').style.display = 'none';
+  document.getElementById('voice-btn').className = '';
+}
+
+function setVoiceStatus(msg) {
+  document.getElementById('voice-status').textContent = msg;
+}
+
+function startListening() {
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    setVoiceStatus('Speech recognition not supported in this browser.');
+    return;
+  }
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  voiceRecognition = new SpeechRecognition();
+  voiceRecognition.continuous = false;
+  voiceRecognition.interimResults = true;
+  voiceRecognition.lang = 'en-US';
+
+  voiceRecognition.onstart = function() {
+    voiceListening = true;
+    document.getElementById('voice-btn').className = 'listening';
+    setVoiceStatus('🔴 Listening...');
+    document.getElementById('voice-transcript').textContent = '';
+  };
+
+  voiceRecognition.onresult = function(e) {
+    var transcript = '';
+    for(var i=0; i<e.results.length; i++) transcript += e.results[i][0].transcript;
+    document.getElementById('voice-transcript').textContent = '"' + transcript + '"';
+    if(e.results[e.results.length-1].isFinal) {
+      stopListening();
+      runVoiceCommand(transcript);
+    }
+  };
+
+  voiceRecognition.onerror = function(e) {
+    setVoiceStatus('Error: ' + e.error + '. Tap to try again.');
+    stopListening();
+  };
+
+  voiceRecognition.onend = function() {
+    if(voiceListening) stopListening();
+  };
+
+  voiceRecognition.start();
+}
+
+function stopListening() {
+  voiceListening = false;
+  if(voiceRecognition) { try{voiceRecognition.stop();}catch(e){} voiceRecognition=null; }
+  document.getElementById('voice-btn').className = '';
+  if(voiceOpen) setVoiceStatus('Tap mic to speak, or tap a suggestion below.');
+}
+
+async function runVoiceCommand(text) {
+  if(!text) return;
+  document.getElementById('voice-transcript').textContent = '"' + text + '"';
+  document.getElementById('voice-btn').className = 'thinking';
+  setVoiceStatus('🤔 Thinking...');
+  document.getElementById('voice-response').textContent = '';
+
+  // Build context snapshot for Claude
+  var tm = today().slice(0,7);
+  var collected = payments.filter(function(p){return p.type==='Rent'&&p.date.startsWith(tm);}).reduce(function(a,p){return a+p.amount;},0);
+  var totalRent = sites.filter(function(s){return s.status!=='vacant';}).reduce(function(a,s){return a+s.rent;},0);
+  var occ = sites.filter(function(s){return s.status!=='vacant';}).length;
+  var late = sites.filter(function(s){return s.status==='late';});
+  var vacant = sites.filter(function(s){return s.status==='vacant';});
+
+  var ctxLines = [
+    'Today is '+today()+'. Property portfolio summary:',
+    'Total properties: '+sites.length,
+    'Occupied: '+occ+'/'+sites.length,
+    'Vacant: '+(vacant.length?vacant.map(function(s){return s.name;}).join(', '):'none'),
+    'Late: '+(late.length?late.map(function(s){return s.name;}).join(', '):'none'),
+    'Rent roll: $'+totalRent.toLocaleString(),
+    'Collected this month: $'+collected.toLocaleString(),
+    'Outstanding: $'+(totalRent-collected).toLocaleString(),
+    'Properties:'
+  ].concat(sites.map(function(s){
+    return s.name+' | '+s.type+' | '+s.tenant+' | $'+s.rent+'/mo | '+s.status;
+  })).concat(['Recent payments:']).concat(payments.slice(0,10).map(function(p){
+    return p.date+' '+p.tenant+' $'+p.amount+' '+p.type;
+  }));
+  var ctx = ctxLines.join(', ');
+  var systemPrompt = 'RC Properties assistant (Ryan & Brandy Christensen). Answer in 1-3 sentences max. Only use provided data. Portfolio: ' + ctx;
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 200,
+        system: systemPrompt,
+        messages: [{role:'user', content: text}]
+      })
+    });
+    var data = await res.json();
+    var reply = data.content && data.content[0] ? data.content[0].text : 'Sorry, I could not process that.';
+    document.getElementById('voice-response').textContent = reply;
+    setVoiceStatus('Done. Tap mic to ask another question.');
+    // Speak the response
+    if('speechSynthesis' in window) {
+      var utt = new SpeechSynthesisUtterance(reply);
+      utt.rate = 1.0; utt.pitch = 1.0;
+      window.speechSynthesis.speak(utt);
+    }
+  } catch(e) {
+    document.getElementById('voice-response').textContent = 'Error connecting to AI. Check your connection.';
+    setVoiceStatus('Error. Tap mic to try again.');
+  }
+  document.getElementById('voice-btn').className = '';
+}
+
 // UTILS
 function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast(`Copied: "${t}"`));}
 function showToast(msg){
@@ -4633,5 +4776,32 @@ document.querySelectorAll('.overlay').forEach(function(o){
 
 init();
 </script>
+<!-- VOICE ASSISTANT -->
+<div id="voice-btn" onclick="toggleVoice()" title="Voice assistant" style="
+  position:fixed;bottom:24px;right:24px;width:56px;height:56px;
+  background:var(--blue);border-radius:50%;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;box-shadow:var(--shadow-md);
+  z-index:400;transition:all .2s;font-size:22px;color:#fff;
+  border:3px solid transparent;">🎤</div>
+
+<div id="voice-panel" style="
+  display:none;position:fixed;bottom:92px;right:24px;width:320px;
+  background:var(--white);border:1px solid var(--border);border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-md);z-index:400;overflow:hidden;">
+  <div style="background:var(--blue);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="color:#fff;font-weight:700;font-size:14px;">🎤 Voice Assistant</div>
+    <button onclick="closeVoice()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0;">✕</button>
+  </div>
+  <div id="voice-status" style="padding:10px 16px;font-size:12px;color:var(--text3);border-bottom:1px solid var(--border);min-height:36px;"></div>
+  <div id="voice-transcript" style="padding:10px 16px;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border);min-height:44px;font-style:italic;"></div>
+  <div id="voice-response" style="padding:12px 16px;font-size:13px;color:var(--text);min-height:60px;line-height:1.6;"></div>
+  <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;" id="voice-suggestions">
+    <button class="btn btn-xs btn-secondary" onclick="runVoiceCommand('what is my rent roll')">Rent roll</button>
+    <button class="btn btn-xs btn-secondary" onclick="runVoiceCommand('show occupancy')">Occupancy</button>
+    <button class="btn btn-xs btn-secondary" onclick="runVoiceCommand('any late payments')">Late payments</button>
+    <button class="btn btn-xs btn-secondary" onclick="runVoiceCommand('upcoming taxes')">Taxes</button>
+  </div>
+</div>
+
 </body>
 </html>
