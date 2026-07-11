@@ -500,6 +500,7 @@ function skipSetup(){
         <div class="sidebar-label">Properties</div>
         <button class="nav-item" onclick="navTo('all-props',this)"><span class="nav-icon">🏘</span>All properties<span class="nav-badge gray" id="nb-all">7</span></button>
         <button class="nav-item" onclick="navToFilter('late',this)"><span class="nav-icon">⚠️</span>Late / overdue<span class="nav-badge red" id="nb-late">0</span></button>
+        <button class="nav-item" onclick="navTo('dashboard',this)"><span class="nav-icon">🏛️</span>Tax unpaid<span class="nav-badge red" id="nb-tax" style="display:none;">0</span></button>
         <button class="nav-item" onclick="navToFilter('current',this)"><span class="nav-icon">✅</span>Current<span class="nav-badge green" id="nb-current">0</span></button>
         <button class="nav-item" onclick="navToFilter('vacant',this)"><span class="nav-icon">○</span>Vacant<span class="nav-badge gray" id="nb-vacant">0</span></button>
       </div>
@@ -560,7 +561,7 @@ function skipSetup(){
         <div class="card">
           <div class="card-body no-pad">
             <table class="tbl">
-              <thead><tr><th style="width:30px;"></th><th>Property</th><th>Type</th><th>Tenant</th><th>Rent / Mortgage</th><th>Paid</th><th>Lease</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th style="width:30px;"></th><th>Property</th><th>Type</th><th>Tenant</th><th>Rent / Mortgage</th><th>Paid</th><th>Lease</th><th>Status</th><th>Tax</th><th>Screening</th><th></th></tr></thead>
               <tbody id="props-tbody"></tbody>
             </table>
           </div>
@@ -2021,6 +2022,27 @@ function closeSidebar(){
 // ══ RENDER ══
 function render(){renderMetrics();renderPropsTable();renderDashTable();updateBadges();renderTaxAlerts();}
 
+function getTaxStatus(s) {
+  // Returns: 'paid', 'partial', 'unpaid', 'overdue', 'upcoming', 'notset'
+  if(!s.taxAmt) return 'notset';
+  var now = new Date();
+  var year = now.getFullYear();
+  var h1Paid = s.tax1==='paid'||s.tax1==='included'||s.tax2==='full';
+  var h2Paid = s.tax2==='paid'||s.tax2==='included'||s.tax2==='full';
+  if(h1Paid && h2Paid) return 'paid';
+  var h1Due = new Date(year,3,30);
+  var h2Due = new Date(year,9,31);
+  if(!h1Paid && now > h1Due) return 'overdue';
+  if(!h2Paid && now > h2Due) return 'overdue';
+  if(!h1Paid || !h2Paid) {
+    var nextDue = !h1Paid ? h1Due : h2Due;
+    var days = Math.ceil((nextDue-now)/(1000*60*60*24));
+    if(days<=60) return 'upcoming';
+    return 'unpaid';
+  }
+  return 'paid';
+}
+
 function renderTaxAlerts(){
   var banner = document.getElementById('tax-alert-banner');
   if(!banner) return;
@@ -2029,59 +2051,69 @@ function renderTaxAlerts(){
   var year = now.getFullYear();
   var alerts = [];
 
-  // WA tax dates: H1 = April 30, H2 = October 31
   var waDates = [
-    {label:'First half (H1)', month:3, day:30, key:'tax1'},  // April = month 3
-    {label:'Second half (H2)', month:9, day:31, key:'tax2'}   // October = month 9
+    {label:'H1', fullLabel:'First half (H1)', month:3, day:30, key:'tax1'},
+    {label:'H2', fullLabel:'Second half (H2)', month:9, day:31, key:'tax2'}
   ];
 
   sites.forEach(function(s) {
     if(s.state !== 'wa' || !s.taxAmt) return;
-
     waDates.forEach(function(td) {
-      var dueDate = new Date(year, td.month, td.day);
-      // If due date passed this year, look at next year for future alert
-      if(dueDate < now) dueDate = new Date(year+1, td.month, td.day);
-
-      var daysUntil = Math.ceil((dueDate - now) / (1000*60*60*24));
       var taxStatus = s[td.key] || '';
-      var isPaid = taxStatus === 'paid' || taxStatus === 'included' || taxStatus === 'full';
+      var isPaid = taxStatus==='paid'||taxStatus==='included'||taxStatus==='full';
+      if(isPaid) return;
 
-      if(isPaid) return; // Don't alert for paid taxes
+      var dueDate = new Date(year, td.month, td.day);
+      var daysUntil = Math.ceil((dueDate-now)/(1000*60*60*24));
 
-      if(daysUntil <= 0) {
+      if(daysUntil < 0) {
         alerts.push({type:'overdue', icon:'🚨', days:Math.abs(daysUntil),
-          title: s.name + ' — Property tax OVERDUE',
-          sub: td.label + ' was due ' + dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
-          taxAmt: s.taxAmt/2
-        });
-      } else if(daysUntil <= 60) {
-        alerts.push({type:'warning', icon:'⚠️', days:daysUntil,
-          title: s.name + ' — Property tax due in ' + daysUntil + ' days',
-          sub: td.label + ' due ' + dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
-          taxAmt: s.taxAmt/2
-        });
+          title:s.name+' — '+td.fullLabel+' property tax OVERDUE',
+          sub:'Was due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
+          taxAmt:s.taxAmt/2, name:s.name});
+      } else if(daysUntil<=60) {
+        alerts.push({type:'upcoming', icon:'⚠️', days:daysUntil,
+          title:s.name+' — '+td.fullLabel+' tax due in '+daysUntil+' days',
+          sub:'Due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
+          taxAmt:s.taxAmt/2, name:s.name});
+      } else {
+        alerts.push({type:'unpaid', icon:'📋', days:daysUntil,
+          title:s.name+' — '+td.fullLabel+' property tax unpaid',
+          sub:'Due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+' ('+daysUntil+' days)',
+          taxAmt:s.taxAmt/2, name:s.name});
       }
     });
   });
 
-  if(!alerts.length) {
-    banner.style.display = 'none';
-    banner.innerHTML = '';
-    return;
+  // Update sidebar badge
+  var unpaidCount = alerts.filter(function(a){return a.type!=='paid';}).length;
+  var taxBadge = document.getElementById('nb-tax');
+  if(taxBadge) {
+    taxBadge.textContent = unpaidCount;
+    taxBadge.style.display = unpaidCount > 0 ? 'inline-flex' : 'none';
   }
 
-  banner.style.display = 'block';
+  if(!alerts.length) {
+    banner.style.display='none'; banner.innerHTML=''; return;
+  }
+
+  // Sort: overdue first, then upcoming, then unpaid
+  var order = {overdue:0,upcoming:1,unpaid:2};
+  alerts.sort(function(a,b){return (order[a.type]||2)-(order[b.type]||2);});
+
+  banner.style.display='block';
   banner.innerHTML = alerts.map(function(a) {
-    return '<div class="tax-alert ' + (a.type==='overdue'?'overdue':'') + '">' +
-      '<div class="tax-alert-icon">' + a.icon + '</div>' +
+    var color = a.type==='overdue'?'var(--red)':a.type==='upcoming'?'var(--amber)':'var(--text3)';
+    var bgCls = a.type==='overdue'?'overdue':'';
+    return '<div class="tax-alert '+bgCls+'">' +
+      '<div class="tax-alert-icon">'+a.icon+'</div>' +
       '<div class="tax-alert-body">' +
-        '<div class="tax-alert-title">' + a.title + '</div>' +
-        '<div class="tax-alert-sub">' + a.sub + ' · Est. ' + fmt(a.taxAmt) + '</div>' +
-        '<div class="tax-alert-props">Mark as paid in the property Edit modal under Property taxes</div>' +
+        '<div class="tax-alert-title">'+a.title+'</div>' +
+        '<div class="tax-alert-sub">'+a.sub+' · Est. '+fmt(a.taxAmt)+'</div>' +
+        '<div class="tax-alert-props">Mark paid in Edit Property → Property taxes</div>' +
       '</div>' +
-      '<div style="font-size:' + (a.type==='overdue'?'20':'16') + 'px;font-weight:700;color:' + (a.type==='overdue'?'var(--red)':'var(--amber)') + ';flex-shrink:0;">' +
-        (a.type==='overdue' ? 'OVERDUE' : a.days + 'd') +
+      '<div style="font-size:13px;font-weight:700;color:'+color+';flex-shrink:0;">'+
+        (a.type==='overdue'?'OVERDUE':a.type==='upcoming'?a.days+'d':'Unpaid')+
       '</div>' +
     '</div>';
   }).join('');
@@ -2160,6 +2192,7 @@ function propRow(s,idx,mini=false){
     <td>${s.status!=='vacant'?`<div class="prog"><div class="prog-bar"><div class="prog-fill ${fillCls}" style="width:${pct}%"></div></div><div class="prog-label" style="color:${pct>=100?'var(--green)':pct>0?'var(--amber)':'var(--red)'}">${fmt(s.paid||0)}</div></div>`:'—'}</td>
     <td>${li.pillTxt!=='—'?`<span class="lease-pill ${li.pill}">${li.pillTxt}</span>`:'—'}</td>
     <td><span class="badge ${s.status}"><span class="badge-dot"></span>${s.status.charAt(0).toUpperCase()+s.status.slice(1)}</span>${hasNotice?'<span class="badge notice" style="margin-left:4px;"><span class="badge-dot"></span>Notice</span>':''}</td>
+    <td>${getTaxBadge(s)}</td>
     <td>${getScreeningBadge(s.id)}</td>
     <td onclick="event.stopPropagation()">
       <div class="row-actions">
@@ -2726,7 +2759,7 @@ function populateSiteDropdowns(){
 // ADD PROPERTY
 function openAddPropModal(){
   // reset all fields
-  ['np-name','np-nick','np-addr','np-parcel','np-size','np-legal-desc','np-amp-url','np-atip-url','np-claude-links','np-assessed-year','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
+  ['np-name','np-nick','np-addr','np-parcel','np-size','np-legal-desc','np-amp-url','np-atip-url','np-claude-links','np-tenant','np-notes','np-lender'].forEach(id=>document.getElementById(id).value='');
   ['np-rent','np-mortgage','np-loan-amt','np-loan-term','np-loan-rate','np-loan-balance','np-purchase-price','np-current-value','np-assessed-value'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   ['np-rent','np-mortgage','np-loan-amt','np-loan-term','np-loan-rate','np-loan-balance'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('np-type').value='house';
@@ -2770,7 +2803,7 @@ function saveNewProp(){
     parcel: document.getElementById('np-parcel').value.trim(),
     legalDesc: document.getElementById('np-legal-desc').value.trim(),
     assessedValue: parseInt(document.getElementById('np-assessed-value').value)||0,
-    assessedYear: document.getElementById('np-assessed-year').value.trim(),
+    assessedYear: '',
     claudeLinks: document.getElementById('np-claude-links').value.trim(),
     size: document.getElementById('np-size').value.trim(),
     ampUrl: document.getElementById('np-amp-url').value.trim(),
@@ -4540,6 +4573,20 @@ function updateUrlLink(inputId, spanId) {
   } else {
     span.innerHTML = '';
   }
+}
+
+// TAX BADGE FOR PROPERTY TABLE
+function getTaxBadge(s) {
+  if(!s.taxAmt) return '<span style="color:var(--text3);font-size:11px;">—</span>';
+  var status = getTaxStatus(s);
+  var map = {
+    paid: '<span class="badge current" style="border-radius:20px;font-size:10px;padding:2px 7px;"><span class="badge-dot"></span>Paid</span>',
+    overdue: '<span class="badge late" style="border-radius:20px;font-size:10px;padding:2px 7px;"><span class="badge-dot"></span>Overdue</span>',
+    upcoming: '<span class="badge pending" style="border-radius:20px;font-size:10px;padding:2px 7px;"><span class="badge-dot"></span>Due soon</span>',
+    unpaid: '<span class="badge" style="border-radius:20px;font-size:10px;padding:2px 7px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);">Unpaid</span>',
+    notset: '<span style="color:var(--text3);font-size:11px;">—</span>'
+  };
+  return map[status] || map.notset;
 }
 
 // SCREENING BADGE FOR PROPERTY TABLE
