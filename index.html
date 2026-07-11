@@ -164,6 +164,7 @@ button{font-family:var(--sans);}
 .type-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;}
 .type-tag.rv{background:var(--blue-bg);color:var(--blue);}
 .type-tag.house{background:var(--green-bg);color:var(--green);}
+.type-tag.land{background:var(--amber-bg);color:var(--amber);}
 
 /* PROGRESS */
 .prog{display:flex;flex-direction:column;gap:3px;}
@@ -508,6 +509,7 @@ function skipSetup(){
         <div class="sidebar-label">By type</div>
         <button class="nav-item" onclick="navToFilter('rv',this)"><span class="nav-icon">🚐</span>RV sites</button>
         <button class="nav-item" onclick="navToFilter('house',this)"><span class="nav-icon">🏡</span>Houses</button>
+        <button class="nav-item" onclick="navToFilter('land',this)"><span class="nav-icon">🌿</span>Land</button>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-label">Documents</div>
@@ -910,7 +912,7 @@ function skipSetup(){
       <div class="f-group"><label>Claude chat links (one per line)</label><textarea id="e-claude-links" rows="3" placeholder="https://claude.ai/chat/...&#10;https://claude.ai/chat/..."></textarea></div>
       <div class="grid-2">
         <div class="f-group"><label>Property type</label>
-          <select id="e-type"><option value="rv">RV site</option><option value="house">House</option></select>
+          <select id="e-type"><option value="rv">RV site</option><option value="house">House</option><option value="land">Land</option></select>
         </div>
         <div class="f-group"><label>State</label>
           <select id="e-state"><option value="wa">Washington</option><option value="az">Arizona</option><option value="other">Other</option></select>
@@ -1116,7 +1118,7 @@ function skipSetup(){
       <div class="f-group"><label>Full address</label><input type="text" id="np-addr" placeholder="123 Main St, City, State ZIP"></div>
       <div class="grid-3">
         <div class="f-group"><label>Type</label>
-          <select id="np-type"><option value="house">House</option><option value="rv">RV site</option></select>
+          <select id="np-type"><option value="house">House</option><option value="rv">RV site</option><option value="land">Land</option></select>
         </div>
         <div class="f-group"><label>State</label>
           <select id="np-state"><option value="wa">Washington</option><option value="az">Arizona</option><option value="other">Other</option></select>
@@ -1653,7 +1655,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:650,mortgage:0,paid:0,
+    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:p.type==='land'?0:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1983,7 +1985,7 @@ function navTo(pageId,btn,skipHash){
 }
 function navToFilter(f,btn){
   activeFilter=f;
-  const labels={late:'Late / overdue',current:'Current',vacant:'Vacant',rv:'RV sites',house:'Houses'};
+  const labels={late:'Late / overdue',current:'Current',vacant:'Vacant',rv:'RV sites',house:'Houses',land:'Land'};
   document.getElementById('props-heading').textContent=labels[f]||'Properties';
   navTo('all-props',btn,true);
   window.location.hash='all-props';
@@ -2186,7 +2188,7 @@ function propRow(s,idx,mini=false){
       onclick="openDetail(${idx})">
     <td onclick="event.stopPropagation()" style="width:30px;padding:12px 4px 12px 12px;"><span class="drag-handle" title="Drag to reorder">⠿</span></td>
     <td>${displayLabel(s)}</td>
-    <td><span class="type-tag ${s.type}">${s.type==='rv'?'RV':'House'}</span></td>
+    <td><span class="type-tag ${s.type}">${s.type==='rv'?'RV':s.type==='land'?'Land':'House'}</span></td>
     <td style="color:${s.status==='vacant'?'var(--text3)':'var(--text)'};">${s.tenant}</td>
     <td style="font-size:12px;">${rentMort}</td>
     <td>${s.status!=='vacant'?`<div class="prog"><div class="prog-bar"><div class="prog-fill ${fillCls}" style="width:${pct}%"></div></div><div class="prog-label" style="color:${pct>=100?'var(--green)':pct>0?'var(--amber)':'var(--red)'}">${fmt(s.paid||0)}</div></div>`:'—'}</td>
@@ -2227,7 +2229,7 @@ function renderDetailOverview(idx){
     <div class="detail-item"><div class="detail-label">Paid this month</div><div class="detail-value ${(s.paid||0)>=(s.rent||1)?'green':'red'}">${fmt(s.paid||0)}</div></div>
     <div class="detail-item"><div class="detail-label">All-time rent collected</div><div class="detail-value">${fmt(totalPaid)}</div></div>
     <div class="detail-item"><div class="detail-label">Yard maintenance</div><div class="detail-value">${s.yard||'Not specified'}</div></div>
-    <div class="detail-item"><div class="detail-label">Property type</div><div class="detail-value">${s.type==='rv'?'RV site':'House'}</div></div>
+    <div class="detail-item"><div class="detail-label">Property type</div><div class="detail-value">${s.type==='rv'?'RV site':s.type==='land'?'Land':'House'}</div></div>
     <div class="detail-item"><div class="detail-label">Property size</div><div class="detail-value">${s.size||'—'}</div></div>
     <div class="detail-item"><div class="detail-label">Assessed value</div><div class="detail-value">${s.assessedValue?fmt(s.assessedValue)+(s.assessedYear?' ('+s.assessedYear+')':''):'—'}</div></div>
   `;
@@ -3409,7 +3411,7 @@ function renderPortfolioGrowth(filteredSitesPL) {
           <div class="acq-dot"></div>
           <div style="flex:1;">
             <div class="acq-name">${displayName(s)}</div>
-            <div class="acq-date">${s.purchaseDate || '—'}${yearsHeld ? ` · ${yearsHeld} years held` : ''} · ${s.type === 'rv' ? 'RV site' : 'House'} · ${s.state.toUpperCase()}</div>
+            <div class="acq-date">${s.purchaseDate || '—'}${yearsHeld ? ` · ${yearsHeld} years held` : ''} · ${s.type === 'rv' ? 'RV site' : s.type === 'land' ? 'Land' : 'House'} · ${s.state.toUpperCase()}</div>
           </div>
           <div style="text-align:right;">
             <div class="acq-price">${s.purchasePrice ? fmt(s.purchasePrice) : 'Price not set'}</div>
