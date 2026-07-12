@@ -1463,6 +1463,31 @@ function skipSetup(){
   </div>
 </div>
 
+<!-- MORTGAGE PAYMENT MODAL -->
+<div class="overlay" id="mortgage-pay-overlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>Log mortgage payment</h3>
+      <button class="modal-close" onclick="closeModal('mortgage-pay-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="f-group"><label>Amount ($)</label><input type="number" id="mp-amount" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Date</label><input type="date" id="mp-date"></div>
+      </div>
+      <div class="grid-2">
+        <div class="f-group"><label>Principal ($)</label><input type="number" id="mp-principal" placeholder="0" min="0" step="1"></div>
+        <div class="f-group"><label>Interest ($)</label><input type="number" id="mp-interest" placeholder="0" min="0" step="1"></div>
+      </div>
+      <div class="f-group"><label>Note (optional)</label><input type="text" id="mp-note" placeholder="e.g. Regular payment, escrow included..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('mortgage-pay-overlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMortgagePayment()">Save payment</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOAN MODAL -->
 <div class="overlay" id="loan-overlay">
   <div class="modal" style="max-width:540px;">
@@ -1660,7 +1685,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:p.type==='land'?0:650,mortgage:0,paid:0,
+    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:p.type==='land'?0:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1704,7 +1729,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1875,7 +1900,7 @@ async function saveToSupabase(){
     // Upsert sites
     const siteData = sites.map((s, i) => ({
       id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
-      parcel: s.parcel||'', size: s.size||'', legal_desc: s.legalDesc||'', amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'', assessed_value: s.assessedValue||0, assessed_year: s.assessedYear||'', assessed_history: s.assessedHistory||[],
+      parcel: s.parcel||'', size: s.size||'', legal_desc: s.legalDesc||'', mortgage_payments: s.mortgagePayments||[], amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'', assessed_value: s.assessedValue||0, assessed_year: s.assessedYear||'', assessed_history: s.assessedHistory||[],
       loan_amt: s.loanAmt||0, loan_term: s.loanTerm||0,
       loan_rate: s.loanRate||0, loan_balance: s.loanBalance||0, lender: s.lender||'',
       deposit_amt: s.depositAmt||0, deposit_date: s.depositDate||null,
@@ -2086,17 +2111,17 @@ function renderTaxAlerts(){
         alerts.push({type:'overdue', icon:'🚨', days:Math.abs(daysUntil),
           title:s.name+' — '+td.fullLabel+' property tax OVERDUE',
           sub:'Was due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
-          taxAmt:s.taxAmt/2, name:s.name});
+          taxAmt:s.taxAmt/2, name:s.name, addr:s.addr||'', parcel:s.parcel||''});
       } else if(daysUntil<=60) {
         alerts.push({type:'upcoming', icon:'⚠️', days:daysUntil,
           title:s.name+' — '+td.fullLabel+' tax due in '+daysUntil+' days',
           sub:'Due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
-          taxAmt:s.taxAmt/2, name:s.name});
+          taxAmt:s.taxAmt/2, name:s.name, addr:s.addr||'', parcel:s.parcel||''});
       } else {
         alerts.push({type:'unpaid', icon:'📋', days:daysUntil,
           title:s.name+' — '+td.fullLabel+' property tax unpaid',
           sub:'Due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+' ('+daysUntil+' days)',
-          taxAmt:s.taxAmt/2, name:s.name});
+          taxAmt:s.taxAmt/2, name:s.name, addr:s.addr||'', parcel:s.parcel||''});
       }
     });
   });
@@ -2623,6 +2648,7 @@ function openEditModal(i){
   document.getElementById('e-loan-rate').value=s.loanRate||'';
   document.getElementById('e-loan-balance').value=s.loanBalance||'';
   document.getElementById('e-lender').value=s.lender||'';
+  renderMortgageHistory(s.mortgagePayments||[]);
   document.getElementById('e-type').value=s.type||'rv';
   document.getElementById('e-state').value=s.state||'wa';
   document.getElementById('e-name').value=s.name||'';
@@ -4738,6 +4764,93 @@ async function runVoiceCommand(text) {
     setVoiceStatus('Error. Tap mic to try again.');
   }
   document.getElementById('voice-btn').className = '';
+}
+
+// MORTGAGE PAYMENT HISTORY
+function openMortgagePayModal() {
+  document.getElementById('mp-amount').value = sites[editIdx] ? sites[editIdx].mortgage||'' : '';
+  document.getElementById('mp-date').value = today();
+  document.getElementById('mp-principal').value = '';
+  document.getElementById('mp-interest').value = '';
+  document.getElementById('mp-note').value = '';
+  // Auto-calculate principal/interest if rate known
+  var s = sites[editIdx];
+  if(s && s.loanRate && s.loanBalance) {
+    var monthlyInterest = parseFloat(((s.loanBalance * s.loanRate/100)/12).toFixed(2));
+    var principal = parseFloat((s.mortgage - monthlyInterest).toFixed(2));
+    if(principal > 0) {
+      document.getElementById('mp-interest').value = monthlyInterest;
+      document.getElementById('mp-principal').value = principal;
+    }
+  }
+  document.getElementById('mortgage-pay-overlay').classList.add('open');
+}
+
+function saveMortgagePayment() {
+  if(editIdx === null) return;
+  var amount = parseFloat(document.getElementById('mp-amount').value)||0;
+  var date = document.getElementById('mp-date').value;
+  if(!amount || !date) { showToast('Please enter amount and date.'); return; }
+  var s = sites[editIdx];
+  if(!s.mortgagePayments) s.mortgagePayments = [];
+  var principal = parseFloat(document.getElementById('mp-principal').value)||0;
+  var interest = parseFloat(document.getElementById('mp-interest').value)||0;
+  s.mortgagePayments.push({
+    date: date, amount: amount,
+    principal: principal, interest: interest,
+    note: document.getElementById('mp-note').value.trim()
+  });
+  // Update loan balance
+  if(principal > 0 && s.loanBalance) {
+    s.loanBalance = Math.max(0, parseFloat((s.loanBalance - principal).toFixed(2)));
+    document.getElementById('e-loan-balance').value = s.loanBalance;
+  }
+  renderMortgageHistory(s.mortgagePayments);
+  autoSave();
+  closeModal('mortgage-pay-overlay');
+  showToast('Mortgage payment logged.');
+}
+
+function deleteMortgagePayment(idx) {
+  if(editIdx === null || !confirm('Delete this payment?')) return;
+  var s = sites[editIdx];
+  var pay = s.mortgagePayments[idx];
+  // Restore balance if principal was recorded
+  if(pay.principal && s.loanBalance !== undefined) {
+    s.loanBalance = parseFloat((s.loanBalance + pay.principal).toFixed(2));
+    document.getElementById('e-loan-balance').value = s.loanBalance;
+  }
+  s.mortgagePayments.splice(idx, 1);
+  renderMortgageHistory(s.mortgagePayments);
+  autoSave();
+  showToast('Payment deleted.');
+}
+
+function renderMortgageHistory(payments) {
+  var el = document.getElementById('e-mortgage-history');
+  if(!el) return;
+  if(!payments || !payments.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text3);font-style:italic;padding:4px 0;">No payments logged yet.</div>';
+    return;
+  }
+  var sorted = [...payments].sort(function(a,b){ return b.date.localeCompare(a.date); });
+  var totalPaid = payments.reduce(function(a,p){ return a+p.amount; }, 0);
+  var totalPrincipal = payments.reduce(function(a,p){ return a+p.principal; }, 0);
+  el.innerHTML =
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:6px;">'+payments.length+' payments · '+fmt(totalPaid)+' total · '+fmt(totalPrincipal)+' principal</div>' +
+    '<table class="tbl" style="font-size:11px;"><thead><tr><th>Date</th><th>Amount</th><th>Principal</th><th>Interest</th><th>Note</th><th></th></tr></thead><tbody>' +
+    sorted.map(function(p, i) {
+      var realIdx = payments.indexOf(p);
+      return '<tr>' +
+        '<td>'+p.date+'</td>' +
+        '<td style="font-weight:600;">'+fmt(p.amount)+'</td>' +
+        '<td style="color:var(--green);">'+( p.principal?fmt(p.principal):'—')+'</td>' +
+        '<td style="color:var(--amber);">'+( p.interest?fmt(p.interest):'—')+'</td>' +
+        '<td style="color:var(--text3);">'+(p.note||'')+'</td>' +
+        '<td><button class="btn btn-xs btn-danger" onclick="deleteMortgagePayment('+realIdx+')">✕</button></td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table>';
 }
 
 // UTILS
