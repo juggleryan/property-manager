@@ -4386,17 +4386,21 @@ var screenings = [];
 
 async function saveScreeningsToSupabase() {
   if(!supabaseReady || isDemoMode) return;
-  var rows = screenings.map(function(s) {
-    var row = {
-      name: s.name||'', email: s.email||'', phone: s.phone||'',
-      property_id: s.property||null, request_num: s.requestNum||'',
-      date: s.date||null, status: s.status||'sent', decision: s.decision||'pending',
-      lease_status: s.leaseStatus||'not_sent', notes: s.notes||''
-    };
-    if(s.id) row.id = s.id;
-    return row;
+  var scrInsert = screenings.filter(function(s){ return !s.id; }).map(function(s){
+    return { name:s.name||'', email:s.email||'', phone:s.phone||'',
+      property_id:s.property||null, request_num:s.requestNum||'',
+      date:s.date||null, status:s.status||'sent', decision:s.decision||'pending',
+      lease_status:s.leaseStatus||'not_sent', notes:s.notes||'' };
   });
-  var res = await supabaseClient.from('screenings').upsert(rows, {onConflict:'id'});
+  var scrUpdate = screenings.filter(function(s){ return !!s.id; }).map(function(s){
+    return { id:s.id, name:s.name||'', email:s.email||'', phone:s.phone||'',
+      property_id:s.property||null, request_num:s.requestNum||'',
+      date:s.date||null, status:s.status||'sent', decision:s.decision||'pending',
+      lease_status:s.leaseStatus||'not_sent', notes:s.notes||'' };
+  });
+  var res = {error:null};
+  if(scrInsert.length) res = await supabaseClient.from('screenings').insert(scrInsert);
+  if(!res.error && scrUpdate.length) res = await supabaseClient.from('screenings').upsert(scrUpdate, {onConflict:'id'});
   if(res.error){ console.error('Screening save error:', res.error); showToast('Save failed: '+res.error.message); return; }
   var r = await supabaseClient.from('screenings').select('*').order('created_at',{ascending:false});
   if(!r.error && r.data) { screenings = r.data.map(mapScreeningRow); renderScreenings(); }
