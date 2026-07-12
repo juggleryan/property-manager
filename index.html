@@ -4188,39 +4188,34 @@ function removeAssessedHistory(histIdx) {
 // ── WAITLIST ──
 var waitlist = [];
 
-function saveWaitlistToSupabase() {
+async function saveWaitlistToSupabase() {
+  console.log('[Waitlist] save called, supabaseReady='+supabaseReady);
   if(!supabaseReady || isDemoMode) return;
-  // Store as a single JSON record in a settings-like table
-  // Use localStorage as primary, sync each entry as needed
-  
-  // Sync to Supabase via a dedicated table
-  supabaseClient.from('waitlist').upsert(
-    waitlist.map(function(w, i) {
-      return {
-        id: w.id || undefined,
-        name: w.name||'', phone: w.phone||'', email: w.email||'',
-        housing_type: w.type||'', property_id: w.property||null,
-        budget: w.budget||0, movein: w.movein||null,
-        occupants: w.occupants||'', pets: w.pets||'',
-        status: w.status||'active', notes: w.notes||'',
-        added: w.added||new Date().toISOString()
-      };
-    }),
-    {onConflict:'id'}
-  ).then(function(res) {
-    if(res.error) console.error('Waitlist sync error:', res.error);
-    else {
-      // Refresh to get IDs
-      supabaseClient.from('waitlist').select('*').order('added',{ascending:false}).then(function(r) {
-        if(!r.error && r.data) {
-          waitlist = r.data.map(mapWaitlistRow);
-          
-          renderWaitlist();
-        }
-      });
-    }
+  var toInsert = waitlist.filter(function(w){ return !w.id; }).map(function(w){
+    return { name:w.name||'', phone:w.phone||'', email:w.email||'',
+      housing_type:w.type||'', property_id:w.property||null,
+      budget:w.budget||0, movein:w.movein||null,
+      occupants:w.occupants||'', pets:w.pets||'',
+      status:w.status||'active', notes:w.notes||'' };
   });
+  var toUpdate = waitlist.filter(function(w){ return !!w.id; }).map(function(w){
+    return { id:w.id, name:w.name||'', phone:w.phone||'', email:w.email||'',
+      housing_type:w.type||'', property_id:w.property||null,
+      budget:w.budget||0, movein:w.movein||null,
+      occupants:w.occupants||'', pets:w.pets||'',
+      status:w.status||'active', notes:w.notes||'' };
+  });
+  console.log('[Waitlist] inserting '+toInsert.length+' updating '+toUpdate.length);
+  var res = {error:null};
+  if(toInsert.length){ res = await supabaseClient.from('waitlist').insert(toInsert); console.log('[Waitlist] insert result:', res.error||'OK'); }
+  if(!res.error && toUpdate.length){ res = await supabaseClient.from('waitlist').upsert(toUpdate,{onConflict:'id'}); console.log('[Waitlist] upsert result:', res.error||'OK'); }
+  if(res.error){ showToast('Waitlist save failed: '+res.error.message); return; }
+  var r = await supabaseClient.from('waitlist').select('*').order('added',{ascending:false});
+  console.log('[Waitlist] reload: '+(r.data?r.data.length+' rows':r.error));
+  if(!r.error && r.data){ waitlist = r.data.map(mapWaitlistRow); renderWaitlist(); }
+  showToast('Prospect saved ✓');
 }
+
 
 function mapWaitlistRow(r) {
   return {
@@ -4386,25 +4381,27 @@ var screenings = [];
 
 async function saveScreeningsToSupabase() {
   if(!supabaseReady || isDemoMode) return;
-  var scrInsert = screenings.filter(function(s){ return !s.id; }).map(function(s){
+  var toInsert = screenings.filter(function(s){ return !s.id; }).map(function(s){
     return { name:s.name||'', email:s.email||'', phone:s.phone||'',
       property_id:s.property||null, request_num:s.requestNum||'',
       date:s.date||null, status:s.status||'sent', decision:s.decision||'pending',
       lease_status:s.leaseStatus||'not_sent', notes:s.notes||'' };
   });
-  var scrUpdate = screenings.filter(function(s){ return !!s.id; }).map(function(s){
+  var toUpdate = screenings.filter(function(s){ return !!s.id; }).map(function(s){
     return { id:s.id, name:s.name||'', email:s.email||'', phone:s.phone||'',
       property_id:s.property||null, request_num:s.requestNum||'',
       date:s.date||null, status:s.status||'sent', decision:s.decision||'pending',
       lease_status:s.leaseStatus||'not_sent', notes:s.notes||'' };
   });
   var res = {error:null};
-  if(scrInsert.length) res = await supabaseClient.from('screenings').insert(scrInsert);
-  if(!res.error && scrUpdate.length) res = await supabaseClient.from('screenings').upsert(scrUpdate, {onConflict:'id'});
-  if(res.error){ console.error('Screening save error:', res.error); showToast('Save failed: '+res.error.message); return; }
+  if(toInsert.length) res = await supabaseClient.from('screenings').insert(toInsert);
+  if(!res.error && toUpdate.length) res = await supabaseClient.from('screenings').upsert(toUpdate,{onConflict:'id'});
+  if(res.error){ showToast('Screening save failed: '+res.error.message); return; }
   var r = await supabaseClient.from('screenings').select('*').order('created_at',{ascending:false});
-  if(!r.error && r.data) { screenings = r.data.map(mapScreeningRow); renderScreenings(); }
+  if(!r.error && r.data){ screenings = r.data.map(mapScreeningRow); renderScreenings(); }
+  showToast('Screening saved ✓');
 }
+
 
 function mapScreeningRow(r) {
   return {
