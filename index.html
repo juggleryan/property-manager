@@ -4185,7 +4185,7 @@ function saveWaitlistToSupabase() {
   if(!supabaseReady || isDemoMode) return;
   // Store as a single JSON record in a settings-like table
   // Use localStorage as primary, sync each entry as needed
-  localStorage.setItem('pm_waitlist', JSON.stringify(waitlist));
+  
   // Sync to Supabase via a dedicated table
   supabaseClient.from('waitlist').upsert(
     waitlist.map(function(w, i) {
@@ -4207,7 +4207,7 @@ function saveWaitlistToSupabase() {
       supabaseClient.from('waitlist').select('*').order('added',{ascending:false}).then(function(r) {
         if(!r.error && r.data) {
           waitlist = r.data.map(mapWaitlistRow);
-          localStorage.setItem('pm_waitlist', JSON.stringify(waitlist));
+          
           renderWaitlist();
         }
       });
@@ -4227,17 +4227,9 @@ function mapWaitlistRow(r) {
 }
 
 async function loadWaitlist() {
-  // Try localStorage first
-  var saved = JSON.parse(localStorage.getItem('pm_waitlist') || '[]');
-  waitlist = saved;
-  // Then load from Supabase
-  if(supabaseReady) {
-    var {data, error} = await supabaseClient.from('waitlist').select('*').order('added',{ascending:false});
-    if(!error && data && data.length) {
-      waitlist = data.map(mapWaitlistRow);
-      localStorage.setItem('pm_waitlist', JSON.stringify(waitlist));
-    }
-  }
+  if(!supabaseReady){ renderWaitlist(); return; }
+  var {data, error} = await supabaseClient.from('waitlist').select('*').order('added',{ascending:false});
+  if(!error && data) waitlist = data.map(mapWaitlistRow);
   renderWaitlist();
 }
 
@@ -4283,7 +4275,7 @@ async function deleteWaitlistEntry(idx) {
     if(error){ showToast('Delete failed: ' + error.message); return; }
   }
   waitlist.splice(idx, 1);
-  localStorage.setItem('pm_waitlist', JSON.stringify(waitlist));
+  
   renderWaitlist();
   showToast('Prospect removed.');
 }
@@ -4385,32 +4377,22 @@ function renderWaitlist() {
 // ── SCREENING ──
 var screenings = [];
 
-function saveScreeningsToSupabase() {
+async function saveScreeningsToSupabase() {
   if(!supabaseReady || isDemoMode) return;
-  localStorage.setItem('pm_screenings', JSON.stringify(screenings));
-  supabaseClient.from('screenings').upsert(
-    screenings.map(function(s) {
-      var row = {
-        name: s.name||'', email: s.email||'', phone: s.phone||'',
-        property_id: s.property||null, request_num: s.requestNum||'',
-        date: s.date||null, status: s.status||'sent', decision: s.decision||'pending',
-        lease_status: s.leaseStatus||'not_sent', notes: s.notes||''
-      };
-      if(s.id) row.id = s.id;
-      return row;
-    }), {onConflict:'id'}
-  ).then(function(res) {
-    if(res.error) console.error('Screening sync error:', res.error);
-    else {
-      supabaseClient.from('screenings').select('*').order('created_at',{ascending:false}).then(function(r) {
-        if(!r.error && r.data) {
-          screenings = r.data.map(mapScreeningRow);
-          localStorage.setItem('pm_screenings', JSON.stringify(screenings));
-          renderScreenings();
-        }
-      });
-    }
+  var rows = screenings.map(function(s) {
+    var row = {
+      name: s.name||'', email: s.email||'', phone: s.phone||'',
+      property_id: s.property||null, request_num: s.requestNum||'',
+      date: s.date||null, status: s.status||'sent', decision: s.decision||'pending',
+      lease_status: s.leaseStatus||'not_sent', notes: s.notes||''
+    };
+    if(s.id) row.id = s.id;
+    return row;
   });
+  var res = await supabaseClient.from('screenings').upsert(rows, {onConflict:'id'});
+  if(res.error){ console.error('Screening save error:', res.error); showToast('Save failed: '+res.error.message); return; }
+  var r = await supabaseClient.from('screenings').select('*').order('created_at',{ascending:false});
+  if(!r.error && r.data) { screenings = r.data.map(mapScreeningRow); renderScreenings(); }
 }
 
 function mapScreeningRow(r) {
@@ -4424,15 +4406,9 @@ function mapScreeningRow(r) {
 }
 
 async function loadScreenings() {
-  var saved = JSON.parse(localStorage.getItem('pm_screenings') || '[]');
-  screenings = saved;
-  if(supabaseReady) {
-    var {data, error} = await supabaseClient.from('screenings').select('*').order('created_at',{ascending:false});
-    if(!error && data) {
-      screenings = data.map(mapScreeningRow);
-      localStorage.setItem('pm_screenings', JSON.stringify(screenings));
-    }
-  }
+  if(!supabaseReady){ renderScreenings(); return; }
+  var {data, error} = await supabaseClient.from('screenings').select('*').order('created_at',{ascending:false});
+  if(!error && data) screenings = data.map(mapScreeningRow);
   renderScreenings();
 }
 
@@ -4477,7 +4453,7 @@ async function deleteScreening(idx) {
     if(error){ showToast('Delete failed: ' + error.message); return; }
   }
   screenings.splice(idx, 1);
-  localStorage.setItem('pm_screenings', JSON.stringify(screenings));
+  
   renderScreenings();
   showToast('Screening deleted.');
 }
