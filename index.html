@@ -1832,7 +1832,7 @@ async function loadFromSupabase(){
         notes:r.notes||'', outcome:r.outcome||'Pending'
       }));
     }
-    // Load loans from Supabase
+    // Load loans
     var loansRes = await supabaseClient.from('loans').select('*').order('created_at',{ascending:true});
     if(loansRes.error) throw loansRes.error;
     if(loansRes.data && loansRes.data.length){
@@ -1846,6 +1846,13 @@ async function loadFromSupabase(){
       }));
       saveLoans();
     }
+    // Load waitlist
+    var wlRes = await supabaseClient.from('waitlist').select('*').order('added',{ascending:false});
+    if(!wlRes.error && wlRes.data) waitlist = wlRes.data.map(mapWaitlistRow);
+    // Load screenings
+    var scrRes = await supabaseClient.from('screenings').select('*').order('created_at',{ascending:false});
+    if(!scrRes.error && scrRes.data) screenings = scrRes.data.map(mapScreeningRow);
+
     saveLocal(); render(); setSyncStatus('ok');
     showToast('Loaded from Supabase ✓');
   } catch(e) {
