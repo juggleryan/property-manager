@@ -541,7 +541,13 @@ function skipSetup(){
           </div>
         </div>
         <!-- TAX ALERT BANNER -->
-        <div id="tax-alert-banner" style="display:none;"></div>
+        <div id="tax-alert-wrapper" style="margin-bottom:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;" id="tax-alert-header" style="display:none;">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Tax alerts</div>
+            <button onclick="toggleTaxAlerts()" id="tax-toggle-btn" class="btn btn-xs btn-secondary" style="font-size:10px;">Hide</button>
+          </div>
+          <div id="tax-alert-banner" style="display:none;"></div>
+        </div>
 
         <div class="metrics">
           <div class="metric c-green"><div class="metric-label">Collected this month</div><div class="metric-value green" id="m-collected">$0</div><div class="metric-sub" id="m-collected-sub">of $0 expected</div></div>
@@ -594,6 +600,7 @@ function skipSetup(){
           <button class="tab" onclick="detailTab('history',this)">Payment history</button>
           <button class="tab" onclick="detailTab('notes',this)">Notes</button>
           <button class="tab" onclick="detailTab('notices',this)">Legal notices</button>
+  <button class="tab" onclick="detailTab('docs',this)">Documents</button>
         </div>
         <div id="detail-overview">
           <div class="detail-grid" id="detail-stats"></div>
@@ -617,7 +624,16 @@ function skipSetup(){
             </div>
           </div>
         </div>
-        <div id="detail-notices" style="display:none;">
+        <div id="detail-docs" style="display:none;">
+        <div style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:13px;font-weight:600;">Property documents</div>
+          <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            📎 Upload <input type="file" id="prop-doc-upload" style="display:none;" onchange="uploadPropDoc(event)">
+          </label>
+        </div>
+        <div id="prop-docs-list"></div>
+      </div>
+      <div id="detail-notices" style="display:none;">
           <div class="card">
             <div class="card-header"><div class="card-title">Legal notices</div>
               <button class="btn btn-sm btn-primary" onclick="openNoticeModal()">+ Serve notice</button>
@@ -1685,7 +1701,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:p.type==='land'?0:650,mortgage:0,paid:0,
+    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],propDocs:[],assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:p.type==='land'?0:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1729,7 +1745,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],propDocs:[],assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1999,7 +2015,7 @@ function matchTenant(text){
 }
 
 // ══ NAVIGATION ══
-function navTo(pageId,btn,skipHash){
+function navTo(pageId,btn,skipHash,keepFilter){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   const pg=document.getElementById('page-'+pageId);
@@ -2012,7 +2028,7 @@ function navTo(pageId,btn,skipHash){
   if(pageId==='documents'){loadAllDocs();}
   if(pageId==='waitlist'){loadWaitlist();}
   if(pageId==='screening'){loadScreenings();}
-  if(pageId==='all-props'){activeFilter='all';document.getElementById('props-heading').textContent='All properties';renderPropsTable();}
+  if(pageId==='all-props'){if(!keepFilter){activeFilter='all';document.getElementById('props-heading').textContent='All properties';}renderPropsTable();}
   if(pageId==='bills')renderBills();
   if(pageId==='leases')renderLeases();
   if(pageId==='payments')renderPayLog();
@@ -2025,7 +2041,7 @@ function navToFilter(f,btn){
   activeFilter=f;
   const labels={late:'Late / overdue',current:'Current',vacant:'Vacant',rv:'RV sites',house:'Houses',land:'Land'};
   document.getElementById('props-heading').textContent=labels[f]||'Properties';
-  navTo('all-props',btn,true);
+  navTo('all-props',btn,true,true);
   window.location.hash='all-props';
   renderPropsTable();
   document.getElementById('props-sub').textContent=filteredSites().length+' propert'+(filteredSites().length!==1?'ies':'y');
@@ -2042,7 +2058,7 @@ function openDetail(idx){
   renderDetailOverview(idx);
 }
 function detailTab(tab,btn){
-  ['overview','history','notes','notices'].forEach(t=>{
+  ['overview','history','notes','notices','docs'].forEach(t=>{
     const el=document.getElementById('detail-'+t);if(el)el.style.display=t===tab?'block':'none';
   });
   document.querySelectorAll('#page-prop-detail .tab').forEach(b=>b.classList.remove('active'));
@@ -2050,6 +2066,7 @@ function detailTab(tab,btn){
   if(tab==='history')renderDetailHistory(detailIdx);
   if(tab==='notes')renderNotes(detailIdx);
   if(tab==='notices')renderDetailNotices(detailIdx);
+  if(tab==='docs')renderPropDocs(detailIdx);
 }
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('mobile-open');
@@ -2084,6 +2101,14 @@ function getTaxStatus(s) {
   return 'paid';
 }
 
+var taxAlertsVisible = true;
+function toggleTaxAlerts() {
+  taxAlertsVisible = !taxAlertsVisible;
+  var banner = document.getElementById('tax-alert-banner');
+  var btn = document.getElementById('tax-toggle-btn');
+  if(banner) banner.style.display = taxAlertsVisible ? 'block' : 'none';
+  if(btn) btn.textContent = taxAlertsVisible ? 'Hide' : 'Show';
+}
 function renderTaxAlerts(){
   var banner = document.getElementById('tax-alert-banner');
   if(!banner) return;
@@ -2142,7 +2167,11 @@ function renderTaxAlerts(){
   var order = {overdue:0,upcoming:1,unpaid:2};
   alerts.sort(function(a,b){return (order[a.type]||2)-(order[b.type]||2);});
 
-  banner.style.display='block';
+  banner.style.display = taxAlertsVisible ? 'block' : 'none';
+  var hdr = document.getElementById('tax-alert-header');
+  if(hdr) hdr.style.display = 'flex';
+  var btn = document.getElementById('tax-toggle-btn');
+  if(btn) btn.textContent = taxAlertsVisible ? 'Hide' : 'Show';
   banner.innerHTML = alerts.map(function(a) {
     var color = a.type==='overdue'?'var(--red)':a.type==='upcoming'?'var(--amber)':'var(--text3)';
     var bgCls = a.type==='overdue'?'overdue':'';
@@ -4851,6 +4880,87 @@ function renderMortgageHistory(payments) {
         '</tr>';
     }).join('') +
     '</tbody></table>';
+}
+
+// PROPERTY DOCUMENTS
+async function uploadPropDoc(e) {
+  var file = e.target.files[0];
+  if(!file || detailIdx === null) return;
+  if(!supabaseReady){ showToast('Supabase not connected.'); return; }
+  var label = document.getElementById('prop-doc-upload').parentElement;
+  label.textContent = '⏳ Uploading...';
+  var s = sites[detailIdx];
+  var path = 'prop_' + s.id + '_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  var {data, error} = await supabaseClient.storage.from('property-documents').upload(path, file);
+  label.innerHTML = '📎 Upload <input type="file" id="prop-doc-upload" style="display:none;" onchange="uploadPropDoc(event)">';
+  if(error){ showToast('Upload failed: ' + error.message); return; }
+  if(!s.propDocs) s.propDocs = [];
+  s.propDocs.push({ path: path, name: file.name, size: file.size, uploaded: new Date().toISOString() });
+  autoSave();
+  renderPropDocs(detailIdx);
+  showToast('✓ ' + file.name + ' uploaded');
+  e.target.value = '';
+}
+
+async function previewPropDoc(path, name) {
+  var {data, error} = await supabaseClient.storage.from('property-documents').createSignedUrl(path, 3600);
+  if(error){ showToast('Could not load file: ' + error.message); return; }
+  var ext = name.split('.').pop().toLowerCase();
+  var canPreview = ['pdf','jpg','jpeg','png','gif','webp'].indexOf(ext) >= 0;
+  document.getElementById('doc-preview-title').textContent = name;
+  document.getElementById('doc-preview-download').href = data.signedUrl;
+  document.getElementById('doc-preview-download').download = name;
+  if(canPreview) {
+    document.getElementById('doc-preview-frame').src = data.signedUrl;
+    document.getElementById('doc-preview-frame').style.display = 'block';
+    document.getElementById('doc-preview-fallback').style.display = 'none';
+  } else {
+    document.getElementById('doc-preview-frame').src = '';
+    document.getElementById('doc-preview-frame').style.display = 'none';
+    document.getElementById('doc-preview-fallback').style.display = 'block';
+    document.getElementById('doc-preview-filename').textContent = name;
+    document.getElementById('doc-fallback-download').href = data.signedUrl;
+  }
+  document.getElementById('doc-preview-overlay').classList.add('open');
+}
+
+async function deletePropDoc(siteIdx, docIdx) {
+  if(!confirm('Delete this document permanently?')) return;
+  var s = sites[siteIdx];
+  var doc = s.propDocs[docIdx];
+  if(supabaseReady) {
+    var {error} = await supabaseClient.storage.from('property-documents').remove([doc.path]);
+    if(error){ showToast('Delete failed: ' + error.message); return; }
+  }
+  s.propDocs.splice(docIdx, 1);
+  autoSave();
+  renderPropDocs(siteIdx);
+  showToast('Document deleted.');
+}
+
+function renderPropDocs(idx) {
+  var el = document.getElementById('prop-docs-list');
+  if(!el) return;
+  var s = sites[idx];
+  var docs = s.propDocs || [];
+  if(!docs.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic;padding:8px 0;">No documents uploaded yet.</div>';
+    return;
+  }
+  el.innerHTML = docs.map(function(doc, i) {
+    var uploaded = doc.uploaded ? new Date(doc.uploaded).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+    var ext = doc.name.split('.').pop().toLowerCase();
+    var canPreview = ['pdf','jpg','jpeg','png','gif','webp'].indexOf(ext) >= 0;
+    return '<div class="loan-doc-item" style="margin-bottom:6px;">' +
+      '<span class="loan-doc-icon">' + docIcon(doc.name) + '</span>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div class="loan-doc-name" title="' + doc.name + '">' + doc.name + '</div>' +
+        '<div style="font-size:10px;color:var(--text3);margin-top:2px;">' + fmtBytes(doc.size) + (uploaded ? ' · ' + uploaded : '') + '</div>' +
+      '</div>' +
+      '<button class="btn btn-xs ' + (canPreview ? 'btn-primary' : 'btn-secondary') + '" onclick="previewPropDoc(' + JSON.stringify(doc.path) + ',' + JSON.stringify(doc.name) + ')">' + (canPreview ? '👁 Preview' : '↓ Download') + '</button>' +
+      '<button class="btn btn-xs btn-danger" onclick="deletePropDoc(' + idx + ',' + i + ')">✕</button>' +
+      '</div>';
+  }).join('');
 }
 
 // UTILS
