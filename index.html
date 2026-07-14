@@ -4971,6 +4971,11 @@ function renderPropDocs(idx) {
   }).join('');
 }
 
+function openDetailById(siteId) {
+  var idx = sites.findIndex(function(s){ return s.id === siteId; });
+  if(idx >= 0) openDetail(idx);
+}
+
 // UTILS
 function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast(`Copied: "${t}"`));}
 function showToast(msg){
