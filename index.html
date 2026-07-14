@@ -2134,17 +2134,17 @@ function renderTaxAlerts(){
 
       if(daysUntil < 0) {
         alerts.push({type:'overdue', icon:'🚨', days:Math.abs(daysUntil),
-          title:s.name+' — '+td.fullLabel+' property tax OVERDUE',
+          title:(s.name||s.addr||'Unknown property')+' — '+td.fullLabel+' property tax OVERDUE',
           sub:'Was due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
           taxAmt:s.taxAmt/2, name:s.name, addr:s.addr||'', parcel:s.parcel||''});
       } else if(daysUntil<=60) {
         alerts.push({type:'upcoming', icon:'⚠️', days:daysUntil,
-          title:s.name+' — '+td.fullLabel+' tax due in '+daysUntil+' days',
+          title:(s.name||s.addr||'Unknown property')+' — '+td.fullLabel+' tax due in '+daysUntil+' days',
           sub:'Due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
           taxAmt:s.taxAmt/2, name:s.name, addr:s.addr||'', parcel:s.parcel||''});
       } else {
         alerts.push({type:'unpaid', icon:'📋', days:daysUntil,
-          title:s.name+' — '+td.fullLabel+' property tax unpaid',
+          title:(s.name||s.addr||'Unknown property')+' — '+td.fullLabel+' property tax unpaid',
           sub:'Due '+dueDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+' ('+daysUntil+' days)',
           taxAmt:s.taxAmt/2, name:s.name, addr:s.addr||'', parcel:s.parcel||''});
       }
@@ -4902,6 +4902,12 @@ async function uploadPropDoc(e) {
   e.target.value = '';
 }
 
+async function previewPropDocByIdx(siteIdx, docIdx) {
+  var s = sites[siteIdx];
+  if(!s || !s.propDocs || !s.propDocs[docIdx]) return;
+  var doc = s.propDocs[docIdx];
+  await previewPropDoc(doc.path, doc.name);
+}
 async function previewPropDoc(path, name) {
   var {data, error} = await supabaseClient.storage.from('property-documents').createSignedUrl(path, 3600);
   if(error){ showToast('Could not load file: ' + error.message); return; }
@@ -4951,14 +4957,15 @@ function renderPropDocs(idx) {
     var uploaded = doc.uploaded ? new Date(doc.uploaded).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
     var ext = doc.name.split('.').pop().toLowerCase();
     var canPreview = ['pdf','jpg','jpeg','png','gif','webp'].indexOf(ext) >= 0;
+    var safeI = i;
     return '<div class="loan-doc-item" style="margin-bottom:6px;">' +
       '<span class="loan-doc-icon">' + docIcon(doc.name) + '</span>' +
       '<div style="flex:1;min-width:0;">' +
         '<div class="loan-doc-name" title="' + doc.name + '">' + doc.name + '</div>' +
         '<div style="font-size:10px;color:var(--text3);margin-top:2px;">' + fmtBytes(doc.size) + (uploaded ? ' · ' + uploaded : '') + '</div>' +
       '</div>' +
-      '<button class="btn btn-xs ' + (canPreview ? 'btn-primary' : 'btn-secondary') + '" onclick="previewPropDoc(' + JSON.stringify(doc.path) + ',' + JSON.stringify(doc.name) + ')">' + (canPreview ? '👁 Preview' : '↓ Download') + '</button>' +
-      '<button class="btn btn-xs btn-danger" onclick="deletePropDoc(' + idx + ',' + i + ')">✕</button>' +
+      '<button class="btn btn-xs ' + (canPreview ? 'btn-primary' : 'btn-secondary') + '" onclick="previewPropDocByIdx(' + idx + ',' + safeI + ')">' + (canPreview ? '👁 Preview' : '↓ Download') + '</button>' +
+      '<button class="btn btn-xs btn-danger" onclick="deletePropDoc(' + idx + ',' + safeI + ')">✕</button>' +
       '</div>';
   }).join('');
 }
