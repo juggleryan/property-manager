@@ -1851,7 +1851,8 @@ async function loadFromSupabase(){
         status:r.status||'vacant', lease:r.lease_file||null, yard:r.yard||'',
         taxAmt:parseFloat(r.tax_amt)||0, tax1:r.tax_h1||'', tax2:r.tax_h2||'', taxNotes:r.tax_notes||'',
         purchaseDate:r.purchase_date||'', purchasePrice:parseFloat(r.purchase_price)||0,
-        currentValue:parseFloat(r.current_value)||0, notes:r.notes||[]
+        currentValue:parseFloat(r.current_value)||0, notes:r.notes||[],
+        mortgagePayments:r.mortgage_payments||[], propDocs:r.prop_docs||[]
       }));
     }
     if(paymentsRes.data && paymentsRes.data.length){
@@ -1916,7 +1917,7 @@ async function saveToSupabase(){
     // Upsert sites
     const siteData = sites.map((s, i) => ({
       id: s.id, name: s.name, addr: s.addr, type: s.type, state: s.state,
-      parcel: s.parcel||'', size: s.size||'', legal_desc: s.legalDesc||'', mortgage_payments: s.mortgagePayments||[], amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'', assessed_value: s.assessedValue||0, assessed_year: s.assessedYear||'', assessed_history: s.assessedHistory||[],
+      parcel: s.parcel||'', size: s.size||'', legal_desc: s.legalDesc||'', mortgage_payments: s.mortgagePayments||[], prop_docs: s.propDocs||[], amp_url: s.ampUrl||'', atip_url: s.atipUrl||'', claude_links: s.claudeLinks||'', assessed_value: s.assessedValue||0, assessed_year: s.assessedYear||'', assessed_history: s.assessedHistory||[],
       loan_amt: s.loanAmt||0, loan_term: s.loanTerm||0,
       loan_rate: s.loanRate||0, loan_balance: s.loanBalance||0, lender: s.lender||'',
       deposit_amt: s.depositAmt||0, deposit_date: s.depositDate||null,
