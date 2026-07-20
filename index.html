@@ -3636,7 +3636,7 @@ function initLoans() {
   renderLoans();
 }
 
-function saveLoans() {
+async function saveLoans() {
   localStorage.setItem('pm_loans', JSON.stringify(loans));
   // Auto-sync loans to Supabase
   if(!supabaseReady || isDemoMode) return;
