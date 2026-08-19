@@ -4976,6 +4976,30 @@ function openDetailById(siteId) {
   if(idx >= 0) openDetail(idx);
 }
 
+// COPY APPLICATION LINK
+function copyApplyLink() {
+  if(detailIdx === null) return;
+  var s = sites[detailIdx];
+  var base = window.location.origin + window.location.pathname.replace('index.html','') + 'apply.html';
+  var url = base + '?property=' + encodeURIComponent(s.id);
+  navigator.clipboard.writeText(url).then(function() {
+    var btn = document.getElementById('copy-apply-btn');
+    var orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = 'var(--green)';
+    setTimeout(function(){ btn.textContent = orig; btn.style.color = ''; }, 2000);
+  }).catch(function() {
+    // Fallback for browsers without clipboard API
+    var ta = document.createElement('textarea');
+    ta.value = url;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Apply link copied: ' + url);
+  });
+}
+
 // UTILS
 function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast(`Copied: "${t}"`));}
 function showToast(msg){
