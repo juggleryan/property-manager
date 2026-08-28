@@ -589,8 +589,9 @@ async function submitApp(e) {
     document.getElementById('rv-state').value
   ].filter(Boolean).join(' | ') : '';
 
-  var propId = propertyData ? propertyData.id : (new URLSearchParams(window.location.search).get('property') || '');
-  var propName = propertyData ? (propertyData.nickname || propertyData.name) : (new URLSearchParams(window.location.search).get('name') || '');
+  var params2 = new URLSearchParams(window.location.search);
+  var propId = propertyData ? propertyData.id : (params2.get('property') || params2.get('p') || '');
+  var propName = propertyData ? (propertyData.nickname || propertyData.name) : (params2.get('name') || propId || 'Not specified');
 
   // Build notes string for waitlist
   var notes = [
@@ -665,6 +666,11 @@ async function submitApp(e) {
       notes: notes.substring(0, 2000),
       submitted_at: new Date().toLocaleString()
     };
+    // Format movein date nicely
+    if(templateParams.movein_date) {
+      var d = new Date(templateParams.movein_date + 'T12:00:00');
+      templateParams.movein_date = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    }
     await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, templateParams);
   } catch(emailErr) {
     // Don't fail on email error - application is already saved
