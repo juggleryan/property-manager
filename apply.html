@@ -187,6 +187,115 @@
           <label>Names of all adult occupants (18+)</label>
           <textarea id="adult-names" placeholder="List full names of all adult occupants who will reside at the property" rows="2"></textarea>
         </div>
+
+        <!-- CO-APPLICANT SECTION -->
+        <div id="co-applicant-section" style="display:none;margin-top:16px;">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#1e40af;">
+            <strong>Co-Applicant Information</strong> — Both applicants are equally responsible for the lease.
+          </div>
+          <div class="grid-2">
+            <div class="f-group">
+              <label>Co-applicant first name <span class="req">*</span></label>
+              <input type="text" id="co-first-name" placeholder="First name">
+            </div>
+            <div class="f-group">
+              <label>Co-applicant last name <span class="req">*</span></label>
+              <input type="text" id="co-last-name" placeholder="Last name">
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:14px;">
+            <div class="f-group">
+              <label>Co-applicant email</label>
+              <input type="email" id="co-email" placeholder="email@example.com">
+            </div>
+            <div class="f-group">
+              <label>Co-applicant phone</label>
+              <input type="tel" id="co-phone" placeholder="(253) 555-0000">
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:14px;">
+            <div class="f-group">
+              <label>Co-applicant date of birth</label>
+              <input type="date" id="co-dob">
+            </div>
+            <div class="f-group">
+              <label>Relationship to primary applicant</label>
+              <select id="co-relationship">
+                <option value="">Select...</option>
+                <option value="spouse">Spouse</option>
+                <option value="partner">Domestic partner</option>
+                <option value="roommate">Roommate</option>
+                <option value="family">Family member</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;font-size:13px;font-weight:600;color:#374151;margin-bottom:10px;">Co-applicant employment & income</div>
+          <div class="grid-2">
+            <div class="f-group">
+              <label>Employment status</label>
+              <select id="co-employment-status" onchange="toggleCoEmployment()">
+                <option value="">Select...</option>
+                <option value="employed-full">Employed full-time</option>
+                <option value="employed-part">Employed part-time</option>
+                <option value="self-employed">Self-employed</option>
+                <option value="retired">Retired</option>
+                <option value="social-security">Social Security / Disability</option>
+                <option value="unemployed">Currently unemployed</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="f-group">
+              <label>Monthly gross income ($)</label>
+              <input type="number" id="co-monthly-income" min="0" step="100" placeholder="e.g. 3500">
+            </div>
+          </div>
+          <div id="co-employer-section" style="display:none;margin-top:14px;">
+            <div class="grid-2">
+              <div class="f-group">
+                <label>Employer name</label>
+                <input type="text" id="co-employer-name" placeholder="Company name">
+              </div>
+              <div class="f-group">
+                <label>Job title</label>
+                <input type="text" id="co-job-title" placeholder="Your role">
+              </div>
+            </div>
+            <div class="grid-2" style="margin-top:14px;">
+              <div class="f-group">
+                <label>Employer phone</label>
+                <input type="tel" id="co-employer-phone" placeholder="(253) 555-0000">
+              </div>
+              <div class="f-group">
+                <label>Length of employment</label>
+                <input type="text" id="co-employment-duration" placeholder="e.g. 2 years">
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;font-size:13px;font-weight:600;color:#374151;margin-bottom:10px;">Co-applicant background disclosure</div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="co-eviction-history" value="yes">
+            <label for="co-eviction-history">Co-applicant has been evicted or had eviction proceedings in the past 7 years.</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="co-broken-lease" value="yes">
+            <label for="co-broken-lease">Co-applicant has broken a lease or left a rental owing money in the past 5 years.</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="co-criminal-history" value="yes">
+            <label for="co-criminal-history">Co-applicant has a criminal conviction.</label>
+          </div>
+          <div class="f-group" style="margin-top:12px;">
+            <label>Co-applicant background explanation (if applicable)</label>
+            <textarea id="co-background-explain" placeholder="Additional context..." rows="2"></textarea>
+          </div>
+
+          <div style="margin-top:14px;" class="notice">
+            Co-applicant will also be subject to a credit, background, and eviction screening through TransUnion SmartMove.
+          </div>
+        </div>
         <div class="section-divider"></div>
         <div class="f-group">
           <label>Do you have pets? <span class="req">*</span></label>
@@ -526,6 +635,22 @@ function showPropertyBanner(name, addr, type) {
   document.getElementById('rv-section').style.display = isRV ? 'block' : 'none';
 }
 
+function toggleCoApplicant(val) {
+  var show = parseInt(val) >= 2;
+  document.getElementById('co-applicant-section').style.display = show ? 'block' : 'none';
+  // Make co-applicant fields required when shown
+  ['co-first-name','co-last-name'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el) el.required = show;
+  });
+}
+
+function toggleCoEmployment() {
+  var val = document.getElementById('co-employment-status').value;
+  var show = ['employed-full','employed-part','self-employed'].includes(val);
+  document.getElementById('co-employer-section').style.display = show ? 'block' : 'none';
+}
+
 function togglePets() {
   var val = document.getElementById('has-pets').value;
   document.getElementById('pet-details').style.display = val === 'yes' ? 'block' : 'none';
@@ -589,6 +714,28 @@ async function submitApp(e) {
   var referral = document.getElementById('referral-source').value;
   var extraNotes = document.getElementById('extra-notes').value.trim();
 
+  // Co-applicant data
+  var adults2 = parseInt(document.getElementById('adult-count').value)||1;
+  var hasCoApp = adults2 >= 2;
+  var coData = '';
+  if(hasCoApp) {
+    var coFirst = document.getElementById('co-first-name').value.trim();
+    var coLast = document.getElementById('co-last-name').value.trim();
+    coData = [
+      'CO-APPLICANT: ' + coFirst + ' ' + coLast,
+      'Co-email: ' + document.getElementById('co-email').value.trim(),
+      'Co-phone: ' + document.getElementById('co-phone').value.trim(),
+      'Co-DOB: ' + document.getElementById('co-dob').value,
+      'Co-relationship: ' + document.getElementById('co-relationship').value,
+      'Co-employment: ' + document.getElementById('co-employment-status').value,
+      'Co-income: $' + (document.getElementById('co-monthly-income').value||'0'),
+      'Co-employer: ' + (document.getElementById('co-employer-name').value.trim()||'N/A'),
+      'Co-eviction: ' + (document.getElementById('co-eviction-history').checked?'Yes':'No'),
+      'Co-criminal: ' + (document.getElementById('co-criminal-history').checked?'Yes':'No'),
+      document.getElementById('co-background-explain').value.trim() ? 'Co-background notes: ' + document.getElementById('co-background-explain').value.trim() : ''
+    ].filter(Boolean).join(' | ');
+  }
+
   var rvInfo = isRV ? [
     document.getElementById('rv-make').value,
     document.getElementById('rv-model').value,
@@ -603,6 +750,7 @@ async function submitApp(e) {
   var propName = propertyData ? (propertyData.nickname || propertyData.name) : (params2.get('name') || propId || 'Not specified');
 
   // Build notes string for waitlist
+  var coAppLine = hasCoApp ? coData : '';
   var notes = [
     'DOB: ' + dob,
     'Current addr: ' + (document.getElementById('current-addr').value || 'N/A'),
@@ -627,7 +775,8 @@ async function submitApp(e) {
     extraNotes ? 'Notes: ' + extraNotes : '',
     'Lease term pref: ' + (leaseTerm || 'Any'),
     'Applied via: rental application form',
-    'Applied on: ' + new Date().toLocaleString()
+    'Applied on: ' + new Date().toLocaleString(),
+    coAppLine
   ].filter(Boolean).join(' | ');
 
   // Save to Supabase waitlist table
@@ -661,7 +810,7 @@ async function submitApp(e) {
     var templateParams = {
       to_email: '1ryanchristensen@gmail.com',
       to_email2: 'brandyferber@gmail.com',
-      applicant_name: fullName,
+      applicant_name: fullName + (hasCoApp ? ' & ' + document.getElementById('co-first-name').value.trim() + ' ' + document.getElementById('co-last-name').value.trim() : ''),
       applicant_email: email,
       applicant_phone: phone,
       property_name: propName || 'Not specified',
@@ -680,7 +829,10 @@ async function submitApp(e) {
       var d = new Date(templateParams.movein_date + 'T12:00:00');
       templateParams.movein_date = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
     }
-    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, templateParams);
+    // Send to Ryan
+    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, {...templateParams, to_email: '1ryanchristensen@gmail.com'});
+    // Send to Brandy
+    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, {...templateParams, to_email: 'brandyferber@gmail.com'});
   } catch(emailErr) {
     // Don't fail on email error - application is already saved
     console.warn('Email notification failed:', emailErr);
