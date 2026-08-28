@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rental Application</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js" crossorigin></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -90,6 +90,14 @@
     <p>Thank you for applying. We have received your application and will review it shortly. You will be contacted within 2-3 business days. A credit, background, and eviction check may be required as part of our screening process.</p>
     <br>
     <p style="font-size:12px;color:#9ca3af;">Questions? Contact us directly.</p>
+    <div style="margin-top:1.5rem;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="window.location.reload()" class="submit-btn" style="width:auto;padding:12px 28px;font-size:14px;">
+        📋 Submit another application
+      </button>
+      <a href="/index.html" class="submit-btn" style="width:auto;padding:12px 28px;font-size:14px;background:#374151;text-decoration:none;display:inline-flex;align-items:center;">
+        🏠 Back to home
+      </a>
+    </div>
   </div>
 
   <!-- Application Form -->
@@ -460,13 +468,20 @@ const EMAILJS_KEY = 'yMtMxURljjHQMjT16';
 // Create a notification template in EmailJS for this - template below
 const EMAILJS_TEMPLATE = 'template_apply_notify';
 
-var supabase = null;
+var sbClient = null;
 var propertyData = null;
 var isRV = false;
 
 window.addEventListener('DOMContentLoaded', function() {
-  // Init Supabase
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // Init Supabase - same pattern as main app
+  console.log('window.supabase type:', typeof window.supabase);
+  if(window.supabase && window.supabase.createClient) {
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('sbClient ready:', !!sbClient);
+  } else {
+    console.error('Supabase library not loaded - window.supabase:', window.supabase);
+    alert('Database library failed to load. Please hard refresh (Ctrl+Shift+R) and try again.');
+  }
   // Init EmailJS
   emailjs.init(EMAILJS_KEY);
 
@@ -491,7 +506,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
 async function loadProperty(propId) {
   try {
-    var r = await supabase.from('sites').select('id,name,addr,type,nickname').eq('id', propId).single();
+    var r = await sbClient.from('sites').select('id,name,addr,type,nickname').eq('id', propId).single();
     if(r.data) {
       propertyData = r.data;
       showPropertyBanner(r.data.nickname || r.data.name, r.data.addr, r.data.type);
@@ -582,8 +597,9 @@ async function submitApp(e) {
     document.getElementById('rv-state').value
   ].filter(Boolean).join(' | ') : '';
 
-  var propId = propertyData ? propertyData.id : (new URLSearchParams(window.location.search).get('property') || '');
-  var propName = propertyData ? (propertyData.nickname || propertyData.name) : (new URLSearchParams(window.location.search).get('name') || '');
+  var params2 = new URLSearchParams(window.location.search);
+  var propId = propertyData ? propertyData.id : (params2.get('property') || params2.get('p') || '');
+  var propName = propertyData ? (propertyData.nickname || propertyData.name) : (params2.get('name') || propId || 'Not specified');
 
   // Build notes string for waitlist
   var notes = [
@@ -628,7 +644,8 @@ async function submitApp(e) {
       notes: notes,
       budget: 0
     };
-    var res = await supabase.from('waitlist').insert([row]);
+    if(!sbClient) throw new Error('Supabase not initialized');
+    var res = await sbClient.from('waitlist').insert([row]);
     if(res.error) throw res.error;
   } catch(err) {
     console.error('Supabase error:', err);
@@ -657,6 +674,11 @@ async function submitApp(e) {
       notes: notes.substring(0, 2000),
       submitted_at: new Date().toLocaleString()
     };
+    // Format movein date nicely
+    if(templateParams.movein_date) {
+      var d = new Date(templateParams.movein_date + 'T12:00:00');
+      templateParams.movein_date = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    }
     await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, templateParams);
   } catch(emailErr) {
     // Don't fail on email error - application is already saved
