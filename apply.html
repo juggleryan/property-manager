@@ -519,8 +519,8 @@ async function loadProperty(propId) {
 
 function showPropertyBanner(name, addr, type) {
   isRV = type === 'rv';
-  document.getElementById('banner-name').textContent = name || 'Rental Property';
-  document.getElementById('banner-addr').textContent = addr || '';
+  document.getElementById('banner-name').textContent = addr || name || 'Rental Property';
+  document.getElementById('banner-addr').textContent = '';
   document.getElementById('banner-icon').textContent = isRV ? '🚐' : (type === 'land' ? '🌿' : '🏡');
   document.getElementById('property-banner').style.display = 'flex';
   document.getElementById('rv-section').style.display = isRV ? 'block' : 'none';
