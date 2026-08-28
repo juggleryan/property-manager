@@ -7,54 +7,51 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js" crossorigin></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fa;color:#1a1d23;min-height:100vh;}
-  .header{background:#1a1d23;color:#fff;padding:20px 24px;display:flex;align-items:center;gap:14px;}
-  .header-icon{font-size:28px;}
-  .header-text h1{font-size:18px;font-weight:700;}
-  .header-text p{font-size:12px;color:#a0a8b4;margin-top:2px;}
-  .container{max-width:720px;margin:32px auto;padding:0 16px 80px;}
-  .card{background:#fff;border-radius:12px;border:1px solid #e4e6ea;margin-bottom:20px;overflow:hidden;}
-  .card-header{background:#f7f8fa;padding:14px 20px;border-bottom:1px solid #e4e6ea;display:flex;align-items:center;gap:10px;}
-  .card-header .icon{font-size:18px;}
-  .card-header h2{font-size:14px;font-weight:700;color:#1a1d23;}
-  .card-body{padding:20px;}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
-  .f-group{display:flex;flex-direction:column;gap:5px;}
-  label{font-size:12px;font-weight:600;color:#6b7280;}
-  label .req{color:#dc2626;}
-  input,select,textarea{border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:14px;color:#1a1d23;background:#fff;width:100%;outline:none;transition:border .15s;}
-  input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-  textarea{resize:vertical;min-height:80px;}
-  .section-divider{height:1px;background:#e4e6ea;margin:16px 0;}
-  .checkbox-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;}
-  .checkbox-row input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:#2563eb;}
-  .checkbox-row label{font-size:13px;color:#374151;font-weight:400;cursor:pointer;}
-  .notice{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;font-size:12px;color:#1e40af;line-height:1.7;margin-bottom:16px;}
-  .notice strong{font-weight:700;}
-  .notice.green{background:#f0fdf4;border-color:#bbf7d0;color:#166534;}
-  .notice.amber{background:#fffbeb;border-color:#fde68a;color:#92400e;}
-  .submit-btn{width:100%;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;transition:background .15s;margin-top:8px;}
-  .submit-btn:hover{background:#1d4ed8;}
-  .submit-btn:disabled{background:#93c5fd;cursor:not-allowed;}
-  .property-banner{background:#1a1d23;color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;}
-  .property-banner .icon{font-size:32px;}
-  .property-banner h2{font-size:16px;font-weight:700;}
-  .property-banner p{font-size:12px;color:#a0a8b4;margin-top:3px;}
-  .success-screen{text-align:center;padding:60px 20px;}
-  .success-screen .icon{font-size:64px;margin-bottom:16px;}
-  .success-screen h2{font-size:24px;font-weight:700;margin-bottom:8px;color:#166534;}
-  .success-screen p{color:#6b7280;font-size:14px;line-height:1.7;max-width:460px;margin:0 auto;}
-  .ehoa{background:#f8fafc;border:1px solid #e4e6ea;border-radius:8px;padding:14px 16px;font-size:11px;color:#6b7280;line-height:1.8;margin-top:16px;}
-  .ehoa strong{color:#1a1d23;}
-  .progress{display:flex;gap:6px;margin-bottom:24px;}
-  .progress-step{flex:1;height:4px;border-radius:2px;background:#e4e6ea;}
-  .progress-step.active{background:#2563eb;}
-  .progress-step.done{background:#16a34a;}
-  .field-error{font-size:11px;color:#dc2626;margin-top:3px;display:none;}
-  input.error,select.error,textarea.error{border-color:#dc2626;}
-  @media(max-width:600px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fa;color:#1a1d23;min-height:100vh;}
+.header{background:#1a1d23;color:#fff;padding:20px 24px;display:flex;align-items:center;gap:14px;}
+.header-icon{font-size:28px;}
+.header-text h1{font-size:18px;font-weight:700;}
+.header-text p{font-size:12px;color:#a0a8b4;margin-top:2px;}
+.container{max-width:720px;margin:32px auto;padding:0 16px 80px;}
+.card{background:#fff;border-radius:12px;border:1px solid #e4e6ea;margin-bottom:20px;overflow:hidden;}
+.card-header{background:#f7f8fa;padding:14px 20px;border-bottom:1px solid #e4e6ea;display:flex;align-items:center;gap:10px;}
+.card-header .icon{font-size:18px;}
+.card-header h2{font-size:14px;font-weight:700;color:#1a1d23;}
+.card-body{padding:20px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.f-group{display:flex;flex-direction:column;gap:5px;}
+label{font-size:12px;font-weight:600;color:#6b7280;}
+label .req{color:#dc2626;}
+input,select,textarea{border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:14px;color:#1a1d23;background:#fff;width:100%;outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+textarea{resize:vertical;min-height:80px;}
+.section-divider{height:1px;background:#e4e6ea;margin:16px 0;}
+.section-label{font-size:13px;font-weight:600;color:#374151;margin-bottom:10px;margin-top:4px;}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;}
+.checkbox-row input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:#2563eb;}
+.checkbox-row label{font-size:13px;color:#374151;font-weight:400;cursor:pointer;}
+.notice{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;font-size:12px;color:#1e40af;line-height:1.7;margin-bottom:16px;}
+.notice strong{font-weight:700;}
+.notice.green{background:#f0fdf4;border-color:#bbf7d0;color:#166534;}
+.notice.amber{background:#fffbeb;border-color:#fde68a;color:#92400e;}
+.notice.blue{background:#eff6ff;border-color:#bfdbfe;color:#1e40af;}
+.submit-btn{width:100%;background:#2563eb;color:#fff;border:none;border-radius:10px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;transition:background .15s;margin-top:8px;}
+.submit-btn:hover{background:#1d4ed8;}
+.submit-btn:disabled{background:#93c5fd;cursor:not-allowed;}
+.property-banner{background:#1a1d23;color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;}
+.property-banner .icon{font-size:32px;}
+.property-banner h2{font-size:16px;font-weight:700;}
+.property-banner p{font-size:12px;color:#a0a8b4;margin-top:3px;}
+.success-screen{text-align:center;padding:60px 20px;}
+.success-screen .icon{font-size:64px;margin-bottom:16px;}
+.success-screen h2{font-size:24px;font-weight:700;margin-bottom:8px;color:#166534;}
+.success-screen p{color:#6b7280;font-size:14px;line-height:1.7;max-width:460px;margin:0 auto;}
+.ehoa{background:#f8fafc;border:1px solid #e4e6ea;border-radius:8px;padding:14px 16px;font-size:11px;color:#6b7280;line-height:1.8;margin-top:16px;}
+.co-section{background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:18px;margin-top:16px;}
+.co-section .co-title{font-size:14px;font-weight:700;color:#1e40af;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+@media(max-width:600px){.grid-2,.grid-3{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -63,28 +60,24 @@
   <div class="header-icon">🏠</div>
   <div class="header-text">
     <h1>Rental Application</h1>
-    <p>Please complete all sections honestly and accurately · Questions: <a href="tel:2532234369" style="color:#60a5fa;">253.223.4369</a></p>
+    <p>Please complete all sections honestly and accurately &nbsp;·&nbsp; Questions: <a href="tel:2532234369" style="color:#60a5fa;">253.223.4369</a></p>
   </div>
 </div>
 
 <div class="container">
 
-  <!-- Property Banner -->
   <div class="property-banner" id="property-banner" style="display:none;">
     <div class="icon" id="banner-icon">🏡</div>
     <div>
-      <h2 id="banner-name">Loading property...</h2>
-      <p id="banner-addr"></p>
-    <p style="font-size:12px;color:#a0a8b4;margin-top:4px;">📞 Questions? Call or text <a href="tel:2532234369" style="color:#60a5fa;">253.223.4369</a></p>
+      <h2 id="banner-addr">Loading...</h2>
+      <p><a href="tel:2532234369" style="color:#60a5fa;">📞 253.223.4369</a></p>
     </div>
   </div>
 
-  <!-- Equal Housing Notice -->
   <div class="notice">
-    <strong>Equal Housing Opportunity.</strong> We are an equal housing opportunity provider. We do not discriminate on the basis of race, color, religion, sex, national origin, disability, familial status, sexual orientation, gender identity, veteran status, or any other protected class under applicable federal, state, or local law. All applicants are evaluated solely on qualifications and our standard rental criteria.
+    <strong>Equal Housing Opportunity.</strong> We do not discriminate on the basis of race, color, religion, sex, national origin, disability, familial status, sexual orientation, gender identity, veteran status, or any other protected class under applicable federal, state, or local law.
   </div>
 
-  <!-- Success Screen (hidden) -->
   <div class="success-screen" id="success-screen" style="display:none;">
     <div class="icon">✅</div>
     <h2>Application Submitted!</h2>
@@ -92,66 +85,36 @@
     <br>
     <p style="font-size:12px;color:#9ca3af;">Questions? Call or text <a href="tel:2532234369" style="color:#2563eb;">253.223.4369</a></p>
     <div style="margin-top:1.5rem;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-      <button onclick="window.location.reload()" class="submit-btn" style="width:auto;padding:12px 28px;font-size:14px;">
-        📋 Submit another application
-      </button>
-      <a href="/index.html" class="submit-btn" style="width:auto;padding:12px 28px;font-size:14px;background:#374151;text-decoration:none;display:inline-flex;align-items:center;">
-        🏠 Back to home
-      </a>
+      <button onclick="window.location.reload()" class="submit-btn" style="width:auto;padding:12px 28px;font-size:14px;">📋 Submit another application</button>
+      <a href="/index.html" class="submit-btn" style="width:auto;padding:12px 28px;font-size:14px;background:#374151;text-decoration:none;display:inline-flex;align-items:center;">🏠 Back to home</a>
     </div>
   </div>
 
-  <!-- Application Form -->
   <form id="app-form" onsubmit="submitApp(event)">
 
-    <!-- Section 1: Personal Info -->
+    <!-- SECTION 1: Primary Applicant -->
     <div class="card">
-      <div class="card-header"><span class="icon">👤</span><h2>Personal information</h2></div>
+      <div class="card-header"><span class="icon">👤</span><h2>Primary applicant</h2></div>
       <div class="card-body">
         <div class="grid-2">
-          <div class="f-group">
-            <label>First name <span class="req">*</span></label>
-            <input type="text" id="first-name" required placeholder="First name">
-          </div>
-          <div class="f-group">
-            <label>Last name <span class="req">*</span></label>
-            <input type="text" id="last-name" required placeholder="Last name">
-          </div>
+          <div class="f-group"><label>First name <span class="req">*</span></label><input type="text" id="first-name" required placeholder="First name"></div>
+          <div class="f-group"><label>Last name <span class="req">*</span></label><input type="text" id="last-name" required placeholder="Last name"></div>
         </div>
         <div class="section-divider"></div>
         <div class="grid-2">
-          <div class="f-group">
-            <label>Email address <span class="req">*</span></label>
-            <input type="email" id="app-email" required placeholder="your@email.com">
-          </div>
-          <div class="f-group">
-            <label>Phone number <span class="req">*</span></label>
-            <input type="tel" id="app-phone" required placeholder="(253) 555-0000">
-          </div>
+          <div class="f-group"><label>Email <span class="req">*</span></label><input type="email" id="app-email" required placeholder="your@email.com"></div>
+          <div class="f-group"><label>Phone <span class="req">*</span></label><input type="tel" id="app-phone" required placeholder="(253) 555-0000"></div>
         </div>
         <div class="section-divider"></div>
         <div class="grid-3">
-          <div class="f-group">
-            <label>Date of birth <span class="req">*</span></label>
-            <input type="date" id="app-dob" required>
-          </div>
-          <div class="f-group">
-            <label>Current address</label>
-            <input type="text" id="current-addr" placeholder="Street address">
-          </div>
-          <div class="f-group">
-            <label>How long at current address</label>
-            <input type="text" id="current-duration" placeholder="e.g. 2 years">
-          </div>
+          <div class="f-group"><label>Date of birth <span class="req">*</span></label><input type="date" id="app-dob" required></div>
+          <div class="f-group"><label>Current address</label><input type="text" id="current-addr" placeholder="Street address"></div>
+          <div class="f-group"><label>How long there</label><input type="text" id="current-duration" placeholder="e.g. 2 years"></div>
         </div>
         <div class="section-divider"></div>
         <div class="grid-2">
-          <div class="f-group">
-            <label>Desired move-in date <span class="req">*</span></label>
-            <input type="date" id="app-movein" required>
-          </div>
-          <div class="f-group">
-            <label>Lease term preference</label>
+          <div class="f-group"><label>Desired move-in date <span class="req">*</span></label><input type="date" id="app-movein" required></div>
+          <div class="f-group"><label>Lease term preference</label>
             <select id="app-lease-term">
               <option value="">No preference</option>
               <option value="month-to-month">Month-to-month</option>
@@ -164,62 +127,33 @@
       </div>
     </div>
 
-    <!-- Section 2: Occupants -->
+    <!-- SECTION 2: Occupants -->
     <div class="card">
       <div class="card-header"><span class="icon">👨‍👩‍👧</span><h2>Occupants & household</h2></div>
       <div class="card-body">
         <div class="grid-3">
-          <div class="f-group">
-            <label>Total occupants <span class="req">*</span></label>
-            <input type="number" id="occupant-count" required min="1" max="20" placeholder="1">
-          </div>
-          <div class="f-group">
-            <label>Adults (18+)</label>
-            <input type="number" id="adult-count" min="1" max="20" placeholder="1">
-          </div>
-          <div class="f-group">
-            <label>Children (under 18)</label>
-            <input type="number" id="child-count" min="0" max="20" placeholder="0">
-          </div>
+          <div class="f-group"><label>Total occupants <span class="req">*</span></label><input type="number" id="occupant-count" required min="1" max="20" placeholder="1"></div>
+          <div class="f-group"><label>Adults (18+) <span class="req">*</span></label><input type="number" id="adult-count" required min="1" max="20" placeholder="1" onchange="toggleCoApplicant(this.value)"></div>
+          <div class="f-group"><label>Children (under 18)</label><input type="number" id="child-count" min="0" max="20" placeholder="0"></div>
         </div>
         <div class="section-divider"></div>
-        <div class="f-group">
-          <label>Names of all adult occupants (18+)</label>
-          <textarea id="adult-names" placeholder="List full names of all adult occupants who will reside at the property" rows="2"></textarea>
-        </div>
+        <div class="f-group"><label>Names of all adult occupants</label><textarea id="adult-names" placeholder="List full names of all adults who will live at the property" rows="2"></textarea></div>
 
-        <!-- CO-APPLICANT SECTION -->
-        <div id="co-applicant-section" style="display:none;margin-top:16px;">
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#1e40af;">
-            <strong>Co-Applicant Information</strong> — Both applicants are equally responsible for the lease.
-          </div>
+        <!-- CO-APPLICANT -->
+        <div class="co-section" id="co-applicant-section" style="display:none;">
+          <div class="co-title">👥 Co-Applicant Information</div>
+          <div class="notice blue">Both applicants are equally responsible for the lease and will each be screened via TransUnion SmartMove.</div>
           <div class="grid-2">
-            <div class="f-group">
-              <label>Co-applicant first name <span class="req">*</span></label>
-              <input type="text" id="co-first-name" placeholder="First name">
-            </div>
-            <div class="f-group">
-              <label>Co-applicant last name <span class="req">*</span></label>
-              <input type="text" id="co-last-name" placeholder="Last name">
-            </div>
+            <div class="f-group"><label>Co-applicant first name <span class="req">*</span></label><input type="text" id="co-first-name" placeholder="First name"></div>
+            <div class="f-group"><label>Co-applicant last name <span class="req">*</span></label><input type="text" id="co-last-name" placeholder="Last name"></div>
           </div>
           <div class="grid-2" style="margin-top:14px;">
-            <div class="f-group">
-              <label>Co-applicant email</label>
-              <input type="email" id="co-email" placeholder="email@example.com">
-            </div>
-            <div class="f-group">
-              <label>Co-applicant phone</label>
-              <input type="tel" id="co-phone" placeholder="(253) 555-0000">
-            </div>
+            <div class="f-group"><label>Co-applicant email</label><input type="email" id="co-email" placeholder="email@example.com"></div>
+            <div class="f-group"><label>Co-applicant phone</label><input type="tel" id="co-phone" placeholder="(253) 555-0000"></div>
           </div>
           <div class="grid-2" style="margin-top:14px;">
-            <div class="f-group">
-              <label>Co-applicant date of birth</label>
-              <input type="date" id="co-dob">
-            </div>
-            <div class="f-group">
-              <label>Relationship to primary applicant</label>
+            <div class="f-group"><label>Date of birth</label><input type="date" id="co-dob"></div>
+            <div class="f-group"><label>Relationship to primary applicant</label>
               <select id="co-relationship">
                 <option value="">Select...</option>
                 <option value="spouse">Spouse</option>
@@ -230,11 +164,10 @@
               </select>
             </div>
           </div>
-
-          <div style="margin-top:16px;font-size:13px;font-weight:600;color:#374151;margin-bottom:10px;">Co-applicant employment & income</div>
+          <div class="section-divider"></div>
+          <div class="section-label">Co-applicant employment & income</div>
           <div class="grid-2">
-            <div class="f-group">
-              <label>Employment status</label>
+            <div class="f-group"><label>Employment status</label>
               <select id="co-employment-status" onchange="toggleCoEmployment()">
                 <option value="">Select...</option>
                 <option value="employed-full">Employed full-time</option>
@@ -246,59 +179,28 @@
                 <option value="other">Other</option>
               </select>
             </div>
-            <div class="f-group">
-              <label>Monthly gross income ($)</label>
-              <input type="number" id="co-monthly-income" min="0" step="100" placeholder="e.g. 3500">
-            </div>
+            <div class="f-group"><label>Monthly gross income ($)</label><input type="number" id="co-monthly-income" min="0" step="100" placeholder="e.g. 3500"></div>
           </div>
           <div id="co-employer-section" style="display:none;margin-top:14px;">
             <div class="grid-2">
-              <div class="f-group">
-                <label>Employer name</label>
-                <input type="text" id="co-employer-name" placeholder="Company name">
-              </div>
-              <div class="f-group">
-                <label>Job title</label>
-                <input type="text" id="co-job-title" placeholder="Your role">
-              </div>
+              <div class="f-group"><label>Employer name</label><input type="text" id="co-employer-name" placeholder="Company name"></div>
+              <div class="f-group"><label>Job title</label><input type="text" id="co-job-title" placeholder="Your role"></div>
             </div>
             <div class="grid-2" style="margin-top:14px;">
-              <div class="f-group">
-                <label>Employer phone</label>
-                <input type="tel" id="co-employer-phone" placeholder="(253) 555-0000">
-              </div>
-              <div class="f-group">
-                <label>Length of employment</label>
-                <input type="text" id="co-employment-duration" placeholder="e.g. 2 years">
-              </div>
+              <div class="f-group"><label>Employer phone</label><input type="tel" id="co-employer-phone" placeholder="(253) 555-0000"></div>
+              <div class="f-group"><label>Length of employment</label><input type="text" id="co-employment-duration" placeholder="e.g. 2 years"></div>
             </div>
           </div>
-
-          <div style="margin-top:16px;font-size:13px;font-weight:600;color:#374151;margin-bottom:10px;">Co-applicant background disclosure</div>
-          <div class="checkbox-row">
-            <input type="checkbox" id="co-eviction-history" value="yes">
-            <label for="co-eviction-history">Co-applicant has been evicted or had eviction proceedings in the past 7 years.</label>
-          </div>
-          <div class="checkbox-row">
-            <input type="checkbox" id="co-broken-lease" value="yes">
-            <label for="co-broken-lease">Co-applicant has broken a lease or left a rental owing money in the past 5 years.</label>
-          </div>
-          <div class="checkbox-row">
-            <input type="checkbox" id="co-criminal-history" value="yes">
-            <label for="co-criminal-history">Co-applicant has a criminal conviction.</label>
-          </div>
-          <div class="f-group" style="margin-top:12px;">
-            <label>Co-applicant background explanation (if applicable)</label>
-            <textarea id="co-background-explain" placeholder="Additional context..." rows="2"></textarea>
-          </div>
-
-          <div style="margin-top:14px;" class="notice">
-            Co-applicant will also be subject to a credit, background, and eviction screening through TransUnion SmartMove.
-          </div>
+          <div class="section-divider"></div>
+          <div class="section-label">Co-applicant background disclosure</div>
+          <div class="checkbox-row"><input type="checkbox" id="co-eviction-history"><label for="co-eviction-history">Co-applicant has been evicted or had eviction proceedings in the past 7 years.</label></div>
+          <div class="checkbox-row"><input type="checkbox" id="co-broken-lease"><label for="co-broken-lease">Co-applicant has broken a lease or left a rental owing money in the past 5 years.</label></div>
+          <div class="checkbox-row"><input type="checkbox" id="co-criminal-history"><label for="co-criminal-history">Co-applicant has a criminal conviction.</label></div>
+          <div class="f-group" style="margin-top:10px;"><label>Co-applicant background explanation (optional)</label><textarea id="co-background-explain" placeholder="Additional context..." rows="2"></textarea></div>
         </div>
+
         <div class="section-divider"></div>
-        <div class="f-group">
-          <label>Do you have pets? <span class="req">*</span></label>
+        <div class="f-group"><label>Do you have pets? <span class="req">*</span></label>
           <select id="has-pets" onchange="togglePets()" required>
             <option value="">Select...</option>
             <option value="no">No pets</option>
@@ -306,33 +208,17 @@
           </select>
         </div>
         <div id="pet-details" style="display:none;margin-top:14px;">
-          <div class="notice amber">Pet approval is not guaranteed and is subject to landlord review. Additional pet deposit may be required.</div>
+          <div class="notice amber">Pet approval is not guaranteed. Additional pet deposit may be required.</div>
           <div class="grid-3">
-            <div class="f-group">
-              <label>Number of pets</label>
-              <input type="number" id="pet-count" min="1" max="10" placeholder="1">
-            </div>
-            <div class="f-group">
-              <label>Type(s) of pet</label>
-              <input type="text" id="pet-type" placeholder="e.g. Dog, Cat">
-            </div>
-            <div class="f-group">
-              <label>Breed(s)</label>
-              <input type="text" id="pet-breed" placeholder="e.g. Labrador">
-            </div>
+            <div class="f-group"><label>Number of pets</label><input type="number" id="pet-count" min="1" max="10" placeholder="1"></div>
+            <div class="f-group"><label>Type(s)</label><input type="text" id="pet-type" placeholder="e.g. Dog, Cat"></div>
+            <div class="f-group"><label>Breed(s)</label><input type="text" id="pet-breed" placeholder="e.g. Labrador"></div>
           </div>
           <div class="grid-2" style="margin-top:14px;">
-            <div class="f-group">
-              <label>Weight(s) in lbs</label>
-              <input type="text" id="pet-weight" placeholder="e.g. 45 lbs">
-            </div>
-            <div class="f-group">
-              <label>Pet name(s)</label>
-              <input type="text" id="pet-names" placeholder="e.g. Buddy, Luna">
-            </div>
+            <div class="f-group"><label>Weight(s) in lbs</label><input type="text" id="pet-weight" placeholder="e.g. 45 lbs"></div>
+            <div class="f-group"><label>Pet name(s)</label><input type="text" id="pet-names" placeholder="e.g. Buddy"></div>
           </div>
-          <div class="f-group" style="margin-top:14px;">
-            <label>Are all pets spayed/neutered?</label>
+          <div class="f-group" style="margin-top:14px;"><label>Are all pets spayed/neutered?</label>
             <select id="pet-fixed">
               <option value="">Select...</option>
               <option value="yes">Yes</option>
@@ -344,55 +230,32 @@
       </div>
     </div>
 
-    <!-- Section 3: RV / Vehicle (shown for RV sites) -->
+    <!-- SECTION 3: RV Info (RV sites only) -->
     <div class="card" id="rv-section" style="display:none;">
       <div class="card-header"><span class="icon">🚐</span><h2>RV & vehicle information</h2></div>
       <div class="card-body">
-        <div class="notice">RV must be self-contained, legally registered, insured, and in good working condition at all times.</div>
+        <div class="notice">RV must be self-contained, legally registered, insured, and in good working condition.</div>
         <div class="grid-3">
-          <div class="f-group">
-            <label>RV make / manufacturer</label>
-            <input type="text" id="rv-make" placeholder="e.g. Winnebago, Airstream">
-          </div>
-          <div class="f-group">
-            <label>RV model</label>
-            <input type="text" id="rv-model" placeholder="e.g. Sightseer 33C">
-          </div>
-          <div class="f-group">
-            <label>Year</label>
-            <input type="number" id="rv-year" min="1970" max="2030" placeholder="e.g. 2018">
-          </div>
+          <div class="f-group"><label>RV make</label><input type="text" id="rv-make" placeholder="e.g. Winnebago"></div>
+          <div class="f-group"><label>RV model</label><input type="text" id="rv-model" placeholder="e.g. Sightseer"></div>
+          <div class="f-group"><label>Year</label><input type="number" id="rv-year" min="1970" max="2030" placeholder="e.g. 2018"></div>
         </div>
         <div class="grid-3" style="margin-top:14px;">
-          <div class="f-group">
-            <label>RV length (feet)</label>
-            <input type="number" id="rv-length" min="10" max="50" placeholder="e.g. 32">
-          </div>
-          <div class="f-group">
-            <label>License plate #</label>
-            <input type="text" id="rv-plate" placeholder="Plate number">
-          </div>
-          <div class="f-group">
-            <label>State registered</label>
-            <input type="text" id="rv-state" placeholder="e.g. WA">
-          </div>
+          <div class="f-group"><label>Length (feet)</label><input type="number" id="rv-length" min="10" max="50" placeholder="32"></div>
+          <div class="f-group"><label>License plate</label><input type="text" id="rv-plate" placeholder="Plate number"></div>
+          <div class="f-group"><label>State registered</label><input type="text" id="rv-state" placeholder="e.g. WA"></div>
         </div>
-        <div class="section-divider"></div>
-        <div class="f-group">
-          <label>Number of additional vehicles (besides RV)</label>
-          <input type="number" id="rv-vehicles" min="0" max="5" placeholder="0">
-        </div>
+        <div class="f-group" style="margin-top:14px;"><label>Additional vehicles on site</label><input type="number" id="rv-vehicles" min="0" max="5" placeholder="0"></div>
       </div>
     </div>
 
-    <!-- Section 4: Employment & Income -->
+    <!-- SECTION 4: Employment -->
     <div class="card">
-      <div class="card-header"><span class="icon">💼</span><h2>Employment & income</h2></div>
+      <div class="card-header"><span class="icon">💼</span><h2>Primary applicant — employment & income</h2></div>
       <div class="card-body">
-        <div class="notice green">Income verification will be required. Please be prepared to provide recent pay stubs, bank statements, or tax returns.</div>
+        <div class="notice green">Income verification required. Be prepared to provide pay stubs, bank statements, or tax returns.</div>
         <div class="grid-2">
-          <div class="f-group">
-            <label>Employment status <span class="req">*</span></label>
+          <div class="f-group"><label>Employment status <span class="req">*</span></label>
             <select id="employment-status" required onchange="toggleEmployment()">
               <option value="">Select...</option>
               <option value="employed-full">Employed full-time</option>
@@ -404,119 +267,64 @@
               <option value="other">Other</option>
             </select>
           </div>
-          <div class="f-group">
-            <label>Monthly gross income ($) <span class="req">*</span></label>
-            <input type="number" id="monthly-income" required min="0" step="100" placeholder="e.g. 4500">
-          </div>
+          <div class="f-group"><label>Monthly gross income ($) <span class="req">*</span></label><input type="number" id="monthly-income" required min="0" step="100" placeholder="e.g. 4500"></div>
         </div>
         <div id="employer-section" style="display:none;margin-top:14px;">
           <div class="grid-2">
-            <div class="f-group">
-              <label>Employer name</label>
-              <input type="text" id="employer-name" placeholder="Company name">
-            </div>
-            <div class="f-group">
-              <label>Job title / position</label>
-              <input type="text" id="job-title" placeholder="Your role">
-            </div>
+            <div class="f-group"><label>Employer name</label><input type="text" id="employer-name" placeholder="Company name"></div>
+            <div class="f-group"><label>Job title</label><input type="text" id="job-title" placeholder="Your role"></div>
           </div>
           <div class="grid-2" style="margin-top:14px;">
-            <div class="f-group">
-              <label>Employer phone</label>
-              <input type="tel" id="employer-phone" placeholder="(253) 555-0000">
-            </div>
-            <div class="f-group">
-              <label>Length of employment</label>
-              <input type="text" id="employment-duration" placeholder="e.g. 3 years">
-            </div>
+            <div class="f-group"><label>Employer phone</label><input type="tel" id="employer-phone" placeholder="(253) 555-0000"></div>
+            <div class="f-group"><label>Length of employment</label><input type="text" id="employment-duration" placeholder="e.g. 3 years"></div>
           </div>
         </div>
-        <div class="f-group" style="margin-top:14px;">
-          <label>Additional income sources (if any)</label>
-          <input type="text" id="other-income" placeholder="e.g. child support, alimony, rental income, benefits">
-        </div>
+        <div class="f-group" style="margin-top:14px;"><label>Additional income sources</label><input type="text" id="other-income" placeholder="e.g. child support, rental income, benefits"></div>
       </div>
     </div>
 
-    <!-- Section 5: Rental History -->
+    <!-- SECTION 5: Rental History -->
     <div class="card">
       <div class="card-header"><span class="icon">🏘</span><h2>Rental history</h2></div>
       <div class="card-body">
-        <div class="f-group">
-          <label>Reason for leaving current residence <span class="req">*</span></label>
-          <textarea id="leave-reason" required placeholder="Why are you moving?" rows="2"></textarea>
-        </div>
+        <div class="f-group"><label>Reason for leaving current residence <span class="req">*</span></label><textarea id="leave-reason" required placeholder="Why are you moving?" rows="2"></textarea></div>
         <div class="section-divider"></div>
-        <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;">Previous landlord reference</div>
+        <div class="section-label">Previous landlord reference</div>
         <div class="grid-2">
-          <div class="f-group">
-            <label>Previous landlord name</label>
-            <input type="text" id="prev-landlord" placeholder="Full name">
-          </div>
-          <div class="f-group">
-            <label>Previous landlord phone</label>
-            <input type="tel" id="prev-landlord-phone" placeholder="(253) 555-0000">
-          </div>
+          <div class="f-group"><label>Landlord name</label><input type="text" id="prev-landlord" placeholder="Full name"></div>
+          <div class="f-group"><label>Landlord phone</label><input type="tel" id="prev-landlord-phone" placeholder="(253) 555-0000"></div>
         </div>
         <div class="grid-2" style="margin-top:14px;">
-          <div class="f-group">
-            <label>Previous rental address</label>
-            <input type="text" id="prev-addr" placeholder="Street address">
-          </div>
-          <div class="f-group">
-            <label>How long did you rent there?</label>
-            <input type="text" id="prev-duration" placeholder="e.g. 2 years">
-          </div>
+          <div class="f-group"><label>Previous rental address</label><input type="text" id="prev-addr" placeholder="Street address"></div>
+          <div class="f-group"><label>How long did you rent there?</label><input type="text" id="prev-duration" placeholder="e.g. 2 years"></div>
         </div>
         <div class="section-divider"></div>
-        <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;">Personal reference</div>
+        <div class="section-label">Personal reference</div>
         <div class="grid-2">
-          <div class="f-group">
-            <label>Reference name</label>
-            <input type="text" id="ref-name" placeholder="Full name">
-          </div>
-          <div class="f-group">
-            <label>Reference phone</label>
-            <input type="tel" id="ref-phone" placeholder="(253) 555-0000">
-          </div>
+          <div class="f-group"><label>Reference name</label><input type="text" id="ref-name" placeholder="Full name"></div>
+          <div class="f-group"><label>Reference phone</label><input type="tel" id="ref-phone" placeholder="(253) 555-0000"></div>
         </div>
-        <div class="f-group" style="margin-top:14px;">
-          <label>Relationship to you</label>
-          <input type="text" id="ref-relationship" placeholder="e.g. Colleague, Friend, Former supervisor">
-        </div>
+        <div class="f-group" style="margin-top:14px;"><label>Relationship to you</label><input type="text" id="ref-relationship" placeholder="e.g. Colleague, Former supervisor"></div>
       </div>
     </div>
 
-    <!-- Section 6: Background -->
+    <!-- SECTION 6: Background -->
     <div class="card">
-      <div class="card-header"><span class="icon">📋</span><h2>Background disclosure</h2></div>
+      <div class="card-header"><span class="icon">📋</span><h2>Primary applicant — background disclosure</h2></div>
       <div class="card-body">
-        <div class="notice">Answering yes does not automatically disqualify your application. We evaluate each application individually in compliance with Washington State HB 2578.</div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="eviction-history" value="yes">
-          <label for="eviction-history">I have been evicted or had an eviction proceeding filed against me in the past 7 years.</label>
-        </div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="broken-lease" value="yes">
-          <label for="broken-lease">I have broken a lease or left a rental owing money in the past 5 years.</label>
-        </div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="criminal-history" value="yes">
-          <label for="criminal-history">I have a criminal conviction (excluding arrests without conviction and sealed records).</label>
-        </div>
-        <div class="f-group" style="margin-top:12px;">
-          <label>If you checked any above, please explain (optional)</label>
-          <textarea id="background-explain" placeholder="Additional context you'd like us to consider..." rows="3"></textarea>
-        </div>
+        <div class="notice">Answering yes does not automatically disqualify your application. We evaluate each application individually per Washington State HB 2578.</div>
+        <div class="checkbox-row"><input type="checkbox" id="eviction-history"><label for="eviction-history">I have been evicted or had eviction proceedings filed against me in the past 7 years.</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="broken-lease"><label for="broken-lease">I have broken a lease or left a rental owing money in the past 5 years.</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="criminal-history"><label for="criminal-history">I have a criminal conviction (excluding arrests without conviction and sealed records).</label></div>
+        <div class="f-group" style="margin-top:12px;"><label>Explanation (optional)</label><textarea id="background-explain" placeholder="Additional context you'd like us to consider..." rows="3"></textarea></div>
       </div>
     </div>
 
-    <!-- Section 7: Additional Info -->
+    <!-- SECTION 7: Additional -->
     <div class="card">
       <div class="card-header"><span class="icon">💬</span><h2>Additional information</h2></div>
       <div class="card-body">
-        <div class="f-group">
-          <label>How did you hear about this property?</label>
+        <div class="f-group"><label>How did you hear about this property?</label>
           <select id="referral-source">
             <option value="">Select...</option>
             <option value="zillow">Zillow</option>
@@ -528,41 +336,22 @@
             <option value="other">Other</option>
           </select>
         </div>
-        <div class="f-group" style="margin-top:14px;">
-          <label>Anything else you'd like us to know?</label>
-          <textarea id="extra-notes" placeholder="Special circumstances, questions, or anything else..." rows="3"></textarea>
-        </div>
+        <div class="f-group" style="margin-top:14px;"><label>Anything else you'd like us to know?</label><textarea id="extra-notes" placeholder="Special circumstances, questions, or anything else..." rows="3"></textarea></div>
       </div>
     </div>
 
-    <!-- Consent & Screening -->
+    <!-- SECTION 8: Consent -->
     <div class="card">
       <div class="card-header"><span class="icon">✍️</span><h2>Authorization & consent</h2></div>
       <div class="card-body">
-        <div class="notice">By submitting this application, you authorize us to verify all information provided and to conduct a credit check, criminal background check, and eviction history check through our third-party screening provider (TransUnion SmartMove). A screening fee may apply.</div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="consent-screening" required>
-          <label for="consent-screening"><strong>I authorize</strong> the landlord/property manager to obtain a credit report, criminal background check, and rental history report as part of the screening process. <span style="color:#dc2626;">*</span></label>
-        </div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="consent-accurate" required>
-          <label for="consent-accurate"><strong>I certify</strong> that all information provided in this application is true and accurate to the best of my knowledge. I understand that misrepresentation may result in denial or termination of tenancy. <span style="color:#dc2626;">*</span></label>
-        </div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="consent-eho">
-          <label for="consent-eho">I acknowledge that I have read and understood the Equal Housing Opportunity statement.</label>
-        </div>
-
-        <!-- Equal Housing Footer -->
+        <div class="notice">By submitting, you authorize us to verify all information and conduct a credit, criminal background, and eviction history check through TransUnion SmartMove. A screening fee may apply.</div>
+        <div class="checkbox-row"><input type="checkbox" id="consent-screening" required><label for="consent-screening"><strong>I authorize</strong> the landlord to obtain a credit report, criminal background check, and rental history report. <span style="color:#dc2626;">*</span></label></div>
+        <div class="checkbox-row"><input type="checkbox" id="consent-accurate" required><label for="consent-accurate"><strong>I certify</strong> all information is true and accurate. Misrepresentation may result in denial or termination of tenancy. <span style="color:#dc2626;">*</span></label></div>
         <div class="ehoa">
-          <strong>Fair Housing Notice:</strong> It is illegal to discriminate against any person because of race, color, religion, sex, handicap, familial status, or national origin in the sale or rental of housing or residential lots, in advertising the sale or rental of housing, in the financing of housing, in the provision of real estate brokerage services, or in the appraisal of housing. Persons who believe they have been discriminated against may file a complaint with the U.S. Department of Housing and Urban Development (HUD) at 1-800-669-9777 or <strong>www.hud.gov</strong>.
-          <br><br>
-          <strong>Washington State Law:</strong> The Washington Law Against Discrimination (RCW 49.60) also prohibits discrimination based on sexual orientation, gender expression or identity, marital status, and veteran or military status.
+          <strong>Fair Housing Notice:</strong> It is illegal to discriminate against any person because of race, color, religion, sex, handicap, familial status, or national origin. Persons who believe they have been discriminated against may file a complaint with HUD at 1-800-669-9777 or <strong>www.hud.gov</strong>.<br><br>
+          <strong>Washington State Law (RCW 49.60):</strong> Also prohibits discrimination based on sexual orientation, gender expression or identity, marital status, and veteran or military status.
         </div>
-
-        <button type="submit" class="submit-btn" id="submit-btn">
-          Submit Application
-        </button>
+        <button type="submit" class="submit-btn" id="submit-btn" style="margin-top:20px;">Submit Application</button>
         <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:10px;">Your information is kept confidential and used solely for rental screening purposes.</p>
       </div>
     </div>
@@ -571,65 +360,51 @@
 </div>
 
 <script>
-const SUPABASE_URL = 'https://ioliuikhxzbexjzfeaus.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_ajHlDgE9q7myl0EF84MYVQ_CDz3uoFv';
-const EMAILJS_SVC = 'service_3acvjpg';
-const EMAILJS_KEY = 'yMtMxURljjHQMjT16';
-// Create a notification template in EmailJS for this - template below
-const EMAILJS_TEMPLATE = 'template_apply_notify';
-
+var SUPABASE_URL = 'https://ioliuikhxzbexjzfeaus.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_ajHlDgE9q7myl0EF84MYVQ_CDz3uoFv';
+var EMAILJS_SVC = 'service_3acvjpg';
+var EMAILJS_KEY = 'yMtMxURljjHQMjT16';
+var EMAILJS_TEMPLATE = 'template_apply_notify';
 var sbClient = null;
 var propertyData = null;
 var isRV = false;
 
 window.addEventListener('DOMContentLoaded', function() {
-  // Init Supabase - same pattern as main app
-  console.log('window.supabase type:', typeof window.supabase);
-  if(window.supabase && window.supabase.createClient) {
-    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('sbClient ready:', !!sbClient);
-  } else {
-    console.error('Supabase library not loaded - window.supabase:', window.supabase);
-    alert('Database library failed to load. Please hard refresh (Ctrl+Shift+R) and try again.');
-  }
-  // Init EmailJS
   emailjs.init(EMAILJS_KEY);
+  try {
+    if(window.supabase && window.supabase.createClient) {
+      sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+  } catch(e) { console.error('Supabase init:', e); }
 
-  // Read URL params
   var params = new URLSearchParams(window.location.search);
-  var propId = params.get('property') || params.get('p');
-  var propName = params.get('name');
-  var propAddr = params.get('addr');
+  var propId = params.get('property') || params.get('p') || '';
   var propType = params.get('type') || 'house';
 
   if(propId) {
     loadProperty(propId);
-  } else if(propName || propAddr) {
-    // Use URL params directly
-    showPropertyBanner(propName || 'Rental Property', propAddr || '', propType);
+  } else if(params.get('addr')) {
+    showBanner(params.get('addr'), propType);
   }
 
-  // Set min move-in date to today
   var today = new Date().toISOString().slice(0,10);
   document.getElementById('app-movein').min = today;
 });
 
 async function loadProperty(propId) {
+  if(!sbClient) return;
   try {
     var r = await sbClient.from('sites').select('id,name,addr,type,nickname').eq('id', propId).single();
     if(r.data) {
       propertyData = r.data;
-      showPropertyBanner(r.data.nickname || r.data.name, r.data.addr, r.data.type);
+      showBanner(r.data.addr || r.data.name, r.data.type);
     }
-  } catch(e) {
-    console.log('Could not load property:', e);
-  }
+  } catch(e) { console.log('Could not load property:', e); }
 }
 
-function showPropertyBanner(name, addr, type) {
+function showBanner(addr, type) {
   isRV = type === 'rv';
-  document.getElementById('banner-name').textContent = addr || name || 'Rental Property';
-  document.getElementById('banner-addr').textContent = '';
+  document.getElementById('banner-addr').textContent = addr || 'Rental Property';
   document.getElementById('banner-icon').textContent = isRV ? '🚐' : (type === 'land' ? '🌿' : '🏡');
   document.getElementById('property-banner').style.display = 'flex';
   document.getElementById('rv-section').style.display = isRV ? 'block' : 'none';
@@ -637,17 +412,13 @@ function showPropertyBanner(name, addr, type) {
 
 function toggleCoApplicant(val) {
   var show = parseInt(val) >= 2;
-  document.getElementById('co-applicant-section').style.display = show ? 'block' : 'none';
-  // Make co-applicant fields required when shown
-  ['co-first-name','co-last-name'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if(el) el.required = show;
-  });
+  var sec = document.getElementById('co-applicant-section');
+  sec.style.display = show ? 'block' : 'none';
 }
 
 function toggleCoEmployment() {
   var val = document.getElementById('co-employment-status').value;
-  var show = ['employed-full','employed-part','self-employed'].includes(val);
+  var show = ['employed-full','employed-part','self-employed'].indexOf(val) >= 0;
   document.getElementById('co-employer-section').style.display = show ? 'block' : 'none';
 }
 
@@ -658,9 +429,12 @@ function togglePets() {
 
 function toggleEmployment() {
   var val = document.getElementById('employment-status').value;
-  var show = ['employed-full','employed-part','self-employed'].includes(val);
+  var show = ['employed-full','employed-part','self-employed'].indexOf(val) >= 0;
   document.getElementById('employer-section').style.display = show ? 'block' : 'none';
 }
+
+function gv(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function gc(id) { var el = document.getElementById(id); return el && el.checked ? 'Yes' : 'No'; }
 
 async function submitApp(e) {
   e.preventDefault();
@@ -668,177 +442,123 @@ async function submitApp(e) {
   btn.disabled = true;
   btn.textContent = 'Submitting...';
 
-  // Gather all data
-  var firstName = document.getElementById('first-name').value.trim();
-  var lastName = document.getElementById('last-name').value.trim();
+  var firstName = gv('first-name');
+  var lastName = gv('last-name');
   var fullName = firstName + ' ' + lastName;
-  var email = document.getElementById('app-email').value.trim();
-  var phone = document.getElementById('app-phone').value.trim();
-  var dob = document.getElementById('app-dob').value;
-  var movein = document.getElementById('app-movein').value;
-  var leaseTerm = document.getElementById('app-lease-term').value;
-  var occupants = document.getElementById('occupant-count').value;
-  var adults = document.getElementById('adult-count').value;
-  var children = document.getElementById('child-count').value;
-  var adultNames = document.getElementById('adult-names').value.trim();
-  var hasPets = document.getElementById('has-pets').value;
-  var petsDetail = hasPets === 'yes' ? [
-    document.getElementById('pet-count').value + ' pet(s)',
-    document.getElementById('pet-type').value,
-    document.getElementById('pet-breed').value,
-    document.getElementById('pet-weight').value,
-    document.getElementById('pet-names').value
-  ].filter(Boolean).join(' | ') : 'No pets';
-
-  var income = document.getElementById('monthly-income').value;
-  var empStatus = document.getElementById('employment-status').value;
-  var employer = document.getElementById('employer-name').value.trim();
-  var jobTitle = document.getElementById('job-title').value.trim();
-  var empPhone = document.getElementById('employer-phone').value.trim();
-  var empDuration = document.getElementById('employment-duration').value.trim();
-  var otherIncome = document.getElementById('other-income').value.trim();
-
-  var leaveReason = document.getElementById('leave-reason').value.trim();
-  var prevLandlord = document.getElementById('prev-landlord').value.trim();
-  var prevLandlordPhone = document.getElementById('prev-landlord-phone').value.trim();
-  var prevAddr = document.getElementById('prev-addr').value.trim();
-  var prevDuration = document.getElementById('prev-duration').value.trim();
-  var refName = document.getElementById('ref-name').value.trim();
-  var refPhone = document.getElementById('ref-phone').value.trim();
-  var refRel = document.getElementById('ref-relationship').value.trim();
-
-  var eviction = document.getElementById('eviction-history').checked ? 'Yes' : 'No';
-  var brokenLease = document.getElementById('broken-lease').checked ? 'Yes' : 'No';
-  var criminal = document.getElementById('criminal-history').checked ? 'Yes' : 'No';
-  var bgExplain = document.getElementById('background-explain').value.trim();
-  var referral = document.getElementById('referral-source').value;
-  var extraNotes = document.getElementById('extra-notes').value.trim();
-
-  // Co-applicant data
-  var adults2 = parseInt(document.getElementById('adult-count').value)||1;
-  var hasCoApp = adults2 >= 2;
-  var coData = '';
-  if(hasCoApp) {
-    var coFirst = document.getElementById('co-first-name').value.trim();
-    var coLast = document.getElementById('co-last-name').value.trim();
-    coData = [
-      'CO-APPLICANT: ' + coFirst + ' ' + coLast,
-      'Co-email: ' + document.getElementById('co-email').value.trim(),
-      'Co-phone: ' + document.getElementById('co-phone').value.trim(),
-      'Co-DOB: ' + document.getElementById('co-dob').value,
-      'Co-relationship: ' + document.getElementById('co-relationship').value,
-      'Co-employment: ' + document.getElementById('co-employment-status').value,
-      'Co-income: $' + (document.getElementById('co-monthly-income').value||'0'),
-      'Co-employer: ' + (document.getElementById('co-employer-name').value.trim()||'N/A'),
-      'Co-eviction: ' + (document.getElementById('co-eviction-history').checked?'Yes':'No'),
-      'Co-criminal: ' + (document.getElementById('co-criminal-history').checked?'Yes':'No'),
-      document.getElementById('co-background-explain').value.trim() ? 'Co-background notes: ' + document.getElementById('co-background-explain').value.trim() : ''
-    ].filter(Boolean).join(' | ');
-  }
-
-  var rvInfo = isRV ? [
-    document.getElementById('rv-make').value,
-    document.getElementById('rv-model').value,
-    document.getElementById('rv-year').value,
-    document.getElementById('rv-length').value + 'ft',
-    document.getElementById('rv-plate').value,
-    document.getElementById('rv-state').value
-  ].filter(Boolean).join(' | ') : '';
+  var email = gv('app-email');
+  var phone = gv('app-phone');
+  var movein = gv('app-movein');
+  var occupants = gv('occupant-count');
+  var adults = gv('adult-count');
+  var hasPets = gv('has-pets');
+  var petsDetail = hasPets === 'yes'
+    ? [gv('pet-count')+' pet(s)', gv('pet-type'), gv('pet-breed'), gv('pet-weight'), gv('pet-names')].filter(Boolean).join(' | ')
+    : 'No pets';
 
   var params2 = new URLSearchParams(window.location.search);
-  var propId = propertyData ? propertyData.id : (params2.get('property') || params2.get('p') || '');
-  var propName = propertyData ? (propertyData.nickname || propertyData.name) : (params2.get('name') || propId || 'Not specified');
+  var propId = propertyData ? propertyData.id : (params2.get('property') || '');
+  var propName = propertyData ? (propertyData.addr || propertyData.name) : (params2.get('addr') || params2.get('property') || 'Not specified');
+  var propType = propertyData ? propertyData.type : (params2.get('type') || '');
 
-  // Build notes string for waitlist
-  var coAppLine = hasCoApp ? coData : '';
-  var notes = [
-    'DOB: ' + dob,
-    'Current addr: ' + (document.getElementById('current-addr').value || 'N/A'),
-    'Employment: ' + empStatus + (employer ? ' at ' + employer : '') + (jobTitle ? ' (' + jobTitle + ')' : ''),
-    'Monthly income: $' + income,
-    'Employer phone: ' + (empPhone || 'N/A'),
-    'Employed for: ' + (empDuration || 'N/A'),
-    'Other income: ' + (otherIncome || 'None'),
-    'Occupants: ' + occupants + ' (' + adults + ' adults, ' + children + ' children)',
-    'Adult names: ' + (adultNames || 'N/A'),
+  // Co-applicant
+  var hasCoApp = parseInt(adults) >= 2;
+  var coName = hasCoApp ? (gv('co-first-name') + ' ' + gv('co-last-name')).trim() : '';
+  var coNotes = hasCoApp ? [
+    'CO-APPLICANT: ' + coName,
+    'Co-email: ' + gv('co-email'),
+    'Co-phone: ' + gv('co-phone'),
+    'Co-DOB: ' + gv('co-dob'),
+    'Co-relationship: ' + gv('co-relationship'),
+    'Co-employment: ' + gv('co-employment-status'),
+    'Co-income: $' + gv('co-monthly-income'),
+    'Co-employer: ' + (gv('co-employer-name') || 'N/A'),
+    'Co-eviction: ' + gc('co-eviction-history'),
+    'Co-criminal: ' + gc('co-criminal-history'),
+    gv('co-background-explain') ? 'Co-bg-notes: ' + gv('co-background-explain') : ''
+  ].filter(Boolean).join(' | ') : '';
+
+  var rvInfo = isRV ? [gv('rv-make'), gv('rv-model'), gv('rv-year'), gv('rv-length')+'ft', gv('rv-plate'), gv('rv-state')].filter(Boolean).join(' | ') : '';
+
+  var noteLines = [
+    'DOB: ' + gv('app-dob'),
+    'Current addr: ' + (gv('current-addr') || 'N/A'),
+    'Employment: ' + gv('employment-status') + (gv('employer-name') ? ' at ' + gv('employer-name') : '') + (gv('job-title') ? ' (' + gv('job-title') + ')' : ''),
+    'Income: $' + gv('monthly-income') + '/mo',
+    'Emp duration: ' + (gv('employment-duration') || 'N/A'),
+    'Other income: ' + (gv('other-income') || 'None'),
+    'Occupants: ' + occupants + ' (' + adults + ' adults, ' + gv('child-count') + ' children)',
+    'Adult names: ' + (gv('adult-names') || 'N/A'),
     'Pets: ' + petsDetail,
     isRV ? 'RV: ' + rvInfo : '',
-    'Reason leaving: ' + leaveReason,
-    'Prev landlord: ' + (prevLandlord || 'N/A') + ' ' + (prevLandlordPhone || ''),
-    'Prev addr: ' + (prevAddr || 'N/A') + ' for ' + (prevDuration || 'N/A'),
-    'Reference: ' + (refName || 'N/A') + ' ' + (refPhone || '') + ' (' + (refRel || '') + ')',
-    'Eviction history: ' + eviction,
-    'Broken lease: ' + brokenLease,
-    'Criminal history: ' + criminal,
-    bgExplain ? 'Background explanation: ' + bgExplain : '',
-    'Referral: ' + referral,
-    extraNotes ? 'Notes: ' + extraNotes : '',
-    'Lease term pref: ' + (leaseTerm || 'Any'),
-    'Applied via: rental application form',
-    'Applied on: ' + new Date().toLocaleString(),
-    coAppLine
+    'Reason leaving: ' + gv('leave-reason'),
+    'Prev landlord: ' + (gv('prev-landlord') || 'N/A') + ' ' + (gv('prev-landlord-phone') || ''),
+    'Prev addr: ' + (gv('prev-addr') || 'N/A') + ' for ' + (gv('prev-duration') || 'N/A'),
+    'Reference: ' + (gv('ref-name') || 'N/A') + ' ' + gv('ref-phone') + ' (' + gv('ref-relationship') + ')',
+    'Eviction: ' + gc('eviction-history'),
+    'Broken lease: ' + gc('broken-lease'),
+    'Criminal: ' + gc('criminal-history'),
+    gv('background-explain') ? 'Bg notes: ' + gv('background-explain') : '',
+    'Referral: ' + gv('referral-source'),
+    gv('extra-notes') ? 'Extra: ' + gv('extra-notes') : '',
+    'Lease pref: ' + (gv('app-lease-term') || 'Any'),
+    coNotes,
+    'Submitted: ' + new Date().toLocaleString()
   ].filter(Boolean).join(' | ');
 
-  // Save to Supabase waitlist table
+  // Save to Supabase
   try {
+    if(!sbClient) throw new Error('Database not connected');
     var row = {
       name: fullName,
       phone: phone,
       email: email,
-      housing_type: propertyData ? propertyData.type : (new URLSearchParams(window.location.search).get('type') || ''),
+      housing_type: propType,
       property_id: propId || null,
       movein: movein,
-      occupants: occupants + ' occupants (' + adults + ' adults, ' + children + ' children)',
+      occupants: occupants + ' occupants (' + adults + ' adults)',
       pets: petsDetail,
       status: 'active',
-      notes: notes,
+      notes: noteLines,
       budget: 0
     };
-    if(!sbClient) throw new Error('Supabase not initialized');
     var res = await sbClient.from('waitlist').insert([row]);
     if(res.error) throw res.error;
   } catch(err) {
     console.error('Supabase error:', err);
     btn.disabled = false;
     btn.textContent = 'Submit Application';
-    alert('There was an error submitting your application. Please try again or contact us directly.');
+    alert('Error submitting application. Please try again or call 253.223.4369');
     return;
   }
 
-  // Send email notifications via EmailJS
+  // Format date
+  var moveinFormatted = movein;
+  try { moveinFormatted = new Date(movein + 'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}); } catch(e){}
+
+  // Email notifications
   try {
-    var templateParams = {
-      to_email: '1ryanchristensen@gmail.com',
-      to_email2: 'brandyferber@gmail.com',
-      applicant_name: fullName + (hasCoApp ? ' & ' + document.getElementById('co-first-name').value.trim() + ' ' + document.getElementById('co-last-name').value.trim() : ''),
+    var applicantDisplay = fullName + (coName ? ' & ' + coName : '');
+    var tpl = {
+      applicant_name: applicantDisplay,
       applicant_email: email,
       applicant_phone: phone,
-      property_name: propName || 'Not specified',
-      movein_date: movein,
+      property_name: propName,
+      movein_date: moveinFormatted,
       occupants: occupants,
-      monthly_income: '$' + income,
-      employment: empStatus + (employer ? ' - ' + employer : ''),
+      monthly_income: '$' + gv('monthly-income'),
+      employment: gv('employment-status') + (gv('employer-name') ? ' - ' + gv('employer-name') : ''),
       pets: petsDetail,
-      eviction: eviction,
-      criminal: criminal,
-      notes: notes.substring(0, 2000),
+      eviction: gc('eviction-history'),
+      criminal: gc('criminal-history'),
+      notes: noteLines.substring(0, 2000),
       submitted_at: new Date().toLocaleString()
     };
-    // Format movein date nicely
-    if(templateParams.movein_date) {
-      var d = new Date(templateParams.movein_date + 'T12:00:00');
-      templateParams.movein_date = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-    }
-    // Send to Ryan
-    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, {...templateParams, to_email: '1ryanchristensen@gmail.com'});
-    // Send to Brandy
-    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, {...templateParams, to_email: 'brandyferber@gmail.com'});
+    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, {...tpl, to_email: '1ryanchristensen@gmail.com'});
+    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, {...tpl, to_email: 'brandyferber@gmail.com'});
   } catch(emailErr) {
-    // Don't fail on email error - application is already saved
-    console.warn('Email notification failed:', emailErr);
+    console.warn('Email failed:', emailErr);
   }
 
-  // Show success
   document.getElementById('app-form').style.display = 'none';
   document.getElementById('success-screen').style.display = 'block';
   window.scrollTo(0,0);
