@@ -1808,7 +1808,7 @@ function launchApp(){
   routeFromHash();
   // Listen for browser back/forward
   window.addEventListener('hashchange', function(){
-    routeFromHash();
+    if(!suppressHashChange) routeFromHash();
   });
 }
 function routeFromHash(){
@@ -2084,13 +2084,16 @@ function navToFilter(f,btn){
   document.getElementById('props-sub').textContent=filteredSites().length+' propert'+(filteredSites().length!==1?'ies':'y');
 }
 function navBack(){navTo(prevPage||'all-props',null);}
+var suppressHashChange = false;
 function openDetail(idx){
   prevPage='all-props';detailIdx=idx;
   const s=sites[idx];
   document.getElementById('detail-name').textContent=displayName(s);
   document.getElementById('detail-addr').textContent=s.addr;
   navTo('prop-detail',null,true);
+  suppressHashChange = true;
   window.location.hash='property/'+s.id;
+  setTimeout(function(){ suppressHashChange = false; }, 100);
   detailTab('overview',document.querySelector('#page-prop-detail .tab'));
   renderDetailOverview(idx);
 }
