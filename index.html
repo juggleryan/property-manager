@@ -964,8 +964,10 @@ function skipSetup(){
       <div class="grid-2">
         <div class="f-group"><label>Tenant name</label><input type="text" id="e-tenant" placeholder="Full name"></div>
         <div class="f-group"><label>Tenant email (for receipts)</label><input type="email" id="e-email" placeholder="tenant@email.com"></div>
+        <div class="f-group"><label>Tenant phone</label><input type="tel" id="e-tenant-phone" placeholder="(253) 555-0000"></div>
         <div class="f-group"><label>Status</label><select id="e-status"><option value="current">Current</option><option value="late">Late</option><option value="pending">Pending</option><option value="vacant">Vacant</option></select></div>
       </div>
+      <div class="f-group"><label>Tenant notes</label><textarea id="e-tenant-notes" rows="2" placeholder="Emergency contact, vehicle info, special arrangements..."></textarea></div>
       <div class="grid-2">
         <div class="f-group"><label>Monthly rent ($)</label><input type="number" id="e-rent" min="0" step="1"></div>
         <div class="f-group"><label>Mortgage payment ($)</label><input type="number" id="e-mortgage" min="0" step="1" placeholder="0"></div>
@@ -1752,7 +1754,7 @@ function displayLabel(s){
 }
 function makeSite(p,o={}){
   return {id:p.id,name:p.name,addr:p.addr,type:p.type,state:p.state,
-    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],propDocs:[],assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:p.type==='land'?0:650,mortgage:0,paid:0,
+    nickname:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],propDocs:[],tenantPhone:'',tenantNotes:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,tenant:'(Vacant)',rent:p.type==='house'?1200:p.type==='land'?0:650,mortgage:0,paid:0,
     start:'',end:'',term:'12',status:'vacant',lease:null,yard:'',
     taxAmt:0,tax1:'',tax2:'',taxNotes:'',tenantEmail:'',notes:[],...o};
 }
@@ -1796,7 +1798,7 @@ function init(){
     const d=JSON.parse(saved);
     payments=d.payments||[];bills=d.bills||[];notices=d.notices||[];
     // Merge saved sites with defaults to ensure new fields like tenantEmail exist
-    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],propDocs:[],assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
+    sites=(d.sites||[]).map(s=>({tenantEmail:'',sortOrder:0,parcel:'',size:'',legalDesc:'',claudeLinks:'',mortgagePayments:[],propDocs:[],tenantPhone:'',tenantNotes:'',assessedValue:0,assessedYear:'',assessedHistory:[],ampUrl:'',atipUrl:'',loanAmt:0,loanTerm:0,loanRate:0,loanBalance:0,lender:'',purchasePrice:0,purchaseDate:'',currentValue:0,depositAmt:0,depositDate:'',depositMethod:'',depositStatus:'held',depositResolvedDate:'',depositReason:'',...s}));
   }
   else defaultData();
   config=JSON.parse(localStorage.getItem(CK)||'{}');
@@ -1900,7 +1902,7 @@ async function loadFromSupabase(){
         depositAmt:parseFloat(r.deposit_amt)||0, depositDate:r.deposit_date||'',
         depositMethod:r.deposit_method||'', depositStatus:r.deposit_status||'held',
         depositResolvedDate:r.deposit_resolved_date||'', depositReason:r.deposit_reason||'',
-        nickname:r.nickname||'', tenant:r.tenant||'(Vacant)', tenantEmail:r.tenant_email||'',
+        nickname:r.nickname||'', tenant:r.tenant||'(Vacant)', tenantEmail:r.tenant_email||'', tenantPhone:r.tenant_phone||'', tenantNotes:r.tenant_notes||'',
         rent:parseFloat(r.rent)||0, mortgage:parseFloat(r.mortgage)||0, paid:parseFloat(r.paid)||0,
         start:r.lease_start||'', end:r.lease_end||'', term:r.lease_term||'12',
         status:r.status||'vacant', lease:r.lease_file||null, yard:r.yard||'',
@@ -1979,7 +1981,7 @@ async function saveToSupabase(){
       deposit_amt: s.depositAmt||0, deposit_date: s.depositDate||null,
       deposit_method: s.depositMethod||'', deposit_status: s.depositStatus||'held',
       deposit_resolved_date: s.depositResolvedDate||null, deposit_reason: s.depositReason||'',
-      nickname: s.nickname||'', tenant: s.tenant, tenant_email: s.tenantEmail||'',
+      nickname: s.nickname||'', tenant: s.tenant, tenant_email: s.tenantEmail||'', tenant_phone: s.tenantPhone||'', tenant_notes: s.tenantNotes||'',
       rent: s.rent||0, mortgage: s.mortgage||0, paid: s.paid||0,
       lease_start: s.start||null, lease_end: s.end||null, lease_term: s.term||'12',
       status: s.status||'vacant', lease_file: s.lease||null, yard: s.yard||'',
