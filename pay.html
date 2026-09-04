@@ -382,23 +382,22 @@ async function submitConfirmation() {
     return;
   }
 
-  // Email receipt to tenant (if they provided email)
-  // Email notification to Ryan + Brandy
+  // Email notification to Ryan + Brandy using existing template
   try {
     var dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
     var notifyParams = {
-      applicant_name: tenantName,
+      applicant_name: tenantName + ' [RENT PAYMENT]',
       applicant_email: '',
       applicant_phone: '',
       property_name: selectedSite.addr || selectedSite.name,
       movein_date: dateFormatted,
-      occupants: '—',
+      occupants: payType,
       monthly_income: fmt(amount),
-      employment: payType,
+      employment: 'Zelle payment confirmation',
       pets: note || 'No note',
       eviction: 'N/A',
       criminal: 'N/A',
-      notes: tenantName + ' submitted a Zelle payment confirmation of ' + fmt(amount) + ' for ' + (selectedSite.addr || selectedSite.name) + ' on ' + dateFormatted + '. Type: ' + payType + (note ? '. Note: ' + note : '') + '. Source: tenant payment portal.',
+      notes: 'RENT PAYMENT CONFIRMATION | Tenant: ' + tenantName + ' | Property: ' + (selectedSite.addr || selectedSite.name) + ' | Amount: ' + fmt(amount) + ' | Date: ' + dateFormatted + ' | Type: ' + payType + (note ? ' | Note: ' + note : '') + ' | Via: tenant payment portal',
       submitted_at: new Date().toLocaleString()
     };
     await emailjs.send(EMAILJS_SVC, EMAILJS_NOTIFY, {...notifyParams, to_email: '1ryanchristensen@gmail.com'});
