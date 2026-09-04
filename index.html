@@ -3677,125 +3677,41 @@ function initLoans() {
 
 async function saveLoans() {
   localStorage.setItem('pm_loans', JSON.stringify(loans));
-  // Auto-sync loans to Supabase
   if(!supabaseReady || isDemoMode) return;
-  var loanData = loans.map(function(l) {
-    return {
-      ...(l.id ? {id: l.id} : {}),
-      direction: l.direction, party: l.party, property_id: l.property||null,
-      amount: l.amount||0, rate: l.rate||0, start_date: l.start||null,
-      due_date: l.due||null, structure: l.structure||'flexible',
-      payment: l.payment||0, frequency: l.frequency||'monthly',
-      notes: l.notes||'', status: l.status||'active',
-      payments: l.payments||[], docs: l.docs||[]
-    };
+  var toInsert = loans.filter(function(l){ return !l.id; }).map(function(l){
+    return { direction:l.direction, party:l.party, property_id:l.property||null,
+      amount:l.amount||0, rate:l.rate||0, start_date:l.start||null,
+      due_date:l.due||null, structure:l.structure||'flexible',
+      payment:l.payment||0, frequency:l.frequency||'monthly',
+      notes:l.notes||'', status:l.status||'active',
+      payments:l.payments||[], docs:l.docs||[] };
   });
-  supabaseClient.from('loans').upsert(loanData, {onConflict:'id'}).then(function(res){
-    if(res.error) console.error('Loan sync error:', res.error);
-    else {
-      // Refresh loans to get IDs assigned by DB
-      supabaseClient.from('loans').select('*').order('created_at',{ascending:true}).then(function(r){
-        if(!r.error && r.data && r.data.length){
-          loans = r.data.map(function(row){return {
-            id:row.id, direction:row.direction||'lent', party:row.party||'',
-            property:row.property_id||'', amount:parseFloat(row.amount)||0,
-            rate:parseFloat(row.rate)||0, start:row.start_date||'', due:row.due_date||'',
-            structure:row.structure||'flexible', payment:parseFloat(row.payment)||0,
-            frequency:row.frequency||'monthly', notes:row.notes||'',
-            status:row.status||'active', payments:row.payments||[], docs:row.docs||[]
-          };});
-          localStorage.setItem('pm_loans', JSON.stringify(loans));
-        }
-      });
-    }
+  var toUpdate = loans.filter(function(l){ return !!l.id; }).map(function(l){
+    return { id:l.id, direction:l.direction, party:l.party, property_id:l.property||null,
+      amount:l.amount||0, rate:l.rate||0, start_date:l.start||null,
+      due_date:l.due||null, structure:l.structure||'flexible',
+      payment:l.payment||0, frequency:l.frequency||'monthly',
+      notes:l.notes||'', status:l.status||'active',
+      payments:l.payments||[], docs:l.docs||[] };
   });
-}
-
-function openLoanModal(direction, editIdx = null) {
-  document.getElementById('loan-direction').value = direction;
-  document.getElementById('loan-edit-idx').value = editIdx !== null ? editIdx : '';
-  document.getElementById('loan-modal-title').textContent = (editIdx !== null ? 'Edit' : 'Add') + ' — ' + (direction === 'lent' ? 'Loan I made' : 'Loan I took');
-  document.getElementById('loan-party-label').textContent = direction === 'lent' ? 'Borrower name' : 'Lender name';
-  document.getElementById('loan-start').value = today();
-  document.getElementById('loan-first-date').value = today();
-
-  if (editIdx !== null) {
-    const l = loans[editIdx];
-    document.getElementById('loan-party').value = l.party || '';
-    document.getElementById('loan-property').value = l.property || '';
-    document.getElementById('loan-amount').value = l.amount || '';
-    document.getElementById('loan-rate').value = l.rate || '';
-    document.getElementById('loan-start').value = l.start || today();
-    document.getElementById('loan-due').value = l.due || '';
-    document.getElementById('loan-structure').value = l.structure || 'flexible';
-    document.getElementById('loan-payment').value = l.payment || '';
-    document.getElementById('loan-frequency').value = l.frequency || 'monthly';
-    document.getElementById('loan-notes').value = l.notes || '';
-  } else {
-    ['loan-party','loan-amount','loan-rate','loan-due','loan-payment','loan-notes','loan-first-payment'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-    document.getElementById('loan-structure').value = 'flexible';
-    document.getElementById('loan-frequency').value = 'monthly';
+  var res = {error:null};
+  if(toInsert.length) res = await supabaseClient.from('loans').insert(toInsert);
+  if(!res.error && toUpdate.length) res = await supabaseClient.from('loans').upsert(toUpdate,{onConflict:'id'});
+  if(res.error){ console.error('Loan save error:', res.error); showToast('Loan save failed: '+res.error.message); return; }
+  // Refresh to get server-assigned IDs
+  var r = await supabaseClient.from('loans').select('*').order('created_at',{ascending:true});
+  if(!r.error && r.data) {
+    loans = r.data.map(function(row){ return {
+      id:row.id, direction:row.direction||'lent', party:row.party||'',
+      property:row.property_id||'', amount:parseFloat(row.amount)||0,
+      rate:parseFloat(row.rate)||0, start:row.start_date||'', due:row.due_date||'',
+      structure:row.structure||'flexible', payment:parseFloat(row.payment)||0,
+      frequency:row.frequency||'monthly', notes:row.notes||'',
+      status:row.status||'active', payments:row.payments||[], docs:row.docs||[]
+    };});
+    localStorage.setItem('pm_loans', JSON.stringify(loans));
+    renderLoans();
   }
-  // Load existing docs if editing
-  var editingIdx = document.getElementById('loan-edit-idx').value;
-  if(editingIdx !== '') {
-    activeLoanIdx = parseInt(editingIdx);
-    renderLoanDocs(activeLoanIdx);
-  } else {
-    activeLoanIdx = null;
-    var dl=document.getElementById('loan-docs-list');
-    if(dl) dl.innerHTML='<div style="font-size:12px;color:var(--text3);font-style:italic;">Save the loan first, then reopen Edit to attach documents.</div>';
-  }
-  document.getElementById('loan-overlay').classList.add('open');
-}
-
-function saveLoan() {
-  const direction = document.getElementById('loan-direction').value;
-  const party = document.getElementById('loan-party').value.trim();
-  const amount = parseFloat(document.getElementById('loan-amount').value) || 0;
-  if (!party || !amount) { showToast('Please enter a name and amount.'); return; }
-
-  const editIdx = document.getElementById('loan-edit-idx').value;
-  const firstPayment = parseFloat(document.getElementById('loan-first-payment').value) || 0;
-  const firstDate = document.getElementById('loan-first-date').value || today();
-
-  const loan = {
-    direction,
-    party,
-    property: document.getElementById('loan-property').value,
-    amount,
-    rate: parseFloat(document.getElementById('loan-rate').value) || 0,
-    start: document.getElementById('loan-start').value,
-    due: document.getElementById('loan-due').value,
-    structure: document.getElementById('loan-structure').value,
-    payment: parseFloat(document.getElementById('loan-payment').value) || 0,
-    frequency: document.getElementById('loan-frequency').value,
-    notes: document.getElementById('loan-notes').value.trim(),
-    payments: [],
-    status: 'active'
-  };
-
-  if (editIdx !== '') {
-    loan.payments = loans[editIdx].payments || [];
-    loans[editIdx] = loan;
-  } else {
-    loans.push(loan);
-  }
-
-  // Log first payment if entered
-  if (firstPayment > 0) {
-    const idx = editIdx !== '' ? parseInt(editIdx) : loans.length - 1;
-    addLoanPaymentToLoan(idx, firstPayment, firstDate, '');
-  }
-
-  var newIdx = editIdx !== '' ? parseInt(editIdx) : loans.length - 1;
-  activeLoanIdx = newIdx;
-  saveLoans();
-  closeModal('loan-overlay');
-  renderLoans();
-  showToast('Loan ' + (editIdx !== '' ? 'updated' : 'added') + ': ' + party + '. Open Edit to attach documents.');
 }
 
 async function deleteLoan(idx){
