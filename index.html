@@ -323,6 +323,12 @@ button{font-family:var(--sans);}
 #voice-btn.listening{background:var(--red);animation:voicePulse 1.2s infinite;}
 #voice-btn.thinking{background:var(--amber);}
 @keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4);}50%{box-shadow:0 0 0 12px rgba(220,38,38,0);}}
+/* ICON LINK BUTTONS */
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:15px;transition:all .15s;position:relative;text-decoration:none;}
+.icon-btn:hover{background:var(--bg);color:var(--blue);}
+.icon-btn[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1d23;color:#fff;font-size:11px;font-weight:500;padding:4px 8px;border-radius:5px;white-space:nowrap;pointer-events:none;z-index:999;}
+.icon-btn[data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#1a1d23;pointer-events:none;z-index:999;}
+.icon-btn-group{display:flex;align-items:center;gap:2px;}
 /* TAX ALERTS */
 .tax-alert{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:12px;}
 .tax-alert.overdue{background:var(--red-bg);border-color:var(--red-border);}
@@ -590,11 +596,20 @@ function skipSetup(){
             <p id="detail-addr"></p>
           </div>
           <div class="page-header-actions">
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
-              <button class="btn btn-sm btn-secondary" onclick="copyApplyLink()" id="copy-apply-btn">📋 Copy apply link</button>
-              <button class="btn btn-sm btn-secondary" onclick="openApplyLink()">↗ Apply</button>
-              <button class="btn btn-sm btn-secondary" onclick="copyPayLink()" id="copy-pay-btn">💳 Copy pay link</button>
-              <button class="btn btn-sm btn-secondary" onclick="openPayLink()">↗ Pay</button>
+            <div class="icon-btn-group" style="margin-bottom:6px;">
+              <button class="icon-btn" id="copy-apply-btn" onclick="copyApplyLink()" data-tip="Copy application link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+              <button class="icon-btn" onclick="openApplyLink()" data-tip="Open application form">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </button>
+              <div style="width:1px;height:16px;background:var(--border);margin:0 4px;"></div>
+              <button class="icon-btn" id="copy-pay-btn" onclick="copyPayLink()" data-tip="Copy payment link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              </button>
+              <button class="icon-btn" onclick="openPayLink()" data-tip="Open payment portal">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </button>
             </div>
             <button class="btn btn-sm btn-secondary" onclick="openEditModal(detailIdx)">Edit property</button>
             <button class="btn btn-sm btn-primary" onclick="openAddPayModal(detailIdx)">+ Log payment</button>
@@ -4045,7 +4060,53 @@ function renderLoanDocs(loanIdx) {
 }
 
 // ── DOCUMENTS PAGE ──
-async function openLoanModalByIdx(idx) {
+async function openLoanModal(direction, editIdx) {
+  editIdx = (editIdx !== undefined && editIdx !== null) ? editIdx : null;
+  document.getElementById('loan-direction').value = direction;
+  document.getElementById('loan-edit-idx').value = editIdx !== null ? editIdx : '';
+  document.getElementById('loan-modal-title').textContent = (editIdx !== null ? 'Edit' : 'Add') + ' — ' + (direction === 'lent' ? 'Loan I made' : 'Loan I took');
+  document.getElementById('loan-party-label').textContent = direction === 'lent' ? 'Borrower name' : 'Lender name';
+
+  // Populate property dropdown
+  var propSel = document.getElementById('loan-property');
+  propSel.innerHTML = '<option value="">No specific property</option>' +
+    sites.map(function(s){ return '<option value="'+s.id+'">'+(s.nickname||s.name)+'</option>'; }).join('');
+
+  if(editIdx !== null) {
+    var l = loans[editIdx];
+    document.getElementById('loan-party').value = l.party || '';
+    document.getElementById('loan-property').value = l.property || '';
+    document.getElementById('loan-amount').value = l.amount || '';
+    document.getElementById('loan-rate').value = l.rate || '';
+    document.getElementById('loan-start').value = l.start || today();
+    document.getElementById('loan-due').value = l.due || '';
+    document.getElementById('loan-structure').value = l.structure || 'flexible';
+    document.getElementById('loan-payment').value = l.payment || '';
+    document.getElementById('loan-frequency').value = l.frequency || 'monthly';
+    document.getElementById('loan-notes').value = l.notes || '';
+    activeLoanIdx = editIdx;
+    renderLoanDocs(editIdx);
+  } else {
+    document.getElementById('loan-party').value = '';
+    document.getElementById('loan-property').value = '';
+    document.getElementById('loan-amount').value = '';
+    document.getElementById('loan-rate').value = '';
+    document.getElementById('loan-start').value = today();
+    document.getElementById('loan-due').value = '';
+    document.getElementById('loan-structure').value = 'flexible';
+    document.getElementById('loan-payment').value = '';
+    document.getElementById('loan-frequency').value = 'monthly';
+    document.getElementById('loan-notes').value = '';
+    activeLoanIdx = null;
+    var dl = document.getElementById('loan-docs-list');
+    if(dl) dl.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic;">Save the loan first, then reopen Edit to attach documents.</div>';
+  }
+  document.getElementById('loan-first-payment').value = '';
+  document.getElementById('loan-first-date').value = today();
+  document.getElementById('loan-overlay').classList.add('open');
+}
+
+function openLoanModalByIdx(idx) {
   var loan = loans[idx];
   if(loan) openLoanModal(loan.direction, idx);
 }
@@ -4981,9 +5042,9 @@ function copyApplyLink() {
   navigator.clipboard.writeText(url).then(function() {
     var btn = document.getElementById('copy-apply-btn');
     var orig = btn.textContent;
-    btn.textContent = '✓ Copied!';
+    btn.style.background = 'var(--green-bg)';
     btn.style.color = 'var(--green)';
-    setTimeout(function(){ btn.textContent = orig; btn.style.color = ''; }, 2000);
+    setTimeout(function(){ btn.style.background = ''; btn.style.color = ''; }, 1500);
   }).catch(function() {
     showToast('Apply link: ' + url);
   });
