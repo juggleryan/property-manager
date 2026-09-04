@@ -280,13 +280,17 @@ async function loadProperties() {
       sites.forEach(function(s) {
         var opt = document.createElement('option');
         opt.value = s.id;
-        opt.textContent = (s.addr || s.name) + (s.tenant ? ' — ' + s.tenant : '');
+        opt.textContent = s.addr || s.name;
         sel.appendChild(opt);
       });
-      // Pre-select if URL param
+      // Pre-select if URL param — hide dropdown if specific property given
       if(window._preselect) {
         sel.value = window._preselect;
-        if(sel.value) onPropertySelect(window._preselect);
+        if(sel.value) {
+          // Hide the select card, show only their property
+          document.getElementById('select-card').style.display = 'none';
+          onPropertySelect(window._preselect);
+        }
       }
     }
   } catch(e) { console.error('Load properties error:', e); }
