@@ -274,7 +274,7 @@ window.addEventListener('DOMContentLoaded', function() {
 async function loadProperties() {
   if(!sbClient) return;
   try {
-    var r = await sbClient.from('sites').select('id,name,addr,type,nickname,tenant,rent,mortgage,status').order('sort_order');
+    var r = await sbClient.from('sites').select('id,name,addr,type,nickname,tenant,rent,mortgage,status,state').order('sort_order');
     if(r.data) {
       sites = r.data.filter(function(s){ return s.status !== 'vacant' && s.state !== 'az' && s.type !== 'land' && s.tenant; });
       var sel = document.getElementById('property-select');
@@ -284,13 +284,22 @@ async function loadProperties() {
         opt.textContent = s.addr || s.name;
         sel.appendChild(opt);
       });
-      // Pre-select if URL param — hide dropdown if specific property given
+      // Pre-select if URL param — hide dropdown and auto-load property
       if(window._preselect) {
-        sel.value = window._preselect;
-        if(sel.value) {
-          // Hide the select card, show only their property
+        // Try matching by id, then by name case-insensitive
+        var match = sites.find(function(s){
+          return s.id === window._preselect ||
+                 s.id.toLowerCase() === window._preselect.toLowerCase() ||
+                 (s.name||'').toLowerCase() === window._preselect.toLowerCase() ||
+                 (s.nickname||'').toLowerCase() === window._preselect.toLowerCase();
+        });
+        if(match) {
+          sel.value = match.id;
           document.getElementById('select-card').style.display = 'none';
-          onPropertySelect(window._preselect);
+          onPropertySelect(match.id);
+        } else {
+          // No match found - just show dropdown normally
+          console.log('No match for property:', window._preselect);
         }
       }
     }
