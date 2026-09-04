@@ -4106,6 +4106,52 @@ async function openLoanModal(direction, editIdx) {
   document.getElementById('loan-overlay').classList.add('open');
 }
 
+function saveLoan() {
+  var direction = document.getElementById('loan-direction').value;
+  var party = document.getElementById('loan-party').value.trim();
+  var editIdxVal = document.getElementById('loan-edit-idx').value;
+  var editIdx = editIdxVal !== '' ? parseInt(editIdxVal) : null;
+
+  if(!party) { showToast('Please enter a name.'); return; }
+
+  var existingLoan = editIdx !== null ? loans[editIdx] : null;
+  var loan = Object.assign({}, existingLoan || {}, {
+    direction: direction,
+    party: party,
+    property: document.getElementById('loan-property').value,
+    amount: parseFloat(document.getElementById('loan-amount').value) || 0,
+    rate: parseFloat(document.getElementById('loan-rate').value) || 0,
+    start: document.getElementById('loan-start').value,
+    due: document.getElementById('loan-due').value,
+    structure: document.getElementById('loan-structure').value,
+    payment: parseFloat(document.getElementById('loan-payment').value) || 0,
+    frequency: document.getElementById('loan-frequency').value,
+    notes: document.getElementById('loan-notes').value.trim(),
+    payments: existingLoan ? (existingLoan.payments || []) : [],
+    docs: existingLoan ? (existingLoan.docs || []) : [],
+    status: existingLoan ? (existingLoan.status || 'active') : 'active'
+  });
+
+  // Log first payment if entered
+  var firstPay = parseFloat(document.getElementById('loan-first-payment').value) || 0;
+  var firstDate = document.getElementById('loan-first-date').value;
+  if(firstPay && firstDate) {
+    loan.payments = loan.payments || [];
+    loan.payments.push({ date: firstDate, amount: firstPay, note: 'Initial payment' });
+  }
+
+  if(editIdx !== null) {
+    loans[editIdx] = loan;
+  } else {
+    loans.push(loan);
+  }
+
+  saveLoans();
+  closeModal('loan-overlay');
+  renderLoans();
+  showToast((editIdx !== null ? 'Loan updated' : 'Loan added') + ': ' + party);
+}
+
 function openLoanModalByIdx(idx) {
   var loan = loans[idx];
   if(loan) openLoanModal(loan.direction, idx);
