@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rent Payment — RC Properties</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6fa;color:#1a1d23;min-height:100vh;}
+.header{background:#1a1d23;color:#fff;padding:20px 24px;display:flex;align-items:center;gap:14px;}
+.header-icon{font-size:28px;}
+.header-text h1{font-size:18px;font-weight:700;}
+.header-text p{font-size:12px;color:#a0a8b4;margin-top:2px;}
+.container{max-width:520px;margin:32px auto;padding:0 16px 80px;}
+.card{background:#fff;border-radius:14px;border:1px solid #e4e6ea;margin-bottom:20px;overflow:hidden;}
+.card-header{background:#f7f8fa;padding:14px 20px;border-bottom:1px solid #e4e6ea;display:flex;align-items:center;gap:10px;}
+.card-header h2{font-size:14px;font-weight:700;}
+.card-body{padding:24px;}
+.f-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.f-group:last-child{margin-bottom:0;}
+label{font-size:12px;font-weight:600;color:#6b7280;}
+label .req{color:#dc2626;}
+input,select,textarea{border:1px solid #d1d5db;border-radius:8px;padding:12px 14px;font-size:15px;color:#1a1d23;background:#fff;width:100%;outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+
+/* Property card */
+.prop-card{background:#1a1d23;color:#fff;border-radius:12px;padding:20px;margin-bottom:20px;display:none;}
+.prop-card.show{display:block;}
+.prop-name{font-size:18px;font-weight:700;margin-bottom:4px;}
+.prop-addr{font-size:13px;color:#a0a8b4;}
+.rent-amount{font-size:40px;font-weight:800;color:#34d399;margin:16px 0 4px;}
+.rent-label{font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;}
+.due-info{background:rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;margin-top:14px;font-size:13px;color:#d1d5db;display:flex;justify-content:space-between;align-items:center;}
+.due-info .overdue{color:#f87171;font-weight:700;}
+.due-info .ok{color:#34d399;font-weight:700;}
+
+/* Zelle button */
+.zelle-btn{display:flex;align-items:center;justify-content:center;gap:12px;background:#6d1ed4;color:#fff;border:none;border-radius:12px;padding:18px 24px;font-size:17px;font-weight:700;cursor:pointer;width:100%;transition:background .15s;text-decoration:none;margin-bottom:12px;}
+.zelle-btn:hover{background:#5b19b0;}
+.zelle-btn .zelle-logo{font-size:22px;}
+.zelle-amount{font-size:13px;color:rgba(255,255,255,.7);font-weight:400;}
+
+/* Steps */
+.steps{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.step{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:#f7f8fa;border-radius:10px;border:1px solid #e4e6ea;}
+.step-num{width:28px;height:28px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.step-body{flex:1;}
+.step-title{font-size:13px;font-weight:700;margin-bottom:2px;}
+.step-sub{font-size:12px;color:#6b7280;line-height:1.5;}
+
+/* Confirm form */
+.confirm-section{display:none;}
+.confirm-section.show{display:block;}
+.submit-btn{width:100%;background:#16a34a;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;transition:background .15s;}
+.submit-btn:hover{background:#15803d;}
+.submit-btn:disabled{background:#86efac;cursor:not-allowed;}
+
+/* Success */
+.success-screen{text-align:center;padding:48px 20px;display:none;}
+.success-screen.show{display:block;}
+.success-icon{font-size:64px;margin-bottom:16px;}
+.success-title{font-size:22px;font-weight:700;color:#166534;margin-bottom:8px;}
+.success-sub{color:#6b7280;font-size:14px;line-height:1.7;max-width:380px;margin:0 auto 24px;}
+
+/* Notice */
+.notice{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;font-size:12px;color:#1e40af;line-height:1.7;margin-bottom:16px;}
+.notice.amber{background:#fffbeb;border-color:#fde68a;color:#92400e;}
+
+/* Late fee warning */
+.late-warning{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;margin-bottom:16px;font-size:13px;color:#dc2626;display:none;}
+.late-warning.show{display:block;}
+.late-warning strong{font-weight:700;}
+
+/* Amount breakdown */
+.amount-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:14px;}
+.amount-row:last-child{border-bottom:none;font-weight:700;font-size:16px;padding-top:12px;}
+.amount-row.total{color:#1a1d23;}
+
+@media(max-width:520px){.container{padding:0 12px 60px;}.rent-amount{font-size:32px;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🏠</div>
+  <div class="header-text">
+    <h1>RC Properties — Rent Payment</h1>
+    <p>Questions? Call or text <a href="tel:2532234369" style="color:#60a5fa;">253.223.4369</a></p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Step 1: Select property -->
+  <div class="card" id="select-card">
+    <div class="card-header"><span style="font-size:18px;">🏠</span><h2>Select your property</h2></div>
+    <div class="card-body">
+      <div class="f-group">
+        <label>Property / unit <span class="req">*</span></label>
+        <select id="property-select" onchange="onPropertySelect(this.value)">
+          <option value="">— Select your unit —</option>
+        </select>
+      </div>
+      <div class="f-group">
+        <label>Your name <span class="req">*</span></label>
+        <input type="text" id="tenant-name" placeholder="First and last name">
+      </div>
+    </div>
+  </div>
+
+  <!-- Property details card -->
+  <div class="prop-card" id="prop-card">
+    <div class="prop-name" id="pc-name"></div>
+    <div class="prop-addr" id="pc-addr"></div>
+    <div class="rent-label" style="margin-top:16px;">Monthly rent</div>
+    <div class="rent-amount" id="pc-rent">$0</div>
+    <div class="due-info">
+      <span>Due on the <strong>1st</strong> of each month</span>
+      <span id="pc-status"></span>
+    </div>
+  </div>
+
+  <!-- Late fee warning -->
+  <div class="late-warning" id="late-warning">
+    <strong>⚠️ Late fee may apply.</strong> Rent is past due. A $100 late fee is assessed after the 5th of the month. If you are paying late, please include the late fee in your payment or contact us to discuss.
+  </div>
+
+  <!-- How to pay -->
+  <div class="card" id="how-to-pay" style="display:none;">
+    <div class="card-header"><span style="font-size:18px;">💸</span><h2>How to pay</h2></div>
+    <div class="card-body">
+
+      <!-- Amount breakdown -->
+      <div id="amount-breakdown" style="margin-bottom:20px;">
+        <div class="amount-row"><span>Monthly rent</span><span id="breakdown-rent">$0</span></div>
+        <div class="amount-row late-row" id="late-row" style="display:none;color:#dc2626;"><span>Late fee</span><span>$100.00</span></div>
+        <div class="amount-row total"><span>Total due</span><span id="breakdown-total">$0</span></div>
+      </div>
+
+      <!-- Zelle button -->
+      <a id="zelle-btn" href="zelle://send?token=2532234369&amount=0" class="zelle-btn">
+        <span class="zelle-logo">💜</span>
+        <div>
+          <div>Pay with Zelle</div>
+          <div class="zelle-amount" id="zelle-amount-label"></div>
+        </div>
+      </a>
+
+      <div class="notice">
+        <strong>Zelle recipient:</strong> Brandy Ferber-Christensen · <strong>253.961.6823</strong><br>
+        Send to this number in your bank's Zelle app. Payment is instant and free.
+      </div>
+
+      <!-- Steps -->
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Open your bank app</div>
+            <div class="step-sub">Use Chase, Wells Fargo, Bank of America, or any bank with Zelle built in.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Send to <strong>253.961.6823</strong></div>
+            <div class="step-sub">Search for Zelle in your bank app. Send payment to Brandy Ferber-Christensen at 253.961.6823.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Include your address in the memo</div>
+            <div class="step-sub">Add your address and "rent" in the memo field so we can match your payment.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Confirm your payment below</div>
+            <div class="step-sub">After sending, fill out the confirmation form so we have a record.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Confirm payment form -->
+  <div class="confirm-section" id="confirm-section">
+    <div class="card">
+      <div class="card-header"><span style="font-size:18px;">✅</span><h2>Confirm your payment</h2></div>
+      <div class="card-body">
+        <div class="notice">Fill this out <strong>after</strong> you have sent the Zelle payment. This helps us log your payment and send you a confirmation.</div>
+        <div class="f-group">
+          <label>Amount you sent ($) <span class="req">*</span></label>
+          <input type="number" id="paid-amount" min="1" step="0.01" placeholder="0.00" required>
+        </div>
+        <div class="f-group">
+          <label>Date you sent it <span class="req">*</span></label>
+          <input type="date" id="paid-date" required>
+        </div>
+        <div class="f-group">
+          <label>Payment type</label>
+          <select id="pay-type">
+            <option value="Rent">Rent</option>
+            <option value="Rent + Late fee">Rent + Late fee</option>
+            <option value="Deposit">Deposit</option>
+            <option value="Partial payment">Partial payment</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label>Note (optional)</label>
+          <input type="text" id="pay-note" placeholder="e.g. July rent, partial payment, etc.">
+        </div>
+        <button class="submit-btn" id="confirm-btn" onclick="submitConfirmation()">
+          ✓ Submit payment confirmation
+        </button>
+        <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:10px;">This does not process a payment — it only records that you sent one via Zelle.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Payment confirmed!</div>
+    <div class="success-sub" id="success-msg">Thank you! Your payment confirmation has been received and logged. You will receive a receipt by email shortly.</div>
+    <button onclick="window.location.reload()" class="submit-btn" style="width:auto;padding:12px 28px;font-size:14px;margin-top:8px;">Pay again</button>
+  </div>
+
+</div>
+
+<script>
+var SUPABASE_URL = 'https://ioliuikhxzbexjzfeaus.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_ajHlDgE9q7myl0EF84MYVQ_CDz3uoFv';
+var EMAILJS_SVC = 'service_3acvjpg';
+var EMAILJS_KEY = 'yMtMxURljjHQMjT16';
+var EMAILJS_RECEIPT = 'template_te2mpqb';
+var EMAILJS_NOTIFY = 'template_apply_notify';
+
+var sbClient = null;
+var sites = [];
+var selectedSite = null;
+var isLate = false;
+
+window.addEventListener('DOMContentLoaded', function() {
+  emailjs.init(EMAILJS_KEY);
+  try {
+    if(window.supabase && window.supabase.createClient) {
+      sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+  } catch(e) { console.error('Supabase init:', e); }
+
+  // Set today as default payment date
+  document.getElementById('paid-date').value = new Date().toISOString().slice(0,10);
+
+  // Check if late (after 5th of month)
+  var today = new Date();
+  isLate = today.getDate() > 5;
+
+  loadProperties();
+
+  // Check URL param for pre-selected property
+  var params = new URLSearchParams(window.location.search);
+  var propId = params.get('property') || params.get('p') || '';
+  if(propId) { window._preselect = propId; }
+});
+
+async function loadProperties() {
+  if(!sbClient) return;
+  try {
+    var r = await sbClient.from('sites').select('id,name,addr,type,nickname,tenant,rent,mortgage,status').order('sort_order');
+    if(r.data) {
+      sites = r.data.filter(function(s){ return s.status !== 'vacant'; });
+      var sel = document.getElementById('property-select');
+      sites.forEach(function(s) {
+        var opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = (s.addr || s.name) + (s.tenant ? ' — ' + s.tenant : '');
+        sel.appendChild(opt);
+      });
+      // Pre-select if URL param
+      if(window._preselect) {
+        sel.value = window._preselect;
+        if(sel.value) onPropertySelect(window._preselect);
+      }
+    }
+  } catch(e) { console.error('Load properties error:', e); }
+}
+
+function fmt(n) { return '$' + (parseFloat(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function onPropertySelect(id) {
+  if(!id) {
+    selectedSite = null;
+    document.getElementById('prop-card').classList.remove('show');
+    document.getElementById('how-to-pay').style.display = 'none';
+    document.getElementById('confirm-section').classList.remove('show');
+    document.getElementById('late-warning').classList.remove('show');
+    return;
+  }
+  selectedSite = sites.find(function(s){ return s.id === id; });
+  if(!selectedSite) return;
+
+  var rent = selectedSite.rent || 0;
+  var lateTotal = isLate ? rent + 100 : rent;
+
+  // Prop card
+  document.getElementById('pc-name').textContent = selectedSite.addr || selectedSite.name;
+  document.getElementById('pc-addr').textContent = selectedSite.tenant ? 'Tenant: ' + selectedSite.tenant : '';
+  document.getElementById('pc-rent').textContent = fmt(rent);
+  document.getElementById('pc-status').innerHTML = isLate
+    ? '<span class="overdue">⚠️ PAST DUE</span>'
+    : '<span class="ok">✓ Current</span>';
+  document.getElementById('prop-card').classList.add('show');
+
+  // Late warning
+  document.getElementById('late-warning').classList.toggle('show', isLate);
+
+  // Amount breakdown
+  document.getElementById('breakdown-rent').textContent = fmt(rent);
+  document.getElementById('breakdown-total').textContent = fmt(lateTotal);
+  document.getElementById('late-row').style.display = isLate ? 'flex' : 'none';
+
+  // Zelle button
+  document.getElementById('zelle-amount-label').textContent = 'Send ' + fmt(lateTotal) + ' to 253.961.6823';
+  document.getElementById('zelle-btn').href = 'zelle://send?token=2532234369&amount=' + lateTotal;
+
+  // Pre-fill amount
+  document.getElementById('paid-amount').value = lateTotal;
+  document.getElementById('pay-type').value = isLate ? 'Rent + Late fee' : 'Rent';
+
+  document.getElementById('how-to-pay').style.display = 'block';
+  document.getElementById('confirm-section').classList.add('show');
+}
+
+async function submitConfirmation() {
+  var tenantName = document.getElementById('tenant-name').value.trim();
+  var amount = parseFloat(document.getElementById('paid-amount').value) || 0;
+  var date = document.getElementById('paid-date').value;
+  var payType = document.getElementById('pay-type').value;
+  var note = document.getElementById('pay-note').value.trim();
+
+  if(!selectedSite) { alert('Please select your property first.'); return; }
+  if(!tenantName) { alert('Please enter your name.'); return; }
+  if(!amount) { alert('Please enter the amount you sent.'); return; }
+  if(!date) { alert('Please enter the payment date.'); return; }
+
+  var btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  // Log to Supabase payments table
+  try {
+    if(sbClient) {
+      var row = {
+        date: date,
+        site_id: selectedSite.id,
+        tenant: tenantName,
+        type: payType,
+        amount: amount,
+        method: 'Zelle',
+        source: 'tenant-portal'
+      };
+      var res = await sbClient.from('payments').insert([row]);
+      if(res.error) throw res.error;
+    }
+  } catch(err) {
+    console.error('Payment log error:', err);
+    btn.disabled = false;
+    btn.textContent = '✓ Submit payment confirmation';
+    alert('Error saving payment. Please call 253.223.4369 to confirm manually.');
+    return;
+  }
+
+  // Email receipt to tenant (if they provided email)
+  // Email notification to Ryan + Brandy
+  try {
+    var dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    var notifyParams = {
+      applicant_name: tenantName,
+      applicant_email: '',
+      applicant_phone: '',
+      property_name: selectedSite.addr || selectedSite.name,
+      movein_date: dateFormatted,
+      occupants: '—',
+      monthly_income: fmt(amount),
+      employment: payType,
+      pets: note || 'No note',
+      eviction: 'N/A',
+      criminal: 'N/A',
+      notes: tenantName + ' submitted a Zelle payment confirmation of ' + fmt(amount) + ' for ' + (selectedSite.addr || selectedSite.name) + ' on ' + dateFormatted + '. Type: ' + payType + (note ? '. Note: ' + note : '') + '. Source: tenant payment portal.',
+      submitted_at: new Date().toLocaleString()
+    };
+    await emailjs.send(EMAILJS_SVC, EMAILJS_NOTIFY, {...notifyParams, to_email: '1ryanchristensen@gmail.com'});
+    await emailjs.send(EMAILJS_SVC, EMAILJS_NOTIFY, {...notifyParams, to_email: 'brandyferber@gmail.com'});
+  } catch(e) { console.warn('Email failed:', e); }
+
+  // Show success
+  var propName = selectedSite.addr || selectedSite.name;
+  document.getElementById('success-msg').textContent =
+    'Thank you ' + tenantName + '! Your Zelle payment of ' + fmt(amount) + ' for ' + propName + ' has been logged. We will verify receipt shortly. Questions? Call 253.223.4369.';
+
+  document.getElementById('select-card').style.display = 'none';
+  document.getElementById('prop-card').classList.remove('show');
+  document.getElementById('how-to-pay').style.display = 'none';
+  document.getElementById('confirm-section').classList.remove('show');
+  document.getElementById('late-warning').classList.remove('show');
+  document.getElementById('success-screen').classList.add('show');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
