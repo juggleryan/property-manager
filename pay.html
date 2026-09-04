@@ -103,10 +103,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
           <option value="">— Select your unit —</option>
         </select>
       </div>
-      <div class="f-group">
-        <label>Your name <span class="req">*</span></label>
-        <input type="text" id="tenant-name" placeholder="First and last name">
-      </div>
+
     </div>
   </div>
 
@@ -195,6 +192,10 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
       <div class="card-body">
         <div class="notice">Fill this out <strong>after</strong> you have sent the Zelle payment. This helps us log your payment and send you a confirmation.</div>
         <div class="f-group">
+          <label>Your name <span class="req">*</span></label>
+          <input type="text" id="tenant-name" placeholder="First and last name" required>
+        </div>
+        <div class="f-group">
           <label>Amount you sent ($) <span class="req">*</span></label>
           <input type="number" id="paid-amount" min="1" step="0.01" placeholder="0.00" required>
         </div>
@@ -275,7 +276,7 @@ async function loadProperties() {
   try {
     var r = await sbClient.from('sites').select('id,name,addr,type,nickname,tenant,rent,mortgage,status').order('sort_order');
     if(r.data) {
-      sites = r.data.filter(function(s){ return s.status !== 'vacant'; });
+      sites = r.data.filter(function(s){ return s.status !== 'vacant' && s.state !== 'az' && s.type !== 'land' && s.tenant; });
       var sel = document.getElementById('property-select');
       sites.forEach(function(s) {
         var opt = document.createElement('option');
