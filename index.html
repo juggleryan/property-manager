@@ -604,6 +604,14 @@ function skipSetup(){
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               </button>
               <div style="width:1px;height:16px;background:var(--border);margin:0 4px;"></div>
+              <div style="width:1px;height:16px;background:var(--border);margin:0 4px;"></div>
+              <button class="icon-btn" id="copy-inquiry-btn" onclick="copyInquiryLink()" data-tip="Copy showing request link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </button>
+              <button class="icon-btn" onclick="openInquiryLink()" data-tip="Open showing request form">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </button>
+              <div style="width:1px;height:16px;background:var(--border);margin:0 4px;"></div>
               <button class="icon-btn" id="copy-pay-btn" onclick="copyPayLink()" data-tip="Copy payment link">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
               </button>
@@ -5046,6 +5054,22 @@ function openDetailById(siteId) {
 }
 
 // COPY APPLICATION LINK
+function getInquiryUrl() {
+  if(detailIdx === null) return '';
+  var s = sites[detailIdx];
+  var base = window.location.origin + window.location.pathname.replace('index.html','') + 'inquiry.html';
+  return base + '?property=' + encodeURIComponent(s.id);
+}
+function openInquiryLink() { var url = getInquiryUrl(); if(url) window.open(url,'_blank'); }
+function copyInquiryLink() {
+  var url = getInquiryUrl();
+  if(!url) return;
+  navigator.clipboard.writeText(url).then(function() {
+    var btn = document.getElementById('copy-inquiry-btn');
+    btn.style.background = 'var(--green-bg)'; btn.style.color = 'var(--green)';
+    setTimeout(function(){ btn.style.background=''; btn.style.color=''; }, 1500);
+  }).catch(function(){ showToast('Inquiry link: ' + url); });
+}
 function getApplyUrl() {
   if(detailIdx === null) return '';
   var s = sites[detailIdx];
