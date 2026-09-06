@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request a Showing</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#f4f6fa;color:#1a1d23;min-height:100vh;}
+
+.hero{background:#1a1d23;color:#fff;padding:40px 24px;text-align:center;}
+.hero h1{font-size:26px;font-weight:800;margin-bottom:8px;}
+.hero p{font-size:14px;color:#a0a8b4;margin-bottom:4px;}
+.hero .phone{font-size:16px;color:#60a5fa;font-weight:600;margin-top:12px;}
+.hero .phone a{color:#60a5fa;text-decoration:none;}
+
+.prop-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:30px;padding:8px 16px;margin-top:16px;font-size:14px;color:#fff;}
+
+.container{max-width:480px;margin:0 auto;padding:28px 16px 80px;}
+
+.card{background:#fff;border-radius:16px;border:1px solid #e4e6ea;padding:28px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+
+.card-title{font-size:16px;font-weight:700;margin-bottom:4px;}
+.card-sub{font-size:13px;color:#6b7280;margin-bottom:22px;}
+
+.f-group{margin-bottom:18px;}
+.f-group:last-child{margin-bottom:0;}
+label{display:block;font-size:12px;font-weight:600;color:#6b7280;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
+input,select,textarea{border:1.5px solid #e5e7eb;border-radius:10px;padding:13px 14px;font-size:15px;color:#1a1d23;background:#fff;width:100%;outline:none;transition:border .15s,box-shadow .15s;font-family:inherit;}
+input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+input::placeholder,textarea::placeholder{color:#d1d5db;}
+textarea{resize:none;min-height:90px;}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+.submit-btn{width:100%;background:#2563eb;color:#fff;border:none;border-radius:12px;padding:17px;font-size:16px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s;letter-spacing:.01em;}
+.submit-btn:hover{background:#1d4ed8;transform:translateY(-1px);}
+.submit-btn:disabled{background:#93c5fd;cursor:not-allowed;transform:none;}
+
+.eho{text-align:center;font-size:11px;color:#9ca3af;line-height:1.7;margin-top:20px;padding:0 8px;}
+
+.success-screen{text-align:center;padding:60px 20px;display:none;}
+.success-screen.show{display:block;}
+.success-icon{font-size:72px;margin-bottom:20px;}
+.success-title{font-size:24px;font-weight:800;color:#166534;margin-bottom:10px;}
+.success-sub{color:#6b7280;font-size:14px;line-height:1.8;max-width:360px;margin:0 auto 28px;}
+.back-btn{display:inline-block;background:#1a1d23;color:#fff;border:none;border-radius:10px;padding:13px 28px;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;}
+
+.privacy{font-size:11px;color:#9ca3af;text-align:center;margin-top:12px;line-height:1.6;}
+
+@media(max-width:480px){.grid-2{grid-template-columns:1fr;}.hero{padding:32px 20px;}.card{padding:22px;}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Request a Showing</h1>
+  <p>We'll reach out to schedule a time that works for you.</p>
+  <div class="phone">📞 <a href="tel:2532234369">253.223.4369</a></div>
+  <div class="prop-chip" id="prop-chip" style="display:none;">
+    <span id="prop-chip-icon">🏡</span>
+    <span id="prop-chip-addr">Loading...</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Request received!</div>
+    <div class="success-sub" id="success-msg">
+      Thanks! We'll be in touch shortly to schedule your showing.
+      Questions? Call or text us at 253.223.4369.
+    </div>
+    <button onclick="window.location.reload()" class="back-btn">← Submit another request</button>
+  </div>
+
+  <form id="inquiry-form" onsubmit="submitInquiry(event)">
+
+    <div class="card">
+      <div class="card-title">Tell us about yourself</div>
+      <div class="card-sub">Just the basics — this takes about 60 seconds.</div>
+
+      <div class="grid-2">
+        <div class="f-group">
+          <label>First name</label>
+          <input type="text" id="first-name" placeholder="First" required>
+        </div>
+        <div class="f-group">
+          <label>Last name</label>
+          <input type="text" id="last-name" placeholder="Last" required>
+        </div>
+      </div>
+
+      <div class="f-group">
+        <label>Phone number</label>
+        <input type="tel" id="phone" placeholder="(253) 555-0000" required>
+      </div>
+
+      <div class="f-group">
+        <label>Email address</label>
+        <input type="email" id="email" placeholder="your@email.com" required>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">A little more info</div>
+      <div class="card-sub">Helps us prepare for the showing.</div>
+
+      <div class="f-group">
+        <label>When are you looking to move?</label>
+        <select id="movein">
+          <option value="">Select a timeframe...</option>
+          <option value="ASAP">As soon as possible</option>
+          <option value="30 days">Within 30 days</option>
+          <option value="60 days">Within 60 days</option>
+          <option value="90 days">Within 90 days</option>
+          <option value="Just browsing">Just browsing for now</option>
+        </select>
+      </div>
+
+      <div class="grid-2">
+        <div class="f-group">
+          <label>Number of people</label>
+          <select id="occupants">
+            <option value="1">Just me</option>
+            <option value="2">2 people</option>
+            <option value="3">3 people</option>
+            <option value="4">4 people</option>
+            <option value="5+">5 or more</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label>Pets?</label>
+          <select id="pets">
+            <option value="No pets">No pets</option>
+            <option value="Small dog">Small dog</option>
+            <option value="Large dog">Large dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="f-group">
+        <label>Anything you'd like us to know? (optional)</label>
+        <textarea id="message" placeholder="Questions about the property, specific needs, best time to reach you..."></textarea>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submit-btn">
+      Request a showing →
+    </button>
+
+    <p class="privacy">Your info is used only to schedule your showing and will never be sold or shared.</p>
+
+    <div class="eho">
+      🏠 Equal Housing Opportunity — We do not discriminate on the basis of race, color, religion, sex, national origin, disability, familial status, or any other protected class.
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+var SUPABASE_URL = 'https://ioliuikhxzbexjzfeaus.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_ajHlDgE9q7myl0EF84MYVQ_CDz3uoFv';
+var EMAILJS_SVC = 'service_3acvjpg';
+var EMAILJS_KEY = 'yMtMxURljjHQMjT16';
+var EMAILJS_TEMPLATE = 'template_apply_notify';
+
+var sbClient = null;
+var propertyData = null;
+
+window.addEventListener('DOMContentLoaded', function() {
+  emailjs.init(EMAILJS_KEY);
+  try {
+    if(window.supabase && window.supabase.createClient) {
+      sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+  } catch(e) { console.error('Supabase init:', e); }
+
+  var params = new URLSearchParams(window.location.search);
+  var propId = params.get('property') || params.get('p') || '';
+  if(propId) loadProperty(propId);
+});
+
+async function loadProperty(propId) {
+  if(!sbClient) return;
+  try {
+    var r = await sbClient.from('sites').select('id,name,addr,type,nickname').eq('id', propId).single();
+    if(!r.data) {
+      // Try case-insensitive match
+      var all = await sbClient.from('sites').select('id,name,addr,type,nickname');
+      if(all.data) {
+        var match = all.data.find(function(s){
+          return s.id.toLowerCase() === propId.toLowerCase() ||
+                 (s.name||'').toLowerCase() === propId.toLowerCase();
+        });
+        if(match) r.data = match;
+      }
+    }
+    if(r.data) {
+      propertyData = r.data;
+      var addr = r.data.addr || r.data.name || 'Rental property';
+      var icon = r.data.type === 'rv' ? '🚐' : r.data.type === 'land' ? '🌿' : '🏡';
+      document.getElementById('prop-chip-icon').textContent = icon;
+      document.getElementById('prop-chip-addr').textContent = addr;
+      document.getElementById('prop-chip').style.display = 'inline-flex';
+    }
+  } catch(e) { console.log('Property load error:', e); }
+}
+
+async function submitInquiry(e) {
+  e.preventDefault();
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  var firstName = document.getElementById('first-name').value.trim();
+  var lastName = document.getElementById('last-name').value.trim();
+  var fullName = firstName + ' ' + lastName;
+  var phone = document.getElementById('phone').value.trim();
+  var email = document.getElementById('email').value.trim();
+  var movein = document.getElementById('movein').value;
+  var occupants = document.getElementById('occupants').value;
+  var pets = document.getElementById('pets').value;
+  var message = document.getElementById('message').value.trim();
+
+  var propId = propertyData ? propertyData.id : (new URLSearchParams(window.location.search).get('property') || '');
+  var propName = propertyData ? (propertyData.addr || propertyData.name) : (new URLSearchParams(window.location.search).get('property') || 'Not specified');
+  var propType = propertyData ? propertyData.type : '';
+
+  var notes = [
+    'SHOWING REQUEST',
+    'Move-in: ' + (movein || 'Not specified'),
+    'Occupants: ' + occupants,
+    'Pets: ' + pets,
+    message ? 'Message: ' + message : '',
+    'Submitted: ' + new Date().toLocaleString()
+  ].filter(Boolean).join(' | ');
+
+  // Save to Supabase waitlist
+  try {
+    if(sbClient) {
+      var row = {
+        name: fullName,
+        phone: phone,
+        email: email,
+        housing_type: propType || '',
+        property_id: propId || null,
+        movein: movein,
+        occupants: occupants,
+        pets: pets,
+        status: 'active',
+        notes: notes,
+        budget: 0
+      };
+      await sbClient.from('waitlist').insert([row]);
+    }
+  } catch(err) {
+    console.error('Supabase error:', err);
+  }
+
+  // Email notification
+  try {
+    var tpl = {
+      applicant_name: fullName + ' [SHOWING REQUEST]',
+      applicant_email: email,
+      applicant_phone: phone,
+      property_name: propName,
+      movein_date: movein || 'Not specified',
+      occupants: occupants,
+      monthly_income: 'N/A',
+      employment: 'Showing inquiry — not full application',
+      pets: pets,
+      eviction: 'N/A',
+      criminal: 'N/A',
+      notes: notes,
+      submitted_at: new Date().toLocaleString()
+    };
+    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, Object.assign({}, tpl, {to_email: '1ryanchristensen@gmail.com'}));
+    await emailjs.send(EMAILJS_SVC, EMAILJS_TEMPLATE, Object.assign({}, tpl, {to_email: 'brandyferber@gmail.com'}));
+  } catch(emailErr) {
+    console.warn('Email failed:', emailErr);
+  }
+
+  // Show success
+  document.getElementById('inquiry-form').style.display = 'none';
+  document.getElementById('success-screen').classList.add('show');
+  document.getElementById('success-msg').textContent =
+    'Thanks ' + firstName + '! We got your request and will reach out shortly to schedule your showing' +
+    (propName !== 'Not specified' ? ' at ' + propName : '') + '. Questions? Call or text 253.223.4369.';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
