@@ -1575,21 +1575,7 @@ function skipSetup(){
           </select>
         </div>
       </div>
-      <div class="f-group"><label>Notes</label><textarea id="loan-notes" rows="3" placeholder="Purpose, collateral, terms, payment notes..."></textarea></div>
-      <div class="grid-2">
-        <div class="f-group"><label>Loan status</label>
-          <select id="loan-status" onchange="onLoanStatusChange()">
-            <option value="active">Active</option>
-            <option value="paid">Paid off</option>
-            <option value="forgiven">Forgiven</option>
-            <option value="defaulted">Defaulted</option>
-          </select>
-        </div>
-        <div class="f-group" id="loan-paidoff-date-row" style="display:none;">
-          <label>Date resolved</label>
-          <input type="date" id="loan-paidoff-date">
-        </div>
-      </div>
+      <div class="f-group"><label>Notes</label><input type="text" id="loan-notes" placeholder="Purpose, collateral, terms..."></div>
       <div class="modal-section-title">Documents</div>
       <div id="loan-docs-list" style="margin-bottom:10px;"></div>
       <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="loan-upload-label">
@@ -3880,8 +3866,9 @@ function renderLoans() {
       const balance = getLoanBalance(l);
       const pct = Math.round(((l.amount - balance) / l.amount) * 100);
       const isOverdue = l.due && l.due < today() && l.status === 'active';
-      const statusCls = l.status === 'paid' ? 'loan-status-paid' : isOverdue ? 'loan-status-overdue' : 'loan-status-active';
-      const statusTxt = l.status === 'paid' ? 'Paid off' : isOverdue ? 'Overdue' : 'Active';
+      const resolved = l.status==='paid'||l.status==='forgiven'||l.status==='defaulted';
+      const statusCls = resolved ? 'loan-status-paid' : isOverdue ? 'loan-status-overdue' : 'loan-status-active';
+      const statusTxt = l.status==='paid' ? 'Paid off' : l.status==='forgiven' ? 'Forgiven' : l.status==='defaulted' ? 'Defaulted' : isOverdue ? 'Overdue' : 'Active';
       return `<tr>
         <td style="cursor:pointer;" onclick="openLoanModal('${l.direction}',${realIdx})"><div class="tbl-name" style="color:var(--blue);text-decoration:underline;text-underline-offset:2px;">${l.party}</div><div class="tbl-sub">${l.notes || (l.property ? sites.find(s=>s.id===l.property)?.name||'' : '')}</div></td>
         <td>${fmt(l.amount)}</td>
@@ -3910,7 +3897,7 @@ function renderLoans() {
   renderTable('loans-borrowed-tbody', borrowed);
 
   // Paid off section
-  var paid = loans.filter(function(l){ return l.status==='paid'||l.status==='forgiven'||l.status==='defaulted'; });
+  var paid = loans.filter(function(l){ return l.status === 'paid' || l.status === 'forgiven' || l.status === 'defaulted'; });
   var paidTbody = document.getElementById('loans-paid-tbody');
   if(paidTbody){
     if(!paid.length){
@@ -4108,11 +4095,6 @@ async function openLoanModal(direction, editIdx) {
     document.getElementById('loan-payment').value = l.payment || '';
     document.getElementById('loan-frequency').value = l.frequency || 'monthly';
     document.getElementById('loan-notes').value = l.notes || '';
-    if(document.getElementById('loan-status')) {
-      document.getElementById('loan-status').value = l.status || 'active';
-      document.getElementById('loan-paidoff-date').value = l.paidoffDate || '';
-      onLoanStatusChange();
-    }
     activeLoanIdx = editIdx;
     renderLoanDocs(editIdx);
   } else {
@@ -4126,11 +4108,6 @@ async function openLoanModal(direction, editIdx) {
     document.getElementById('loan-payment').value = '';
     document.getElementById('loan-frequency').value = 'monthly';
     document.getElementById('loan-notes').value = '';
-    if(document.getElementById('loan-status')) {
-      document.getElementById('loan-status').value = 'active';
-      document.getElementById('loan-paidoff-date').value = '';
-      onLoanStatusChange();
-    }
     activeLoanIdx = null;
     var dl = document.getElementById('loan-docs-list');
     if(dl) dl.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic;">Save the loan first, then reopen Edit to attach documents.</div>';
@@ -4164,8 +4141,7 @@ function saveLoan() {
     status: (document.getElementById('loan-status') ? document.getElementById('loan-status').value : null) || 'active',
     paidoffDate: (document.getElementById('loan-paidoff-date') ? document.getElementById('loan-paidoff-date').value : '') || '',
     payments: existingLoan ? (existingLoan.payments || []) : [],
-    docs: existingLoan ? (existingLoan.docs || []) : [],
-    status: existingLoan ? (existingLoan.status || 'active') : 'active'
+    docs: existingLoan ? (existingLoan.docs || []) : []
   });
 
   // Log first payment if entered
@@ -4186,21 +4162,6 @@ function saveLoan() {
   closeModal('loan-overlay');
   renderLoans();
   showToast((editIdx !== null ? 'Loan updated' : 'Loan added') + ': ' + party);
-}
-
-function onLoanStatusChange() {
-  var status = document.getElementById('loan-status').value;
-  var row = document.getElementById('loan-paidoff-date-row');
-  if(row) row.style.display = (status==='paid'||status==='forgiven'||status==='defaulted') ? 'block' : 'none';
-}
-
-function markLoanPaid(idx) {
-  if(!confirm('Mark this loan as paid off?')) return;
-  loans[idx].status = 'paid';
-  loans[idx].paidoffDate = new Date().toISOString().slice(0,10);
-  saveLoans();
-  renderLoans();
-  showToast('Loan marked as paid off — moved to resolved section.');
 }
 
 function openLoanModalByIdx(idx) {
