@@ -840,7 +840,7 @@ function skipSetup(){
           </div>
           <div id="paid-loans-body" style="display:none;">
             <table class="tbl">
-              <thead><tr><th>Party</th><th>Direction</th><th>Original amount</th><th>Rate</th><th>Start date</th><th>Paid off</th><th>Notes</th><th></th></tr></thead>
+              <thead><tr><th>Party</th><th>Direction</th><th>Original amount</th><th>Rate</th><th>Start date</th><th>Status</th><th>Date resolved</th><th>Notes</th><th></th></tr></thead>
               <tbody id="loans-paid-tbody"></tbody>
             </table>
           </div>
@@ -1575,7 +1575,21 @@ function skipSetup(){
           </select>
         </div>
       </div>
-      <div class="f-group"><label>Notes</label><input type="text" id="loan-notes" placeholder="Purpose, collateral, terms..."></div>
+      <div class="f-group"><label>Notes</label><textarea id="loan-notes" rows="3" placeholder="Purpose, collateral, terms, payment notes..."></textarea></div>
+      <div class="grid-2">
+        <div class="f-group"><label>Loan status</label>
+          <select id="loan-status" onchange="onLoanStatusChange()">
+            <option value="active">Active</option>
+            <option value="paid">Paid off</option>
+            <option value="forgiven">Forgiven</option>
+            <option value="defaulted">Defaulted</option>
+          </select>
+        </div>
+        <div class="f-group" id="loan-paidoff-date-row" style="display:none;">
+          <label>Date resolved</label>
+          <input type="date" id="loan-paidoff-date">
+        </div>
+      </div>
       <div class="modal-section-title">Documents</div>
       <div id="loan-docs-list" style="margin-bottom:10px;"></div>
       <label class="btn btn-sm btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="loan-upload-label">
@@ -1949,7 +1963,7 @@ async function loadFromSupabase(){
         rate:parseFloat(r.rate)||0, start:r.start_date||'', due:r.due_date||'',
         structure:r.structure||'flexible', payment:parseFloat(r.payment)||0,
         frequency:r.frequency||'monthly', notes:r.notes||'',
-        status:r.status||'active', payments:r.payments||[], docs:r.docs||[]
+        status:r.status||'active', paidoffDate:r.paidoff_date||'', payments:r.payments||[], docs:r.docs||[]
       }));
       saveLoans();
     }
@@ -3713,7 +3727,7 @@ async function saveLoans() {
       amount:l.amount||0, rate:l.rate||0, start_date:l.start||null,
       due_date:l.due||null, structure:l.structure||'flexible',
       payment:l.payment||0, frequency:l.frequency||'monthly',
-      notes:l.notes||'', status:l.status||'active',
+      notes:l.notes||'', status:l.status||'active', paidoff_date:l.paidoffDate||null,
       payments:l.payments||[], docs:l.docs||[] };
   });
   var toUpdate = loans.filter(function(l){ return !!l.id; }).map(function(l){
@@ -3721,7 +3735,7 @@ async function saveLoans() {
       amount:l.amount||0, rate:l.rate||0, start_date:l.start||null,
       due_date:l.due||null, structure:l.structure||'flexible',
       payment:l.payment||0, frequency:l.frequency||'monthly',
-      notes:l.notes||'', status:l.status||'active',
+      notes:l.notes||'', status:l.status||'active', paidoff_date:l.paidoffDate||null,
       payments:l.payments||[], docs:l.docs||[] };
   });
   var res = {error:null};
@@ -3737,7 +3751,7 @@ async function saveLoans() {
       rate:parseFloat(row.rate)||0, start:row.start_date||'', due:row.due_date||'',
       structure:row.structure||'flexible', payment:parseFloat(row.payment)||0,
       frequency:row.frequency||'monthly', notes:row.notes||'',
-      status:row.status||'active', payments:row.payments||[], docs:row.docs||[]
+      status:row.status||'active', paidoffDate:row.paidoff_date||'', payments:row.payments||[], docs:row.docs||[]
     };});
     localStorage.setItem('pm_loans', JSON.stringify(loans));
     renderLoans();
@@ -3896,7 +3910,7 @@ function renderLoans() {
   renderTable('loans-borrowed-tbody', borrowed);
 
   // Paid off section
-  var paid = loans.filter(function(l){ return l.status === 'paid'; });
+  var paid = loans.filter(function(l){ return l.status==='paid'||l.status==='forgiven'||l.status==='defaulted'; });
   var paidTbody = document.getElementById('loans-paid-tbody');
   if(paidTbody){
     if(!paid.length){
@@ -3916,6 +3930,7 @@ function renderLoans() {
           '<td style="font-size:12px;color:var(--text2);">' + (l.notes||'—') + '</td>' +
           '<td><div class="row-actions">' +
           '<button class="btn btn-xs btn-secondary" onclick="openLoanPayModal(' + realIdx + ')">History</button>' +
+          '<button class="btn btn-xs btn-secondary" title="Mark paid off" onclick="markLoanPaid(' + realIdx + ')">✓ Paid</button> ' +
           '<button class="btn btn-xs btn-danger" onclick="deleteLoan(' + realIdx + ')">✕</button>' +
           '</div></td>' +
           '</tr>';
@@ -4094,6 +4109,9 @@ async function openLoanModal(direction, editIdx) {
     document.getElementById('loan-payment').value = l.payment || '';
     document.getElementById('loan-frequency').value = l.frequency || 'monthly';
     document.getElementById('loan-notes').value = l.notes || '';
+    document.getElementById('loan-status').value = l.status || 'active';
+    document.getElementById('loan-paidoff-date').value = l.paidoffDate || '';
+    onLoanStatusChange();
     activeLoanIdx = editIdx;
     renderLoanDocs(editIdx);
   } else {
@@ -4107,6 +4125,9 @@ async function openLoanModal(direction, editIdx) {
     document.getElementById('loan-payment').value = '';
     document.getElementById('loan-frequency').value = 'monthly';
     document.getElementById('loan-notes').value = '';
+    document.getElementById('loan-status').value = 'active';
+    document.getElementById('loan-paidoff-date').value = '';
+    onLoanStatusChange();
     activeLoanIdx = null;
     var dl = document.getElementById('loan-docs-list');
     if(dl) dl.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic;">Save the loan first, then reopen Edit to attach documents.</div>';
@@ -4137,6 +4158,8 @@ function saveLoan() {
     payment: parseFloat(document.getElementById('loan-payment').value) || 0,
     frequency: document.getElementById('loan-frequency').value,
     notes: document.getElementById('loan-notes').value.trim(),
+    status: document.getElementById('loan-status').value || 'active',
+    paidoffDate: document.getElementById('loan-paidoff-date').value || '',
     payments: existingLoan ? (existingLoan.payments || []) : [],
     docs: existingLoan ? (existingLoan.docs || []) : [],
     status: existingLoan ? (existingLoan.status || 'active') : 'active'
@@ -4160,6 +4183,21 @@ function saveLoan() {
   closeModal('loan-overlay');
   renderLoans();
   showToast((editIdx !== null ? 'Loan updated' : 'Loan added') + ': ' + party);
+}
+
+function onLoanStatusChange() {
+  var status = document.getElementById('loan-status').value;
+  var row = document.getElementById('loan-paidoff-date-row');
+  if(row) row.style.display = (status==='paid'||status==='forgiven'||status==='defaulted') ? 'block' : 'none';
+}
+
+function markLoanPaid(idx) {
+  if(!confirm('Mark this loan as paid off?')) return;
+  loans[idx].status = 'paid';
+  loans[idx].paidoffDate = new Date().toISOString().slice(0,10);
+  saveLoans();
+  renderLoans();
+  showToast('Loan marked as paid off.');
 }
 
 function openLoanModalByIdx(idx) {
