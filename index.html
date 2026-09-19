@@ -840,7 +840,7 @@ function skipSetup(){
           </div>
           <div id="paid-loans-body" style="display:none;">
             <table class="tbl">
-              <thead><tr><th>Party</th><th>Direction</th><th>Original amount</th><th>Rate</th><th>Start date</th><th>Status</th><th>Date resolved</th><th>Notes</th><th></th></tr></thead>
+              <thead><tr><th>Party</th><th>Direction</th><th>Original amount</th><th>Rate</th><th>Start date</th><th>Paid off</th><th>Notes</th><th></th></tr></thead>
               <tbody id="loans-paid-tbody"></tbody>
             </table>
           </div>
@@ -3853,8 +3853,8 @@ function logLoanPayment() {
 }
 
 function renderLoans() {
-  const lent = loans.filter(l => l.direction === 'lent');
-  const borrowed = loans.filter(l => l.direction === 'borrowed');
+  const lent = loans.filter(l => l.direction === 'lent' && (!l.status || l.status === 'active'));
+  const borrowed = loans.filter(l => l.direction === 'borrowed' && (!l.status || l.status === 'active'));
 
   // Metrics
   const totalLent = lent.reduce((a, l) => a + getLoanBalance(l), 0);
@@ -3930,7 +3930,6 @@ function renderLoans() {
           '<td style="font-size:12px;color:var(--text2);">' + (l.notes||'—') + '</td>' +
           '<td><div class="row-actions">' +
           '<button class="btn btn-xs btn-secondary" onclick="openLoanPayModal(' + realIdx + ')">History</button>' +
-          '<button class="btn btn-xs btn-secondary" title="Mark paid off" onclick="markLoanPaid(' + realIdx + ')">✓ Paid</button> ' +
           '<button class="btn btn-xs btn-danger" onclick="deleteLoan(' + realIdx + ')">✕</button>' +
           '</div></td>' +
           '</tr>';
@@ -4109,9 +4108,11 @@ async function openLoanModal(direction, editIdx) {
     document.getElementById('loan-payment').value = l.payment || '';
     document.getElementById('loan-frequency').value = l.frequency || 'monthly';
     document.getElementById('loan-notes').value = l.notes || '';
-    document.getElementById('loan-status').value = l.status || 'active';
-    document.getElementById('loan-paidoff-date').value = l.paidoffDate || '';
-    onLoanStatusChange();
+    if(document.getElementById('loan-status')) {
+      document.getElementById('loan-status').value = l.status || 'active';
+      document.getElementById('loan-paidoff-date').value = l.paidoffDate || '';
+      onLoanStatusChange();
+    }
     activeLoanIdx = editIdx;
     renderLoanDocs(editIdx);
   } else {
@@ -4125,9 +4126,11 @@ async function openLoanModal(direction, editIdx) {
     document.getElementById('loan-payment').value = '';
     document.getElementById('loan-frequency').value = 'monthly';
     document.getElementById('loan-notes').value = '';
-    document.getElementById('loan-status').value = 'active';
-    document.getElementById('loan-paidoff-date').value = '';
-    onLoanStatusChange();
+    if(document.getElementById('loan-status')) {
+      document.getElementById('loan-status').value = 'active';
+      document.getElementById('loan-paidoff-date').value = '';
+      onLoanStatusChange();
+    }
     activeLoanIdx = null;
     var dl = document.getElementById('loan-docs-list');
     if(dl) dl.innerHTML = '<div style="font-size:12px;color:var(--text3);font-style:italic;">Save the loan first, then reopen Edit to attach documents.</div>';
@@ -4158,8 +4161,8 @@ function saveLoan() {
     payment: parseFloat(document.getElementById('loan-payment').value) || 0,
     frequency: document.getElementById('loan-frequency').value,
     notes: document.getElementById('loan-notes').value.trim(),
-    status: document.getElementById('loan-status').value || 'active',
-    paidoffDate: document.getElementById('loan-paidoff-date').value || '',
+    status: (document.getElementById('loan-status') ? document.getElementById('loan-status').value : null) || 'active',
+    paidoffDate: (document.getElementById('loan-paidoff-date') ? document.getElementById('loan-paidoff-date').value : '') || '',
     payments: existingLoan ? (existingLoan.payments || []) : [],
     docs: existingLoan ? (existingLoan.docs || []) : [],
     status: existingLoan ? (existingLoan.status || 'active') : 'active'
@@ -4197,7 +4200,7 @@ function markLoanPaid(idx) {
   loans[idx].paidoffDate = new Date().toISOString().slice(0,10);
   saveLoans();
   renderLoans();
-  showToast('Loan marked as paid off.');
+  showToast('Loan marked as paid off — moved to resolved section.');
 }
 
 function openLoanModalByIdx(idx) {
