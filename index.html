@@ -3744,6 +3744,15 @@ async function saveLoans() {
   }
 }
 
+function markLoanPaid(idx) {
+  if(!confirm('Mark this loan as paid off? It will move to the resolved section.')) return;
+  loans[idx].status = 'paid';
+  loans[idx].paidoffDate = new Date().toISOString().slice(0,10);
+  saveLoans();
+  renderLoans();
+  showToast('Loan marked as paid off.');
+}
+
 async function deleteLoan(idx){
   if(!confirm('Delete this loan? Documents in Supabase storage will be kept.')) return;
   var loan = loans[idx];
@@ -3886,6 +3895,7 @@ function renderLoans() {
           <div class="row-actions">
             <button class="btn btn-xs btn-primary" onclick="openLoanPayModal(${realIdx})">Payments</button>
             <button class="btn btn-xs btn-secondary" onclick="openLoanModal('${l.direction}',${realIdx})">Edit</button>
+            ${!resolved ? `<button class="btn btn-xs btn-secondary" onclick="markLoanPaid(${realIdx})" style="color:var(--green);">✓ Paid</button>` : ''}
             <button class="btn btn-xs btn-danger" onclick="deleteLoan(${realIdx})">✕</button>
           </div>
         </td>
