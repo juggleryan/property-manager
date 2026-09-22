@@ -145,6 +145,31 @@ textarea{resize:none;min-height:90px;}
       </div>
 
       <div class="f-group">
+        <label>Currently employed?</label>
+        <select id="employed" onchange="toggleEmployment()">
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+
+      <div id="employment-details" class="grid-2">
+        <div class="f-group">
+          <label>Length of employment</label>
+          <select id="employment-length">
+            <option value="Less than 6 months">Less than 6 months</option>
+            <option value="6–12 months">6–12 months</option>
+            <option value="1–2 years">1–2 years</option>
+            <option value="2–5 years">2–5 years</option>
+            <option value="5+ years">5+ years</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label>Monthly income</label>
+          <input type="text" id="monthly-income" placeholder="e.g. $3,500">
+        </div>
+      </div>
+
+      <div class="f-group">
         <label>Anything you'd like us to know? (optional)</label>
         <textarea id="message" placeholder="Questions about the property, specific needs, best time to reach you..."></textarea>
       </div>
@@ -213,6 +238,12 @@ async function loadProperty(propId) {
   } catch(e) { console.log('Property load error:', e); }
 }
 
+function toggleEmployment() {
+  var employed = document.getElementById('employed').value;
+  var details = document.getElementById('employment-details');
+  details.style.display = employed === 'Yes' ? 'grid' : 'none';
+}
+
 async function submitInquiry(e) {
   e.preventDefault();
   var btn = document.getElementById('submit-btn');
@@ -227,6 +258,9 @@ async function submitInquiry(e) {
   var movein = document.getElementById('movein').value;
   var occupants = document.getElementById('occupants').value;
   var pets = document.getElementById('pets').value;
+  var employed = document.getElementById('employed').value;
+  var employmentLength = employed === 'Yes' ? document.getElementById('employment-length').value : 'N/A';
+  var monthlyIncome = document.getElementById('monthly-income').value.trim() || 'Not specified';
   var message = document.getElementById('message').value.trim();
 
   var propId = propertyData ? propertyData.id : (new URLSearchParams(window.location.search).get('property') || '');
@@ -238,6 +272,8 @@ async function submitInquiry(e) {
     'Move-in: ' + (movein || 'Not specified'),
     'Occupants: ' + occupants,
     'Pets: ' + pets,
+    'Employed: ' + employed + (employed === 'Yes' ? ' (' + employmentLength + ')' : ''),
+    'Monthly income: ' + (employed === 'Yes' ? monthlyIncome : 'N/A'),
     message ? 'Message: ' + message : '',
     'Submitted: ' + new Date().toLocaleString()
   ].filter(Boolean).join(' | ');
@@ -273,8 +309,8 @@ async function submitInquiry(e) {
       property_name: propName,
       movein_date: movein || 'Not specified',
       occupants: occupants,
-      monthly_income: 'N/A',
-      employment: 'Showing inquiry — not full application',
+      monthly_income: employed === 'Yes' ? monthlyIncome : 'Not employed',
+      employment: employed === 'Yes' ? 'Employed — ' + employmentLength : 'Not currently employed',
       pets: pets,
       eviction: 'N/A',
       criminal: 'N/A',
